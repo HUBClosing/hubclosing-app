@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env.local
+.env*.local
+out/
+.vercel/
+.DS_Store
+
+# Local Netlify folder
+.netlify
