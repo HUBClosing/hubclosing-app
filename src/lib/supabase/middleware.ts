@@ -45,26 +45,14 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Redirect authenticated users away from auth pages (but not callback)
-  // Query the users table to determine the correct redirect destination
+  // Send to /dashboard — requireUser() handles pending → onboarding redirect
   if (
     user &&
     request.nextUrl.pathname.startsWith('/auth') &&
     !request.nextUrl.pathname.startsWith('/auth/callback')
   ) {
-    // Check if user has a profile and their role
-    const { data: dbUser } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
     const url = request.nextUrl.clone();
-    // If no DB row or pending role -> onboarding, otherwise dashboard
-    if (!dbUser || dbUser.role === 'pending') {
-      url.pathname = '/onboarding';
-    } else {
-      url.pathname = '/dashboard';
-    }
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 

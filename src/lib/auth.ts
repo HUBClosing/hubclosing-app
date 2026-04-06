@@ -14,24 +14,29 @@ export async function getUser(): Promise<User | null> {
     .eq('id', authUser.id)
     .single();
 
-  // If auth user exists but no DB row, auto-create with 'pending' role
-  // This prevents redirect loops when the DB trigger didn't fire
+  // If auth user exists but no DB row, create with 'pending' role
+  // Uses insert (not upsert) to never overwrite an existing row
   if (!user && authUser) {
     const { data: newUser, error } = await supabase
       .from('users')
-      .upsert({
+      .insert({
         id: authUser.id,
         email: authUser.email || '',
         role: 'pending',
         full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
         avatar_url: authUser.user_metadata?.avatar_url || null,
-      }, { onConflict: 'id' })
+      })
       .select('*')
       .single();
 
+    // If insert fails (duplicate), try to fetch the existing row
     if (error) {
-      console.error('Failed to auto-create user row:', error);
-      return null;
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return existingUser;
     }
     return newUser;
   }
