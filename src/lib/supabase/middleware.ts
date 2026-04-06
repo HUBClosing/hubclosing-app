@@ -33,6 +33,16 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Helper: create a redirect that preserves Supabase session cookies
+  function redirectWithCookies(url: URL) {
+    const redirectResponse = NextResponse.redirect(url);
+    // Copy all cookies from supabaseResponse (refreshed session) to the redirect
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie as any);
+    });
+    return redirectResponse;
+  }
+
   // Protected routes - require authentication
   if (
     !user &&
@@ -41,11 +51,10 @@ export async function updateSession(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   // Redirect authenticated users away from auth pages (but not callback)
-  // Send to /dashboard — requireUser() handles pending → onboarding redirect
   if (
     user &&
     request.nextUrl.pathname.startsWith('/auth') &&
@@ -53,7 +62,7 @@ export async function updateSession(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url);
   }
 
   return supabaseResponse;
