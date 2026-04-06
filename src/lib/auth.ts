@@ -22,6 +22,10 @@ export async function requireUser(): Promise<User> {
   if (!user) {
     redirect('/auth/login');
   }
+  // If user hasn't completed onboarding, redirect there
+  if (user.role === 'pending') {
+    redirect('/onboarding');
+  }
   return user;
 }
 

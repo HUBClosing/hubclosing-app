@@ -10,31 +10,32 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Ensure user profile exists (for OAuth signups where trigger might not have role)
+      // Ensure user profile exists (for OAuth signups where trigger might not fire)
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {
         const { data: existingUser } = await supabase
           .from('users')
-          .select('id')
+          .select('id, role')
           .eq('id', authUser.id)
           .single();
 
         if (!existingUser) {
-          // User was created via OAuth but trigger didn't fire or failed
-          const role = authUser.user_metadata?.role || 'closer';
+          // New OAuth user - create with 'pending' role, will complete onboarding
           await supabase.from('users').insert({
             id: authUser.id,
             email: authUser.email || '',
-            role,
+            role: 'pending',
             full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
             avatar_url: authUser.user_metadata?.avatar_url || null,
           });
 
-          if (role === 'closer') {
-            await supabase.from('closer_profiles').insert({ user_id: authUser.id });
-          } else if (role === 'manager') {
-            await supabase.from('manager_profiles').insert({ user_id: authUser.id });
-          }
+          // Redirect to onboarding for new users
+          return NextResponse.redirect(`${origin}/onboarding`);
+        }
+
+        // Existing user with pending role -> onboarding
+        if (existingUser.role === 'pending') {
+          return NextResponse.redirect(`${origin}/onboarding`);
         }
       }
 

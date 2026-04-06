@@ -1,4 +1,4 @@
-export type UserRole = 'closer' | 'manager' | 'admin';
+export type UserRole = 'closer' | 'manager' | 'admin' | 'pending';
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
 export type OfferStatus = 'active' | 'paused' | 'closed';
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';

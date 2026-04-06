@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import type { UserRole } from '@/types/database';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -17,7 +16,6 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<UserRole>('closer');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +37,6 @@ export function AuthForm({ mode }: AuthFormProps) {
           options: {
             data: {
               full_name: fullName,
-              role: role,
             },
           },
         });
@@ -122,54 +119,22 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom complet
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Votre nom"
-                    required
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nom complet
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Votre nom"
+                  required
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Je suis...
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setRole('closer')}
-                    className={`p-3 rounded-lg border-2 text-center text-sm font-medium transition-all ${
-                      role === 'closer'
-                        ? 'border-brand-green bg-brand-green/5 text-brand-green'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    🎯 Closer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('manager')}
-                    className={`p-3 rounded-lg border-2 text-center text-sm font-medium transition-all ${
-                      role === 'manager'
-                        ? 'border-brand-green bg-brand-green/5 text-brand-green'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    📊 Manager
-                  </button>
-                </div>
-              </div>
-            </>
+            </div>
           )}
 
           <div>
