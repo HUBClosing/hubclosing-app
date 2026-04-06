@@ -19,7 +19,6 @@ export default function OnboardingPage() {
   // Closer details
   const [experience, setExperience] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
-  const [linkedin, setLinkedin] = useState('');
   const [phone, setPhone] = useState('');
 
   // Manager details
@@ -29,9 +28,8 @@ export default function OnboardingPage() {
   const [website, setWebsite] = useState('');
 
   const closerSpecialties = [
-    'High Ticket', 'SaaS', 'Coaching', 'Formation en ligne',
-    'E-commerce', 'Immobilier', 'Assurance', 'B2B',
-    'Infoproduit', 'MLM', 'Crypto/Finance', 'Santé/Bien-être',
+    'Coaching', 'E-commerce', 'Immobilier', 'Assurance',
+    'B2B', 'Crypto/Finance', 'Santé/Bien-être',
   ];
 
   const toggleSpecialty = (s: string) => {
@@ -77,7 +75,6 @@ export default function OnboardingPage() {
             user_id: authUser.id,
             experience_level: experience || 'junior',
             specialties: specialties,
-            linkedin_url: linkedin || null,
           }, { onConflict: 'user_id' });
 
         if (profileError) throw profileError;
@@ -90,7 +87,6 @@ export default function OnboardingPage() {
             industry: industry || null,
             team_size: teamSize ? parseInt(teamSize) : null,
             website_url: website || null,
-            linkedin_url: linkedin || null,
           }, { onConflict: 'user_id' });
 
         if (profileError) throw profileError;
@@ -253,7 +249,7 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone (optionnel)
+                  Téléphone <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -262,23 +258,15 @@ export default function OnboardingPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+33 6 12 34 56 78"
+                    required
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  LinkedIn (optionnel)
-                </label>
-                <input
-                  type="url"
-                  value={linkedin}
-                  onChange={(e) => setLinkedin(e.target.value)}
-                  placeholder="https://linkedin.com/in/votre-profil"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                />
-              </div>
+              <p className="text-red-500 text-sm font-medium mt-2">
+                Plus votre profil sera complété, plus il sera mis en avant et aura des chances d&apos;être sélectionné.
+              </p>
             </div>
 
             {error && (
@@ -287,7 +275,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <Button onClick={handleFinish} isLoading={loading} className="w-full mt-6">
+            <Button onClick={handleFinish} isLoading={loading} disabled={!phone.trim()} className="w-full mt-6">
               Finaliser mon profil <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
@@ -384,7 +372,7 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone (optionnel)
+                  Téléphone <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -393,23 +381,15 @@ export default function OnboardingPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+33 6 12 34 56 78"
+                    required
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  LinkedIn (optionnel)
-                </label>
-                <input
-                  type="url"
-                  value={linkedin}
-                  onChange={(e) => setLinkedin(e.target.value)}
-                  placeholder="https://linkedin.com/in/votre-profil"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                />
-              </div>
+              <p className="text-red-500 text-sm font-medium mt-2">
+                Plus votre profil sera complété, plus il sera mis en avant et aura des chances d&apos;être sélectionné.
+              </p>
             </div>
 
             {error && (
@@ -418,7 +398,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <Button onClick={handleFinish} isLoading={loading} className="w-full mt-6">
+            <Button onClick={handleFinish} isLoading={loading} disabled={!phone.trim()} className="w-full mt-6">
               Finaliser mon profil <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
