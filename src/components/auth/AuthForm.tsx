@@ -55,8 +55,12 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
           password,
         });
         if (error) throw error;
-        const redirect = searchParams.get('redirect') || '/dashboard';
-        router.push(redirect);
+        // Sécurité : valider que le redirect est une route interne uniquement
+        const redirectParam = searchParams.get('redirect') || '/dashboard';
+        const safeRedirect = redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+          ? redirectParam
+          : '/dashboard';
+        router.push(safeRedirect);
         router.refresh();
       }
     } catch (err: any) {
@@ -67,13 +71,24 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (error) setError(error.message);
+    setLoading(true);
+    setError('');
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (oauthError) {
+        setError(oauthError.message);
+        setLoading(false);
+      }
+      // Si pas d'erreur, l'utilisateur est redirigé vers Google — loading reste true
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la connexion Google');
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,7 +141,8 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
           {/* Google OAuth - toujours visible */}
           <button
             onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

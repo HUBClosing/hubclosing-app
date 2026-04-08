@@ -33,17 +33,29 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Helper: create a redirect that preserves Supabase session cookies
+  // Helper: créer une redirection qui préserve les cookies de session Supabase
   function redirectWithCookies(url: URL) {
     const redirectResponse = NextResponse.redirect(url);
-    // Copy all cookies from supabaseResponse (refreshed session) to the redirect
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie.name, cookie.value, cookie as any);
     });
     return redirectResponse;
   }
 
-  // Protected routes - require authentication
+  // Helper: ajouter les headers de sécurité à une réponse
+  function addSecurityHeaders(response: NextResponse) {
+    // Protection contre le clickjacking
+    response.headers.set('X-Frame-Options', 'DENY');
+    // Protection XSS (navigateurs legacy)
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    // Politique de référence stricte
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Permissions Policy — désactiver les features inutilisées
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    return response;
+  }
+
+  // Routes protégées — requièrent une authentification
   if (
     !user &&
     (request.nextUrl.pathname.startsWith('/dashboard') ||
@@ -51,10 +63,23 @@ export async function updateSession(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
-    return redirectWithCookies(url);
+    // Ajouter un redirect pour retourner à la page demandée après login
+    url.searchParams.set('redirect', request.nextUrl.pathname);
+    return addSecurityHeaders(redirectWithCookies(url));
   }
 
-  // Redirect authenticated users away from auth pages (but not callback)
+  // Protection admin — vérification supplémentaire côté middleware
+  // Note: la vérification principale reste dans requireAdmin(), mais on bloque
+  // les routes /api sensibles ici aussi
+  if (
+    !user &&
+    request.nextUrl.pathname.startsWith('/api') &&
+    !request.nextUrl.pathname.startsWith('/api/auth')
+  ) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+
+  // Rediriger les utilisateurs authentifiés loin des pages auth (sauf callback)
   if (
     user &&
     request.nextUrl.pathname.startsWith('/auth') &&
@@ -62,8 +87,8 @@ export async function updateSession(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
-    return redirectWithCookies(url);
+    return addSecurityHeaders(redirectWithCookies(url));
   }
 
-  return supabaseResponse;
+  return addSecurityHeaders(supabaseResponse);
 }

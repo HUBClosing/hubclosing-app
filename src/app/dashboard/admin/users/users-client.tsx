@@ -19,6 +19,7 @@ export function UsersClient({ users }: UsersClientProps) {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const router = useRouter();
 
   const supabase = createBrowserClient(
@@ -36,22 +37,32 @@ export function UsersClient({ users }: UsersClientProps) {
 
   const toggleActive = async (userId: string, currentActive: boolean) => {
     setLoading(userId);
+    setActionError(null);
     const { error } = await supabase
       .from('users')
       .update({ is_active: !currentActive, updated_at: new Date().toISOString() })
       .eq('id', userId);
-    if (!error) router.refresh();
+    if (error) {
+      setActionError(`Erreur : ${error.message}`);
+    } else {
+      router.refresh();
+    }
     setLoading(null);
     setMenuOpen(null);
   };
 
   const changeRole = async (userId: string, newRole: string) => {
     setLoading(userId);
+    setActionError(null);
     const { error } = await supabase
       .from('users')
       .update({ role: newRole, updated_at: new Date().toISOString() })
       .eq('id', userId);
-    if (!error) router.refresh();
+    if (error) {
+      setActionError(`Erreur : ${error.message}`);
+    } else {
+      router.refresh();
+    }
     setLoading(null);
     setMenuOpen(null);
   };
@@ -81,11 +92,17 @@ export function UsersClient({ users }: UsersClientProps) {
         </div>
       </div>
 
+      {actionError && (
+        <div className="mx-4 mt-3 p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{actionError}</p>
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Utilisateur</TableHead>
-            <TableHead>Rôle</TableHead>
+            <TableHead>R&ocirc;le</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Plan</TableHead>
             <TableHead>Inscrit</TableHead>
@@ -108,9 +125,9 @@ export function UsersClient({ users }: UsersClientProps) {
                 <Badge variant={user.role === 'admin' ? 'warning' : user.role === 'closer' ? 'success' : 'info'} className="capitalize">{user.role}</Badge>
               </TableCell>
               <TableCell>
-                <Badge variant={user.is_active ? 'success' : 'error'}>{user.is_active ? 'Actif' : 'Inactif'}</Badge>
+                <Badge variant={user.is_active !== false ? 'success' : 'error'}>{user.is_active !== false ? 'Actif' : 'Inactif'}</Badge>
               </TableCell>
-              <TableCell className="capitalize">{user.subscription_plan}</TableCell>
+              <TableCell className="capitalize">{user.subscription_plan || 'free'}</TableCell>
               <TableCell className="text-gray-500">{formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: fr })}</TableCell>
               <TableCell className="text-right">
                 <div className="relative inline-block">
@@ -124,13 +141,13 @@ export function UsersClient({ users }: UsersClientProps) {
                   {menuOpen === user.id && (
                     <div className="absolute right-0 top-8 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 w-48">
                       <button
-                        onClick={() => toggleActive(user.id, user.is_active)}
+                        onClick={() => toggleActive(user.id, user.is_active !== false)}
                         className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
                       >
-                        {user.is_active ? (
-                          <><Ban className="w-4 h-4 text-red-500" /> Désactiver</>
+                        {user.is_active !== false ? (
+                          <><Ban className="w-4 h-4 text-red-500" /> D&eacute;sactiver</>
                         ) : (
-                          <><CheckCircle className="w-4 h-4 text-green-500" /> Réactiver</>
+                          <><CheckCircle className="w-4 h-4 text-green-500" /> R&eacute;activer</>
                         )}
                       </button>
                       {user.role !== 'admin' && (
@@ -161,7 +178,7 @@ export function UsersClient({ users }: UsersClientProps) {
       </Table>
 
       {filtered.length === 0 && (
-        <div className="text-center py-8 text-gray-500 text-sm">Aucun utilisateur trouvé</div>
+        <div className="text-center py-8 text-gray-500 text-sm">Aucun utilisateur trouv&eacute;</div>
       )}
     </Card>
   );

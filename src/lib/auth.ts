@@ -4,38 +4,45 @@ import type { User } from '@/types/database';
 
 export async function getUser(): Promise<User | null> {
   const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-  if (!authUser) return null;
+  if (authError || !authUser) return null;
 
-  const { data: user } = await supabase
+  const { data: user, error: fetchError } = await supabase
     .from('users')
     .select('*')
     .eq('id', authUser.id)
-    .single();
+    .maybeSingle();
 
-  // If auth user exists but no DB row, create with 'pending' role
-  // Uses insert (not upsert) to never overwrite an existing row
-  if (!user && authUser) {
-    const { data: newUser, error } = await supabase
+  // Si erreur de requête, log et retourne null
+  if (fetchError) {
+    console.error('[getUser] fetch error:', fetchError.message);
+    return null;
+  }
+
+  // Si auth user existe mais pas de profil DB, créer avec upsert
+  // upsert évite les race conditions de doublon
+  if (!user) {
+    const { data: newUser, error: upsertError } = await supabase
       .from('users')
-      .insert({
+      .upsert({
         id: authUser.id,
-        email: authUser.email || '',
+        email: authUser.email || null,
         role: 'pending',
         full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
         avatar_url: authUser.user_metadata?.avatar_url || null,
-      })
+      }, { onConflict: 'id', ignoreDuplicates: true })
       .select('*')
       .single();
 
-    // If insert fails (duplicate), try to fetch the existing row
-    if (error) {
+    if (upsertError) {
+      console.error('[getUser] upsert error:', upsertError.message);
+      // Tenter une dernière lecture en cas de conflit
       const { data: existingUser } = await supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
       return existingUser;
     }
     return newUser;
@@ -49,7 +56,7 @@ export async function requireUser(): Promise<User> {
   if (!user) {
     redirect('/auth/login');
   }
-  // If user hasn't completed onboarding, redirect there
+  // Si l'utilisateur n'a pas complété l'onboarding, rediriger
   if (user.role === 'pending') {
     redirect('/onboarding');
   }
