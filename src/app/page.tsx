@@ -211,12 +211,26 @@ img{max-width:100%;height:auto;}
 .feature-card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--cream);position:relative;}
 .feature-card p{font-size:14px;color:var(--gray-l);line-height:1.6;position:relative;}
 
-/* ===== TESTIMONIALS ===== */
-.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
-.testimonial-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:28px 24px;transition:all 0.4s;position:relative;overflow:hidden;}
+/* ===== TESTIMONIALS MARQUEE ===== */
+.testimonials-marquee-wrap{overflow:hidden;position:relative;width:100vw;margin-left:calc(-50vw + 50%);padding:0 0;}
+.testimonials-marquee-wrap::before,.testimonials-marquee-wrap::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none;}
+.testimonials-marquee-wrap::before{left:0;background:linear-gradient(to right,#F5F0E8,transparent);}
+.testimonials-marquee-wrap::after{right:0;background:linear-gradient(to left,#F5F0E8,transparent);}
+.testimonials-marquee{display:flex;gap:20px;animation:marquee-scroll 60s linear infinite;width:max-content;}
+.testimonials-marquee:hover{animation-play-state:paused;}
+.testimonials-marquee-row2{animation:marquee-scroll-reverse 55s linear infinite;}
+.testimonials-marquee-row2:hover{animation-play-state:paused;}
+@keyframes marquee-scroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+@keyframes marquee-scroll-reverse{0%{transform:translateX(-50%);}100%{transform:translateX(0);}}
+.testimonial-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:28px 24px;transition:all 0.4s;position:relative;overflow:hidden;min-width:340px;max-width:340px;flex-shrink:0;}
 .testimonial-card:hover{transform:translateY(-4px);border-color:rgba(232,145,58,0.1);}
 .testimonial-card::before{content:'\\201C';position:absolute;top:12px;right:20px;font-size:60px;color:rgba(232,145,58,0.06);font-family:Georgia,serif;line-height:1;}
 .testimonial-text{font-size:14px;color:var(--gray-l);line-height:1.7;margin-bottom:18px;font-style:italic;position:relative;}
+.testimonial-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:14px;}
+.badge-closer{background:rgba(232,145,58,0.12);color:#D4782E;}
+.badge-setter{background:rgba(43,94,158,0.12);color:#2B5E9E;}
+.badge-hos{background:rgba(139,92,246,0.12);color:#7C3AED;}
+.badge-manager{background:rgba(16,185,129,0.12);color:#059669;}
 .testimonial-author{display:flex;align-items:center;gap:12px;}
 .testimonial-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#FFF;}
 .testimonial-name{font-size:14px;font-weight:600;color:var(--cream);}
@@ -263,7 +277,8 @@ img{max-width:100%;height:auto;}
 
 /* ===== RESPONSIVE ===== */
 @media(max-width:900px){
-  .steps-grid,.testimonials-grid{grid-template-columns:1fr;}
+  .steps-grid{grid-template-columns:1fr;}
+  .testimonial-card{min-width:280px;max-width:280px;}
   .features-grid{grid-template-columns:1fr;}
   .footer-inner{grid-template-columns:1fr 1fr;}
   .hero-stats{gap:28px;}
@@ -933,30 +948,124 @@ img{max-width:100%;height:auto;}
             <div className="slabel reveal">Témoignages</div>
             <div className="stitle reveal">Ils nous font <span className="accent">déjà confiance</span></div>
             <div className="sdesc reveal">Plus de 2 000 membres dans notre communauté WhatsApp. Voici leurs retours.</div>
-            <div className="testimonials-grid">
-              <div className="testimonial-card reveal reveal-delay-1">
-                <div className="testimonial-text">"Avant je passais des heures à chercher des offres sur les groupes Facebook. Maintenant j'ai tout au même endroit, avec des infos claires sur les commissions."</div>
-                <div className="testimonial-author">
-                  <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),var(--amber-d))' }}>M</div>
-                  <div><div className="testimonial-name">Maxime R.</div><div className="testimonial-role">Closer — Niche coaching</div></div>
+          </div>
+
+          {/* Rangée 1 — défilement gauche → droite */}
+          <div className="testimonials-marquee-wrap" style={{ marginBottom: '20px' }}>
+            <div className="testimonials-marquee">
+              {[...Array(2)].map((_, dup) => (
+                <div key={`r1-${dup}`} style={{ display: 'flex', gap: '20px' }}>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-closer">Closer</div>
+                    <div className="testimonial-text">{`"Avant je passais des heures à chercher des offres sur les groupes Facebook. Maintenant j'ai tout au même endroit, avec des infos claires sur les commissions."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),var(--amber-d))' }}>M</div>
+                      <div><div className="testimonial-name">Maxime R.</div><div className="testimonial-role">Closer — Niche coaching</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-hos">HOS</div>
+                    <div className="testimonial-text">{`"En tant que HOS, recruter un bon closer c'est le nerf de la guerre. Avoir une base de profils qualifiés, c'est exactement ce qu'il nous manquait."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#7C3AED,#5B21B6)' }}>S</div>
+                      <div><div className="testimonial-name">Sophie L.</div><div className="testimonial-role">Head of Sales — E-commerce</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-setter">Setter</div>
+                    <div className="testimonial-text">{`"Grâce à HUBClosing, j'ai trouvé 3 programmes à setter en moins d'une semaine. Les fiches sont complètes et je sais exactement à quoi m'attendre avant de postuler."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#2B5E9E,#1A3F6F)' }}>A</div>
+                      <div><div className="testimonial-name">Anaïs D.</div><div className="testimonial-role">Setter — Bien-être</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-manager">Manager</div>
+                    <div className="testimonial-text">{`"J'ai posté une offre le lundi, j'avais 12 candidatures qualifiées le mercredi. Le gain de temps est énorme par rapport aux recrutements classiques."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#059669,#047857)' }}>T</div>
+                      <div><div className="testimonial-name">Thomas V.</div><div className="testimonial-role">Manager — Formation trading</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-closer">Closer</div>
+                    <div className="testimonial-text">{`"Ce qui me plaît c'est la transparence. On voit les commissions, le panier moyen, le type de produit. Plus de mauvaises surprises en entretien."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),#C06A20)' }}>J</div>
+                      <div><div className="testimonial-name">Julien M.</div><div className="testimonial-role">Closer — Immobilier digital</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-hos">HOS</div>
+                    <div className="testimonial-text">{`"On a structuré toute notre équipe sales grâce à HUBClosing. 4 closers recrutés en un mois, tous encore en poste 6 mois plus tard. La qualité est là."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#7C3AED,#6D28D9)' }}>N</div>
+                      <div><div className="testimonial-name">Nicolas P.</div><div className="testimonial-role">HOS — Agence marketing</div></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="testimonial-card reveal reveal-delay-2">
-                <div className="testimonial-text">"En tant que HOS, recruter un bon closer c'est le nerf de la guerre. Avoir une base de profils qualifiés, c'est exactement ce qu'il nous manquait."</div>
-                <div className="testimonial-author">
-                  <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#2B5E9E,#1A3F6F)' }}>S</div>
-                  <div><div className="testimonial-name">Sophie L.</div><div className="testimonial-role">Head of Sales — E-commerce</div></div>
-                </div>
-              </div>
-              <div className="testimonial-card reveal reveal-delay-3">
-                <div className="testimonial-text">"La communauté est incroyable. On s'entraide, on partage les bons plans. HUBClosing c'est plus qu'une plateforme, c'est une famille de sales."</div>
-                <div className="testimonial-author">
-                  <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--success),#16A34A)' }}>K</div>
-                  <div><div className="testimonial-name">Karim B.</div><div className="testimonial-role">Closer & Setter — Formation</div></div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
+
+          {/* Rangée 2 — défilement droite → gauche */}
+          <div className="testimonials-marquee-wrap">
+            <div className="testimonials-marquee testimonials-marquee-row2">
+              {[...Array(2)].map((_, dup) => (
+                <div key={`r2-${dup}`} style={{ display: 'flex', gap: '20px' }}>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-setter">Setter</div>
+                    <div className="testimonial-text">{`"La communauté WhatsApp est un vrai plus. On échange les tips, on se recommande des programmes. C'est un réseau de confiance entre setters."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#2B5E9E,#1E40AF)' }}>L</div>
+                      <div><div className="testimonial-name">Laura C.</div><div className="testimonial-role">Setter — Développement personnel</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-closer">Closer</div>
+                    <div className="testimonial-text">{`"La communauté est incroyable. On s'entraide, on partage les bons plans. HUBClosing c'est plus qu'une plateforme, c'est une famille de sales."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),var(--amber-d))' }}>K</div>
+                      <div><div className="testimonial-name">Karim B.</div><div className="testimonial-role">Closer — Formation en ligne</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-manager">Manager</div>
+                    <div className="testimonial-text">{`"Fini le temps où je devais poster dans 15 groupes Telegram pour trouver un closer. Ici tout est centralisé et pro. C'est le LinkedIn du closing."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#059669,#10B981)' }}>E</div>
+                      <div><div className="testimonial-name">Emma G.</div><div className="testimonial-role">Manager — SaaS B2B</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-hos">HOS</div>
+                    <div className="testimonial-text">{`"Le dashboard analytics est top. Je suis mes KPIs de recrutement, le taux de conversion des candidatures. Ça professionnalise tout le process."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#7C3AED,#5B21B6)' }}>R</div>
+                      <div><div className="testimonial-name">Romain A.</div><div className="testimonial-role">HOS — Programme high-ticket</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-setter">Setter</div>
+                    <div className="testimonial-text">{`"En 3 mois sur HUBClosing, j'ai doublé mes revenus. Les opportunités sont mieux qualifiées qu'ailleurs et les managers sont sérieux."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#2B5E9E,#1A3F6F)' }}>Y</div>
+                      <div><div className="testimonial-name">Yasmine H.</div><div className="testimonial-role">Setter — Coaching business</div></div>
+                    </div>
+                  </div>
+                  <div className="testimonial-card">
+                    <div className="testimonial-badge badge-closer">Closer</div>
+                    <div className="testimonial-text">{`"J'étais sceptique au début, encore une plateforme... Mais la qualité des offres m'a convaincu. Maintenant c'est mon outil n°1 pour trouver des missions."`}</div>
+                    <div className="testimonial-author">
+                      <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),#B8651A)' }}>D</div>
+                      <div><div className="testimonial-name">Dylan F.</div><div className="testimonial-role">Closer — Crypto & finance</div></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </section>
       </div>
 
