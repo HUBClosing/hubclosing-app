@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
@@ -23,6 +23,18 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
   const [message, setMessage] = useState('');
 
   const supabase = createClient();
+
+  // Vérifier côté client si l'utilisateur est déjà connecté
+  // Cela remplace la redirection middleware qui causait des boucles
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.replace('/dashboard');
+      }
+    };
+    checkSession();
+  }, [supabase, router]);
 
   const switchMode = (newMode: 'login' | 'register') => {
     setMode(newMode);

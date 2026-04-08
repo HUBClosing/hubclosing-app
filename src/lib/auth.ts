@@ -54,6 +54,10 @@ export async function getUser(): Promise<User | null> {
 export async function requireUser(): Promise<User> {
   const user = await getUser();
   if (!user) {
+    // Nettoyer la session invalide pour éviter une boucle de redirection
+    // entre le middleware et cette fonction
+    const supabase = await createClient();
+    await supabase.auth.signOut();
     redirect('/auth/login');
   }
   // Si l'utilisateur n'a pas complété l'onboarding, rediriger

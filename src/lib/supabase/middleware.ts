@@ -79,16 +79,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }
 
-  // Rediriger les utilisateurs authentifiés loin des pages auth (sauf callback)
-  if (
-    user &&
-    request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/auth/callback')
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return addSecurityHeaders(redirectWithCookies(url));
-  }
+  // Note: on ne redirige PAS les utilisateurs connectés depuis /auth/login
+  // car cela créerait une boucle de redirection si le token Supabase est
+  // dans un état intermédiaire (rafraîchi dans le middleware mais pas encore
+  // visible côté serveur component). La redirection est gérée côté client
+  // dans AuthForm.tsx si l'utilisateur est déjà connecté.
 
   return addSecurityHeaders(supabaseResponse);
 }
