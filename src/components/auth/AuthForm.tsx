@@ -50,23 +50,59 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
 
     try {
       if (mode === 'register') {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName,
             },
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
           },
         });
         if (error) throw error;
-        setMessage('Vérifiez votre email pour confirmer votre inscription !');
+
+        // Si la confirmation email est désactivée, l'utilisateur est auto-connecté
+        // → on le redirige directement vers l'onboarding
+        if (signUpData.session) {
+          // Créer le profil utilisateur dans la DB
+          if (signUpData.user) {
+            await supabase.from('users').upsert({
+              id: signUpData.user.id,
+              email: signUpData.user.email || null,
+              role: 'pending',
+              full_name: fullName || '',
+            }, { onConflict: 'id' });
+          }
+          router.push('/onboarding');
+          router.refresh();
+          return;
+        }
+
+        // Sinon, confirmation email requise
+        setMessage('Vérifiez votre email pour confirmer votre inscription ! Vous serez redirigé vers le formulaire de profil.');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
+
+        // Vérifier le rôle de l'utilisateur pour rediriger correctement
+        if (signInData.user) {
+          const { data: dbUser } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', signInData.user.id)
+            .maybeSingle();
+
+          if (!dbUser || dbUser.role === 'pending') {
+            router.push('/onboarding');
+            router.refresh();
+            return;
+          }
+        }
+
         // Sécurité : valider que le redirect est une route interne uniquement
         const redirectParam = searchParams.get('redirect') || '/dashboard';
         const safeRedirect = redirectParam.startsWith('/') && !redirectParam.startsWith('//')
