@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
-import { ArrowRight, ArrowLeft, Phone, Briefcase, Users, Target, CheckCircle, PhoneCall, Crown } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Phone, Briefcase, Users, Target, CheckCircle, PhoneCall, Crown, Mail } from 'lucide-react';
 
 type Step = 'role' | 'details' | 'done';
 type SubRole = 'closer' | 'setter' | 'manager' | 'hos';
@@ -27,6 +27,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState('');
 
   // Closer details
+  const [personalEmail, setPersonalEmail] = useState('');
   const [experience, setExperience] = useState('');
   const [specialties, setSpecialties] = useState<string[]>([]);
   const [phone, setPhone] = useState('');
@@ -126,10 +127,14 @@ export default function OnboardingPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Non authentifié');
 
-      // Update user role
+      // Update user role + email personnel si closer/setter
+      const updateData: Record<string, any> = { role: selectedRole, phone: phone || null };
+      if (selectedRole === 'closer' && personalEmail.trim()) {
+        updateData.personal_email = personalEmail.trim();
+      }
       const { error: userError } = await supabase
         .from('users')
-        .update({ role: selectedRole, phone: phone || null })
+        .update(updateData)
         .eq('id', authUser.id);
 
       if (userError) throw userError;
@@ -269,6 +274,23 @@ export default function OnboardingPage() {
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email personnel <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={personalEmail}
+                    onChange={(e) => setPersonalEmail(e.target.value)}
+                    placeholder="votre@email.com"
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Niveau d&apos;expérience en closing
                 </label>
                 <select
@@ -334,7 +356,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <Button onClick={handleFinish} isLoading={loading} disabled={!phone.trim()} className="w-full mt-6">
+            <Button onClick={handleFinish} isLoading={loading} disabled={!phone.trim() || !personalEmail.trim()} className="w-full mt-6">
               Finaliser mon profil <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
