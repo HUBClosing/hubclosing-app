@@ -80,7 +80,7 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         }
 
         // Sinon, confirmation email requise
-        setMessage('Vérifiez votre email pour confirmer votre inscription ! Vous serez redirigé vers le formulaire de profil.');
+        setMessage('Un email de confirmation vient d\'être envoyé à ' + email + '. Pensez à vérifier vos spams si vous ne le trouvez pas dans votre boîte de réception.');
       } else {
         const { data: signInData, error } = await supabase.auth.signInWithPassword({
           email,
