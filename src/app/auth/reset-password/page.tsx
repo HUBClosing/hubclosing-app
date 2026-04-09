@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -16,22 +17,55 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
+  const [checking, setChecking] = useState(true);
 
-  // Supabase injecte automatiquement la session via le hash fragment du lien email
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    const initSession = async () => {
+      // Cas 1 : code dans l'URL (PKCE flow) — échanger contre une session
+      const code = searchParams.get('code');
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setError('Le lien a expiré ou est invalide. Demandez un nouveau lien.');
+          setChecking(false);
+          return;
+        }
         setSessionReady(true);
+        setChecking(false);
+        return;
       }
-    });
 
-    // Vérifier aussi si une session existe déjà
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setSessionReady(true);
-    });
+      // Cas 2 : écouter l'événement PASSWORD_RECOVERY (hash fragment legacy)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+          setSessionReady(true);
+          setChecking(false);
+        }
+      });
 
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+      // Cas 3 : session déjà active (redirigé depuis /auth/callback)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setSessionReady(true);
+        setChecking(false);
+      } else {
+        // Timeout : si rien après 5s, afficher le message d'erreur
+        setTimeout(() => {
+          setChecking((prev) => {
+            if (prev) {
+              setError('Le lien a expiré ou est invalide.');
+              return false;
+            }
+            return prev;
+          });
+        }, 5000);
+      }
+
+      return () => subscription.unsubscribe();
+    };
+
+    initSession();
+  }, [supabase, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,18 +124,24 @@ export default function ResetPasswordPage() {
                 Redirection vers la connexion...
               </p>
             </div>
-          ) : !sessionReady ? (
+          ) : checking && !error ? (
             <div className="text-center py-8">
               <div className="animate-spin h-8 w-8 border-2 border-brand-amber border-t-transparent rounded-full mx-auto mb-4" />
               <p className="text-sm text-gray-500">
                 Vérification du lien de réinitialisation...
               </p>
-              <p className="text-xs text-gray-400 mt-2">
-                Si rien ne se passe, le lien a peut-être expiré.{' '}
-                <a href="/auth/forgot-password" className="text-brand-amber hover:underline">
-                  Demander un nouveau lien
-                </a>
-              </p>
+            </div>
+          ) : !sessionReady ? (
+            <div className="text-center py-8">
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 mb-4">
+                <p className="text-sm text-red-600">{error || 'Le lien est invalide ou a expiré.'}</p>
+              </div>
+              <a
+                href="/auth/forgot-password"
+                className="inline-block px-4 py-2 bg-brand-amber text-white rounded-xl text-sm font-medium hover:bg-brand-amber/90 transition-colors"
+              >
+                Demander un nouveau lien
+              </a>
             </div>
           ) : (
             <>
