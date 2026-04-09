@@ -47,9 +47,9 @@ const managerLinks = [
 
 const adminLinks = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/dashboard/admin', label: 'Vue d\'ensemble', icon: BarChart3 },
   { href: '/dashboard/admin/users', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/offers', label: 'Offres', icon: Briefcase },
-  { href: '/dashboard/admin/stats', label: 'Statistiques', icon: BarChart3 },
   { href: '/dashboard/events', label: '\u00c9v\u00e9nements', icon: Calendar },
   { href: '/dashboard/admin/settings', label: 'Configuration', icon: Shield },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },

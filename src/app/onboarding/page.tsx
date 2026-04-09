@@ -4,15 +4,25 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
-import { ArrowRight, ArrowLeft, Phone, Briefcase, Users, Target, CheckCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Phone, Briefcase, Users, Target, CheckCircle, PhoneCall, Crown } from 'lucide-react';
 
 type Step = 'role' | 'details' | 'done';
+type SubRole = 'closer' | 'setter' | 'manager' | 'hos';
+
+interface RoleOption {
+  subRole: SubRole;
+  dbRole: 'closer' | 'manager';
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
   const [step, setStep] = useState<Step>('role');
   const [selectedRole, setSelectedRole] = useState<'closer' | 'manager' | null>(null);
+  const [subRole, setSubRole] = useState<SubRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,6 +42,63 @@ export default function OnboardingPage() {
     'B2B', 'Crypto/Finance', 'Santé/Bien-être',
   ];
 
+  const roleOptions: RoleOption[] = [
+    {
+      subRole: 'closer',
+      dbRole: 'closer',
+      title: 'Closer',
+      description: 'Je veux closer des deals et convertir des prospects en clients',
+      icon: <Target className="h-6 w-6" />,
+    },
+    {
+      subRole: 'setter',
+      dbRole: 'closer',
+      title: 'Setter',
+      description: 'Je veux qualifier les prospects et booker des rendez-vous pour les closers',
+      icon: <PhoneCall className="h-6 w-6" />,
+    },
+    {
+      subRole: 'manager',
+      dbRole: 'manager',
+      title: 'Manager',
+      description: 'Je gère une équipe de closers/setters et je cherche des profils qualifiés',
+      icon: <Briefcase className="h-6 w-6" />,
+    },
+    {
+      subRole: 'hos',
+      dbRole: 'manager',
+      title: 'HOS (Head of Sales)',
+      description: 'Je pilote la stratégie commerciale et recrute pour mon équipe sales',
+      icon: <Crown className="h-6 w-6" />,
+    },
+  ];
+
+  const getSubRoleLabel = () => {
+    if (!subRole) return '';
+    const labels = {
+      closer: 'Closer',
+      setter: 'Setter',
+      manager: 'Manager',
+      hos: 'HOS',
+    };
+    return labels[subRole];
+  };
+
+  const getSuccessMessage = () => {
+    switch (subRole) {
+      case 'closer':
+        return 'Découvrez les offres disponibles sur la marketplace.';
+      case 'setter':
+        return 'Trouvez des opportunités de qualification de prospects.';
+      case 'manager':
+        return 'Publiez votre première offre et trouvez les meilleurs closers.';
+      case 'hos':
+        return 'Constituez votre équipe de vente idéale.';
+      default:
+        return 'Bienvenue sur HUBClosing !';
+    }
+  };
+
   const toggleSpecialty = (s: string) => {
     setSpecialties((prev) => {
       const arr = Array.from(prev);
@@ -46,7 +113,7 @@ export default function OnboardingPage() {
   };
 
   const handleSubmitRole = async () => {
-    if (!selectedRole) return;
+    if (!selectedRole || !subRole) return;
     setStep('details');
   };
 
@@ -131,47 +198,34 @@ export default function OnboardingPage() {
             </p>
 
             <div className="space-y-3">
-              <button
-                onClick={() => setSelectedRole('closer')}
-                className={`w-full p-5 rounded-xl border-2 text-left transition-all ${
-                  selectedRole === 'closer'
-                    ? 'border-brand-amber bg-brand-amber/5 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`p-2.5 rounded-lg ${selectedRole === 'closer' ? 'bg-brand-amber/10' : 'bg-gray-100'}`}>
-                    <Target className={`h-6 w-6 ${selectedRole === 'closer' ? 'text-brand-amber' : 'text-gray-500'}`} />
+              {roleOptions.map((option) => (
+                <button
+                  key={option.subRole}
+                  onClick={() => {
+                    setSelectedRole(option.dbRole);
+                    setSubRole(option.subRole);
+                  }}
+                  className={`w-full p-5 rounded-xl border-2 text-left transition-all ${
+                    subRole === option.subRole
+                      ? 'border-brand-amber bg-brand-amber/5 shadow-sm'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`p-2.5 rounded-lg ${subRole === option.subRole ? 'bg-brand-amber/10' : 'bg-gray-100'}`}>
+                      <div className={subRole === option.subRole ? 'text-brand-amber' : 'text-gray-500'}>
+                        {option.icon}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-brand-dark">{option.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {option.description}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-brand-dark">Closer / Setter</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Je veux trouver des offres et closer des deals pour des infopreneurs et entreprises
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setSelectedRole('manager')}
-                className={`w-full p-5 rounded-xl border-2 text-left transition-all ${
-                  selectedRole === 'manager'
-                    ? 'border-brand-amber bg-brand-amber/5 shadow-sm'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`p-2.5 rounded-lg ${selectedRole === 'manager' ? 'bg-brand-amber/10' : 'bg-gray-100'}`}>
-                    <Briefcase className={`h-6 w-6 ${selectedRole === 'manager' ? 'text-brand-amber' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-brand-dark">Manager / HOS</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Je cherche des closers et setters qualifiés pour vendre mes produits ou services
-                    </p>
-                  </div>
-                </div>
-              </button>
+                </button>
+              ))}
             </div>
 
             {error && (
@@ -182,7 +236,7 @@ export default function OnboardingPage() {
 
             <Button
               onClick={handleSubmitRole}
-              disabled={!selectedRole}
+              disabled={!selectedRole || !subRole}
               className="w-full mt-6"
             >
               Continuer <ArrowRight className="h-4 w-4 ml-2" />
@@ -190,8 +244,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2: Details */}
-        {step === 'details' && selectedRole === 'closer' && (
+        {/* Step 2: Details - Closer/Setter */}
+        {step === 'details' && (selectedRole === 'closer' || subRole === 'setter') && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             <button
               onClick={() => setStep('role')}
@@ -200,9 +254,14 @@ export default function OnboardingPage() {
               <ArrowLeft className="h-4 w-4" /> Retour
             </button>
 
-            <h2 className="text-xl font-bold text-brand-dark mb-1">
-              Votre profil Closer
-            </h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-brand-dark">
+                Votre profil {getSubRoleLabel()}
+              </h2>
+              <span className="inline-block px-2.5 py-1 bg-brand-amber/10 text-brand-amber text-xs font-medium rounded-full">
+                {getSubRoleLabel()}
+              </span>
+            </div>
             <p className="text-sm text-gray-500 mb-6">
               Ces informations aideront les managers à vous trouver
             </p>
@@ -281,7 +340,8 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {step === 'details' && selectedRole === 'manager' && (
+        {/* Step 2: Details - Manager/HOS */}
+        {step === 'details' && selectedRole === 'manager' && (subRole === 'manager' || subRole === 'hos') && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             <button
               onClick={() => setStep('role')}
@@ -290,9 +350,14 @@ export default function OnboardingPage() {
               <ArrowLeft className="h-4 w-4" /> Retour
             </button>
 
-            <h2 className="text-xl font-bold text-brand-dark mb-1">
-              Votre profil Manager / HOS
-            </h2>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-brand-dark">
+                Votre profil {getSubRoleLabel()}
+              </h2>
+              <span className="inline-block px-2.5 py-1 bg-brand-amber/10 text-brand-amber text-xs font-medium rounded-full">
+                {getSubRoleLabel()}
+              </span>
+            </div>
             <p className="text-sm text-gray-500 mb-6">
               Présentez votre activité pour attirer les meilleurs closers
             </p>
@@ -414,9 +479,7 @@ export default function OnboardingPage() {
               Profil créé avec succès !
             </h2>
             <p className="text-gray-600 mb-2">
-              {selectedRole === 'closer'
-                ? 'Bienvenue ! Découvrez les offres disponibles sur la marketplace.'
-                : 'Bienvenue ! Publiez votre première offre et trouvez les meilleurs closers.'}
+              Bienvenue ! {getSuccessMessage()}
             </p>
             <p className="text-sm text-gray-400">
               Redirection vers votre tableau de bord...
