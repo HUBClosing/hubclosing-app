@@ -283,6 +283,13 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
               {mode === 'register' && (
                 <p className="text-xs text-gray-400 mt-1">Minimum 6 caractères</p>
               )}
+              {mode === 'login' && (
+                <div className="text-right mt-1">
+                  <a href="/auth/forgot-password" className="text-xs text-brand-amber hover:underline">
+                    Mot de passe oublié ?
+                  </a>
+                </div>
+              )}
             </div>
 
             {error && (
