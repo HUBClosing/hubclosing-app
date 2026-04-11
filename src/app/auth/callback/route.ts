@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     }
 
     if (!existingUser) {
-      // Nouvel utilisateur OAuth — créer le profil avec rôle 'pending'
+      // Nouvel utilisateur — créer le profil avec rôle 'pending'
       const { error: insertError } = await supabase.from('users').insert({
         id: authUser.id,
         email: authUser.email || null,
@@ -50,20 +50,17 @@ export async function GET(request: Request) {
 
       if (insertError) {
         console.error('[auth/callback] insert user error:', insertError.message);
-        // Si erreur de doublon (race condition), on continue normalement
         if (!insertError.message.includes('duplicate')) {
           return NextResponse.redirect(`${origin}/auth/login?error=profile_creation_failed`);
         }
       }
 
+      // Seuls les NOUVEAUX utilisateurs vont à l'onboarding (première inscription)
       return NextResponse.redirect(`${origin}/onboarding`);
     }
 
-    // Utilisateur existant avec rôle pending -> onboarding
-    if (existingUser.role === 'pending') {
-      return NextResponse.redirect(`${origin}/onboarding`);
-    }
-
+    // Utilisateur existant → toujours vers le dashboard (ou safeNext)
+    // Même si le rôle est 'pending', la connexion mène au dashboard
     return NextResponse.redirect(`${origin}${safeNext}`);
   }
 
