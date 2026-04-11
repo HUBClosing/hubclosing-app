@@ -10,7 +10,7 @@ interface ProfileContentProps {
 }
 
 export function ProfileContent({ user, profile }: ProfileContentProps) {
-  const u = user as any;
+  const u = user;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

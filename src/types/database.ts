@@ -11,6 +11,11 @@ export interface User {
   full_name: string | null;
   avatar_url: string | null;
   phone: string | null;
+  personal_email: string | null;
+  years_experience: number | null;
+  niches: string[] | null;
+  infopreneur_type: string | null;
+  sub_role: string | null;
   subscription_plan: SubscriptionPlan;
   is_active: boolean;
   created_at: string;

@@ -8,10 +8,10 @@ export default async function ProfilePage() {
 
   let profile = null;
   if (user.role === 'closer') {
-    const { data } = await supabase.from('closer_profiles').select('*').eq('user_id', user.id).single();
+    const { data } = await supabase.from('closer_profiles').select('*').eq('user_id', user.id).maybeSingle();
     profile = data;
   } else if (user.role === 'manager') {
-    const { data } = await supabase.from('manager_profiles').select('*').eq('user_id', user.id).single();
+    const { data } = await supabase.from('manager_profiles').select('*').eq('user_id', user.id).maybeSingle();
     profile = data;
   }
 

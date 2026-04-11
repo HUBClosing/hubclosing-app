@@ -1,4 +1,5 @@
 import { requireUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { StatsCard, Card, CardContent, CardHeader } from '@/components/ui';
 import {
@@ -124,6 +125,12 @@ const eventTypeColors: Record<string, string> = {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+
+  // Utilisateur pending → rediriger vers l'onboarding pour compléter l'inscription
+  if (user.role === 'pending') {
+    redirect('/onboarding');
+  }
+
   const data = await getDashboardData(user.id, user.role);
 
   return (
