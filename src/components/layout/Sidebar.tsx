@@ -18,6 +18,7 @@ import {
   BarChart3,
   Shield,
   Calendar,
+  Bell,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -50,6 +51,7 @@ const adminLinks = [
   { href: '/dashboard/admin', label: 'Vue d\'ensemble', icon: BarChart3 },
   { href: '/dashboard/admin/users', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/offers', label: 'Offres', icon: Briefcase },
+  { href: '/dashboard/admin/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/events', label: '\u00c9v\u00e9nements', icon: Calendar },
   { href: '/dashboard/admin/settings', label: 'Configuration', icon: Shield },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },

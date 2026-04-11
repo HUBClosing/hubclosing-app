@@ -4,7 +4,7 @@ import { StatsCard, Card, CardContent, CardHeader, Badge, Avatar } from '@/compo
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Users, Briefcase, MessageSquare, TrendingUp } from 'lucide-react';
+import { Users, Briefcase, MessageSquare, TrendingUp, Bell, Settings, ArrowRight } from 'lucide-react';
 
 export default async function AdminPage() {
   await requireAdmin();
@@ -15,46 +15,32 @@ export default async function AdminPage() {
     totalUsersResult,
     closersResult,
     managersResult,
-    pendingUsersResult,
-    totalOffersResult,
+    unreadNotificationsResult,
     activeOffersResult,
-    pausedOffersResult,
-    totalApplicationsResult,
     pendingAppsResult,
-    acceptedAppsResult,
-    rejectedAppsResult,
+    totalAppsResult,
     messagesResult,
-    conversationsResult,
+    recentNotificationsResult,
     recentUsersResult,
     recentApplicationsResult,
-    recentOffersResult,
   ] = await Promise.all([
     supabase.from('users').select('id', { count: 'exact', head: true }),
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'closer'),
     supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'manager'),
-    supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'pending'),
-    supabase.from('offers').select('id', { count: 'exact', head: true }),
+    supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false),
     supabase.from('offers').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('offers').select('id', { count: 'exact', head: true }).eq('status', 'paused'),
-    supabase.from('applications').select('id', { count: 'exact', head: true }),
     supabase.from('applications').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('applications').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
-    supabase.from('applications').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+    supabase.from('applications').select('id', { count: 'exact', head: true }),
     supabase.from('messages').select('id', { count: 'exact', head: true }),
     supabase
-      .from('messages')
-      .select('sender_id, receiver_id')
-      .order('created_at', { ascending: false })
-      .limit(1000),
-    supabase.from('users').select('id, email, full_name, role, created_at').order('created_at', { ascending: false }).limit(10),
-    supabase
-      .from('applications')
-      .select('id, status, created_at, closer:users!closer_id(id, email, full_name), offer:offers!offer_id(id, title, manager_id)')
+      .from('notifications')
+      .select('*, sender:users!sender_id(id, email, full_name)')
       .order('created_at', { ascending: false })
       .limit(10),
+    supabase.from('users').select('id, email, full_name, role, created_at').order('created_at', { ascending: false }).limit(5),
     supabase
-      .from('offers')
-      .select('id, title, status, commission_rate, manager_id, created_at, manager:users!manager_id(id, email, full_name)')
+      .from('applications')
+      .select('id, status, created_at, closer:users!closer_id(id, email, full_name), offer:offers!offer_id(id, title)')
       .order('created_at', { ascending: false })
       .limit(5),
   ]);
@@ -63,32 +49,41 @@ export default async function AdminPage() {
   const totalUsers = totalUsersResult.count || 0;
   const closersCount = closersResult.count || 0;
   const managersCount = managersResult.count || 0;
-  const pendingUsersCount = pendingUsersResult.count || 0;
+  const unreadNotifications = unreadNotificationsResult.count || 0;
 
-  const totalOffers = totalOffersResult.count || 0;
   const activeOffers = activeOffersResult.count || 0;
-  const pausedOffers = pausedOffersResult.count || 0;
-  const closedOffers = totalOffers - activeOffers - pausedOffers;
-
-  const totalApplications = totalApplicationsResult.count || 0;
   const pendingApplications = pendingAppsResult.count || 0;
-  const acceptedApplications = acceptedAppsResult.count || 0;
-  const rejectedApplications = rejectedAppsResult.count || 0;
-  const conversionRate = totalApplications > 0 ? ((acceptedApplications / totalApplications) * 100).toFixed(1) : '0';
-
+  const totalApplications = totalAppsResult.count || 0;
   const totalMessages = messagesResult.count || 0;
-  const conversations = conversationsResult.data || [];
-  const uniqueConversations = new Set(
-    conversations.flatMap((msg: any) => [
-      `${[msg.sender_id, msg.receiver_id].sort().join('-')}`,
-    ])
-  ).size;
+  const conversionRate = totalApplications > 0 ? ((totalApplications - pendingApplications) / totalApplications * 100).toFixed(1) : '0';
 
+  const recentNotifications = recentNotificationsResult.data || [];
   const recentUsers = recentUsersResult.data || [];
   const recentApplications = recentApplicationsResult.data || [];
-  const recentOffers = recentOffersResult.data || [];
 
-  // Role label mapping
+  // Helper functions
+  const getCategoryBadgeVariant = (category: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
+    const variantMap: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
+      bug: 'error',
+      suggestion: 'info',
+      general: 'default',
+      urgent: 'warning',
+      signalement: 'error',
+    };
+    return variantMap[category] || 'default';
+  };
+
+  const getCategoryLabel = (category: string) => {
+    const labelMap: Record<string, string> = {
+      bug: 'Bug',
+      suggestion: 'Suggestion',
+      general: 'Général',
+      urgent: 'Urgent',
+      signalement: 'Signalement',
+    };
+    return labelMap[category] || category;
+  };
+
   const getRoleLabel = (role: string) => {
     const roleMap: Record<string, string> = {
       closer: 'Closer',
@@ -99,7 +94,6 @@ export default async function AdminPage() {
     return roleMap[role] || role;
   };
 
-  // Role badge variant
   const getRoleBadgeVariant = (role: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
     const variantMap: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
       closer: 'info',
@@ -110,7 +104,6 @@ export default async function AdminPage() {
     return variantMap[role] || 'default';
   };
 
-  // Application status badge variant
   const getStatusBadgeVariant = (status: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
     const variantMap: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
       pending: 'warning',
@@ -131,74 +124,154 @@ export default async function AdminPage() {
     return statusMap[status] || status;
   };
 
-  // Offer status badge variant
-  const getOfferStatusBadgeVariant = (status: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
-    const variantMap: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
-      active: 'success',
-      paused: 'warning',
-      closed: 'error',
-    };
-    return variantMap[status] || 'default';
-  };
-
-  const getOfferStatusLabel = (status: string) => {
-    const statusMap: Record<string, string> = {
-      active: 'Active',
-      paused: 'En pause',
-      closed: 'Fermée',
-    };
-    return statusMap[status] || status;
+  const truncateText = (text: string, length: number = 80) => {
+    return text.length > length ? text.substring(0, length) + '...' : text;
   };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-brand-dark">Vue d'ensemble Admin</h1>
-        <p className="text-gray-500">Tableau de bord de gestion de la plateforme HUBClosing</p>
+        <h1 className="text-4xl font-bold text-brand-dark">Centre de commande Admin</h1>
+        <p className="text-gray-500">Tableau de bord complet de gestion et de suivi de la plateforme HUBClosing</p>
       </div>
 
-      {/* KPI Row 1: Users */}
+      {/* KPI Row 1: Users & Notifications */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard title="Total Utilisateurs" value={totalUsers} icon={<Users className="h-5 w-5" />} />
+        <StatsCard title="Total utilisateurs" value={totalUsers} icon={<Users className="h-5 w-5" />} />
         <StatsCard title="Closers actifs" value={closersCount} icon={<TrendingUp className="h-5 w-5" />} />
         <StatsCard title="Managers actifs" value={managersCount} icon={<Briefcase className="h-5 w-5" />} />
-        <StatsCard title="En attente" value={pendingUsersCount} icon={<Users className="h-5 w-5" />} />
+        <StatsCard title="Notifications non lues" value={unreadNotifications} icon={<Bell className="h-5 w-5" />} />
       </div>
 
-      {/* KPI Row 2: Offers */}
+      {/* KPI Row 2: Offers, Applications, Conversion & Messages */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard title="Total Offres" value={totalOffers} />
-        <StatsCard title="Offres actives" value={activeOffers} />
-        <StatsCard title="En pause" value={pausedOffers} />
-        <StatsCard title="Fermées" value={closedOffers} />
+        <StatsCard title="Offres actives" value={activeOffers} icon={<Briefcase className="h-5 w-5" />} />
+        <StatsCard title="Candidatures en attente" value={pendingApplications} icon={<Users className="h-5 w-5" />} />
+        <StatsCard title="Taux de conversion" value={`${conversionRate}%`} icon={<TrendingUp className="h-5 w-5" />} />
+        <StatsCard title="Messages total" value={totalMessages} icon={<MessageSquare className="h-5 w-5" />} />
       </div>
 
-      {/* KPI Row 3: Applications */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard title="Total Candidatures" value={totalApplications} />
-        <StatsCard title="En attente" value={pendingApplications} />
-        <StatsCard title="Acceptées" value={acceptedApplications} />
-        <StatsCard title="Taux de conversion" value={`${conversionRate}%`} />
+      {/* Two-column layout: Notifications & Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Notifications & Remontées */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notifications & Remontées
+            </h2>
+          </CardHeader>
+          <CardContent>
+            {recentNotifications && recentNotifications.length > 0 ? (
+              <div className="space-y-3">
+                {recentNotifications.map((notification: any) => (
+                  <div
+                    key={notification.id}
+                    className={`p-3 rounded-lg border-l-4 transition-colors ${
+                      notification.is_read ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-400'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={getCategoryBadgeVariant(notification.category)}>
+                            {getCategoryLabel(notification.category)}
+                          </Badge>
+                          {!notification.is_read && (
+                            <span className="inline-block w-2 h-2 bg-blue-500 rounded-full" />
+                          )}
+                        </div>
+                        <p className="font-medium text-brand-dark truncate">{notification.title}</p>
+                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{truncateText(notification.message, 100)}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-gray-500">{notification.sender?.full_name || notification.sender?.email}</span>
+                          <span className="text-xs text-gray-400">
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: fr })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Link
+                  href="/dashboard/admin/notifications"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 mt-4 pt-4 border-t border-gray-200"
+                >
+                  Voir toutes les notifications
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ) : (
+              <p className="text-center text-gray-500 py-8">Aucune notification</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Actions rapides */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-bold text-brand-dark flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Actions rapides
+            </h2>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Link
+                href="/dashboard/admin/users"
+                className="flex items-center justify-between p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200"
+              >
+                <div className="flex items-center gap-3">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium text-blue-900">Gérer les utilisateurs</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-blue-600" />
+              </Link>
+
+              <Link
+                href="/dashboard/admin/offers"
+                className="flex items-center justify-between p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors border border-green-200"
+              >
+                <div className="flex items-center gap-3">
+                  <Briefcase className="h-5 w-5 text-green-600" />
+                  <span className="font-medium text-green-900">Gérer les offres</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-green-600" />
+              </Link>
+
+              <Link
+                href="/dashboard/admin/notifications"
+                className="flex items-center justify-between p-3 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="h-5 w-5 text-amber-600" />
+                  <span className="font-medium text-amber-900">Voir les notifications</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-amber-600" />
+              </Link>
+
+              <Link
+                href="/dashboard/admin/settings"
+                className="flex items-center justify-between p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors border border-purple-200"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="h-5 w-5 text-purple-600" />
+                  <span className="font-medium text-purple-900">Configuration</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-purple-600" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* KPI Row 4: Messaging */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatsCard title="Total Messages" value={totalMessages} icon={<MessageSquare className="h-5 w-5" />} />
-        <StatsCard title="Conversations uniques" value={uniqueConversations} />
-        <StatsCard
-          title="Taux d'acceptation"
-          value={totalApplications > 0 ? `${((acceptedApplications / totalApplications) * 100).toFixed(0)}%` : '0%'}
-        />
-        <StatsCard title="Taux de refus" value={totalApplications > 0 ? `${((rejectedApplications / totalApplications) * 100).toFixed(0)}%` : '0%'} />
-      </div>
-
-      {/* Two-column grid: Recent Users & Applications */}
+      {/* Recent Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Users */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-bold text-brand-dark">Derniers inscrits</h2>
+            <h2 className="text-lg font-bold text-brand-dark">Derniers utilisateurs inscrits</h2>
           </CardHeader>
           <CardContent>
             {recentUsers && recentUsers.length > 0 ? (
@@ -254,44 +327,6 @@ export default async function AdminPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Recent Offers */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-bold text-brand-dark">Dernières offres</h2>
-        </CardHeader>
-        <CardContent>
-          {recentOffers && recentOffers.length > 0 ? (
-            <div className="space-y-4">
-              {recentOffers.map((offer: any) => (
-                <div
-                  key={offer.id}
-                  className="flex items-center justify-between gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-brand-dark truncate">{offer.title}</p>
-                    <p className="text-sm text-gray-500 truncate">{offer.manager?.full_name || offer.manager?.email}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {formatDistanceToNow(new Date(offer.created_at), { addSuffix: true, locale: fr })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {offer.commission_rate && (
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-brand-amber">{offer.commission_rate}%</p>
-                        <p className="text-xs text-gray-500">Commission</p>
-                      </div>
-                    )}
-                    <Badge variant={getOfferStatusBadgeVariant(offer.status)}>{getOfferStatusLabel(offer.status)}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500 py-8">Aucune offre récente</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
