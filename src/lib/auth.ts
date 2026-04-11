@@ -60,10 +60,6 @@ export async function requireUser(): Promise<User> {
     await supabase.auth.signOut();
     redirect('/auth/login');
   }
-  // Si l'utilisateur n'a pas complété l'onboarding, rediriger
-  if (user.role === 'pending') {
-    redirect('/onboarding');
-  }
   return user;
 }
 

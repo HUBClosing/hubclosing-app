@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
-import { ArrowRight, ArrowLeft, Phone, Briefcase, Users, Target, CheckCircle, PhoneCall, Crown, Mail } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Phone, Mail, User, Briefcase, Target, CheckCircle, PhoneCall, Crown, Clock } from 'lucide-react';
 
-type Step = 'role' | 'details' | 'done';
+type Step = 'info' | 'role' | 'done';
 type SubRole = 'closer' | 'setter' | 'manager' | 'hos';
 
 interface RoleOption {
@@ -17,31 +17,46 @@ interface RoleOption {
   icon: React.ReactNode;
 }
 
+const niches = [
+  'Immobilier',
+  'Bourse / Trading',
+  'Crypto / Blockchain',
+  'Coaching / Développement personnel',
+  'E-commerce / Dropshipping',
+  'Marketing digital',
+  'Santé / Bien-être',
+  'Finance / Investissement',
+  'Formation professionnelle',
+  'Autre',
+];
+
+const typesInfopreneur = [
+  'Formateur en ligne',
+  'Coach / Mentor',
+  'Consultant',
+  'Créateur de contenu',
+  'Agence',
+  'SaaS / Outil digital',
+  'Autre',
+];
+
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
-  const [step, setStep] = useState<Step>('role');
+  const [step, setStep] = useState<Step>('info');
   const [selectedRole, setSelectedRole] = useState<'closer' | 'manager' | null>(null);
   const [subRole, setSubRole] = useState<SubRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Closer details
+  // Infos obligatoires
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [personalEmail, setPersonalEmail] = useState('');
-  const [experience, setExperience] = useState('');
-  const [specialties, setSpecialties] = useState<string[]>([]);
   const [phone, setPhone] = useState('');
-
-  // Manager details
-  const [companyName, setCompanyName] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [teamSize, setTeamSize] = useState('');
-  const [website, setWebsite] = useState('');
-
-  const closerSpecialties = [
-    'Coaching', 'E-commerce', 'Immobilier', 'Assurance',
-    'B2B', 'Crypto/Finance', 'Santé/Bien-être',
-  ];
+  const [yearsExperience, setYearsExperience] = useState('');
+  const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [infoType, setInfoType] = useState('');
 
   const roleOptions: RoleOption[] = [
     {
@@ -55,14 +70,14 @@ export default function OnboardingPage() {
       subRole: 'setter',
       dbRole: 'closer',
       title: 'Setter',
-      description: 'Je veux qualifier les prospects et booker des rendez-vous pour les closers',
+      description: 'Je qualifie les prospects et je book des rendez-vous pour les closers',
       icon: <PhoneCall className="h-6 w-6" />,
     },
     {
       subRole: 'manager',
       dbRole: 'manager',
       title: 'Manager',
-      description: 'Je gère une équipe de closers/setters et je cherche des profils qualifiés',
+      description: 'Je gère une équipe de closers/setters et cherche des profils qualifiés',
       icon: <Briefcase className="h-6 w-6" />,
     },
     {
@@ -74,52 +89,31 @@ export default function OnboardingPage() {
     },
   ];
 
-  const getSubRoleLabel = () => {
-    if (!subRole) return '';
-    const labels = {
-      closer: 'Closer',
-      setter: 'Setter',
-      manager: 'Manager',
-      hos: 'HOS',
-    };
-    return labels[subRole];
-  };
-
-  const getSuccessMessage = () => {
-    switch (subRole) {
-      case 'closer':
-        return 'Découvrez les offres disponibles sur la marketplace.';
-      case 'setter':
-        return 'Trouvez des opportunités de qualification de prospects.';
-      case 'manager':
-        return 'Publiez votre première offre et trouvez les meilleurs closers.';
-      case 'hos':
-        return 'Constituez votre équipe de vente idéale.';
-      default:
-        return 'Bienvenue sur HUBClosing !';
-    }
-  };
-
-  const toggleSpecialty = (s: string) => {
-    setSpecialties((prev) => {
-      const arr = Array.from(prev);
-      const idx = arr.indexOf(s);
-      if (idx >= 0) {
-        arr.splice(idx, 1);
-      } else {
-        arr.push(s);
+  const toggleNiche = (niche: string) => {
+    setSelectedNiches((prev) => {
+      if (prev.includes(niche)) {
+        return prev.filter((n) => n !== niche);
       }
-      return arr;
+      return [...prev, niche];
     });
   };
 
-  const handleSubmitRole = async () => {
-    if (!selectedRole || !subRole) return;
-    setStep('details');
+  const isStep1Valid =
+    lastName.trim() &&
+    firstName.trim() &&
+    personalEmail.trim() &&
+    phone.trim() &&
+    yearsExperience &&
+    selectedNiches.length > 0 &&
+    infoType;
+
+  const handleGoToRole = () => {
+    if (!isStep1Valid) return;
+    setStep('role');
   };
 
   const handleFinish = async () => {
-    if (!selectedRole) return;
+    if (!selectedRole || !subRole) return;
     setLoading(true);
     setError('');
 
@@ -127,41 +121,35 @@ export default function OnboardingPage() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Non authentifié');
 
-      // Update user role + email personnel si closer/setter
-      const updateData: Record<string, any> = { role: selectedRole, phone: phone || null };
-      if (selectedRole === 'closer' && personalEmail.trim()) {
-        updateData.personal_email = personalEmail.trim();
-      }
+      // Mettre à jour le profil utilisateur
       const { error: userError } = await supabase
         .from('users')
-        .update(updateData)
+        .update({
+          role: selectedRole,
+          full_name: `${firstName.trim()} ${lastName.trim()}`,
+          personal_email: personalEmail.trim(),
+          phone: phone.trim(),
+          years_experience: parseInt(yearsExperience),
+          niches: selectedNiches,
+          infopreneur_type: infoType,
+          sub_role: subRole,
+        })
         .eq('id', authUser.id);
 
       if (userError) throw userError;
 
-      // Create role-specific profile
+      // Créer le profil spécifique au rôle
       if (selectedRole === 'closer') {
-        const { error: profileError } = await supabase
-          .from('closer_profiles')
-          .upsert({
-            user_id: authUser.id,
-            experience_level: experience || 'junior',
-            specialties: specialties,
-          }, { onConflict: 'user_id' });
-
-        if (profileError) throw profileError;
+        await supabase.from('closer_profiles').upsert({
+          user_id: authUser.id,
+          experience_level: parseInt(yearsExperience) >= 5 ? 'expert' : parseInt(yearsExperience) >= 2 ? 'senior' : parseInt(yearsExperience) >= 1 ? 'intermediaire' : 'junior',
+          specialties: selectedNiches,
+        }, { onConflict: 'user_id' });
       } else {
-        const { error: profileError } = await supabase
-          .from('manager_profiles')
-          .upsert({
-            user_id: authUser.id,
-            company_name: companyName || null,
-            industry: industry || null,
-            team_size: teamSize ? parseInt(teamSize) : null,
-            website_url: website || null,
-          }, { onConflict: 'user_id' });
-
-        if (profileError) throw profileError;
+        await supabase.from('manager_profiles').upsert({
+          user_id: authUser.id,
+          industry: infoType,
+        }, { onConflict: 'user_id' });
       }
 
       setStep('done');
@@ -176,30 +164,201 @@ export default function OnboardingPage() {
     }
   };
 
+  const getSuccessMessage = () => {
+    switch (subRole) {
+      case 'closer': return 'Découvrez les offres disponibles sur la marketplace.';
+      case 'setter': return 'Trouvez des opportunités de qualification de prospects.';
+      case 'manager': return 'Publiez votre première offre et trouvez les meilleurs closers.';
+      case 'hos': return 'Constituez votre équipe de vente idéale.';
+      default: return 'Bienvenue sur HUBClosing !';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-cream via-white to-brand-cream/50 flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Progress bar */}
         <div className="flex items-center gap-2 mb-8">
-          <div className={`h-1.5 flex-1 rounded-full transition-colors ${step === 'role' || step === 'details' || step === 'done' ? 'bg-brand-amber' : 'bg-gray-200'}`} />
-          <div className={`h-1.5 flex-1 rounded-full transition-colors ${step === 'details' || step === 'done' ? 'bg-brand-amber' : 'bg-gray-200'}`} />
+          <div className={`h-1.5 flex-1 rounded-full transition-colors ${step === 'info' || step === 'role' || step === 'done' ? 'bg-brand-amber' : 'bg-gray-200'}`} />
+          <div className={`h-1.5 flex-1 rounded-full transition-colors ${step === 'role' || step === 'done' ? 'bg-brand-amber' : 'bg-gray-200'}`} />
           <div className={`h-1.5 flex-1 rounded-full transition-colors ${step === 'done' ? 'bg-brand-amber' : 'bg-gray-200'}`} />
         </div>
 
-        {/* Step 1: Role selection */}
-        {step === 'role' && (
+        {/* Step 1: Informations obligatoires */}
+        {step === 'info' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-brand-dark mb-2">
                 Bienvenue sur HUBClosing !
               </h1>
               <p className="text-gray-600">
-                Aidez-nous à personnaliser votre expérience
+                Complétez votre fiche pour accéder à la plateforme
               </p>
             </div>
 
-            <p className="text-sm font-medium text-gray-700 mb-4">
-              Quel est votre profil ?
+            <div className="space-y-4">
+              {/* Nom */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Votre nom"
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                  />
+                </div>
+              </div>
+
+              {/* Prénom */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prénom <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Votre prénom"
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                  />
+                </div>
+              </div>
+
+              {/* Email personnel */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Adresse email <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={personalEmail}
+                    onChange={(e) => setPersonalEmail(e.target.value)}
+                    placeholder="votre@email.com"
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                  />
+                </div>
+              </div>
+
+              {/* Téléphone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Téléphone <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+33 6 12 34 56 78"
+                    required
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                  />
+                </div>
+              </div>
+
+              {/* Années d'expérience */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre d&apos;années d&apos;expérience <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <select
+                    value={yearsExperience}
+                    onChange={(e) => setYearsExperience(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber bg-white"
+                  >
+                    <option value="">Sélectionnez...</option>
+                    <option value="0">Moins de 1 an</option>
+                    <option value="1">1 à 2 ans</option>
+                    <option value="3">3 à 5 ans</option>
+                    <option value="5">5 à 10 ans</option>
+                    <option value="10">10+ ans</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Niche travaillée */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Niche(s) travaillée(s) <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {niches.map((niche) => (
+                    <button
+                      key={niche}
+                      type="button"
+                      onClick={() => toggleNiche(niche)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                        selectedNiches.includes(niche)
+                          ? 'bg-brand-amber/10 border-brand-amber text-brand-amber'
+                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {niche}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Type d'infopreneur */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quel genre d&apos;infopreneur ? <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={infoType}
+                  onChange={(e) => setInfoType(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber bg-white"
+                >
+                  <option value="">Sélectionnez...</option>
+                  {typesInfopreneur.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {error && (
+              <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <Button onClick={handleGoToRole} disabled={!isStep1Valid} className="w-full mt-6">
+              Continuer <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
+
+        {/* Step 2: Choix du rôle */}
+        {step === 'role' && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <button
+              onClick={() => setStep('info')}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6"
+            >
+              <ArrowLeft className="h-4 w-4" /> Retour
+            </button>
+
+            <h2 className="text-xl font-bold text-brand-dark mb-2">
+              Quel est votre rôle ?
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Choisissez le profil qui vous correspond
             </p>
 
             <div className="space-y-3">
@@ -224,9 +383,7 @@ export default function OnboardingPage() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-brand-dark">{option.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {option.description}
-                      </p>
+                      <p className="text-sm text-gray-500 mt-1">{option.description}</p>
                     </div>
                   </div>
                 </button>
@@ -239,254 +396,8 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <Button
-              onClick={handleSubmitRole}
-              disabled={!selectedRole || !subRole}
-              className="w-full mt-6"
-            >
-              Continuer <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        )}
-
-        {/* Step 2: Details - Closer/Setter */}
-        {step === 'details' && (selectedRole === 'closer' || subRole === 'setter') && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-            <button
-              onClick={() => setStep('role')}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6"
-            >
-              <ArrowLeft className="h-4 w-4" /> Retour
-            </button>
-
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-xl font-bold text-brand-dark">
-                Votre profil {getSubRoleLabel()}
-              </h2>
-              <span className="inline-block px-2.5 py-1 bg-brand-amber/10 text-brand-amber text-xs font-medium rounded-full">
-                {getSubRoleLabel()}
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              Ces informations aideront les managers à vous trouver
-            </p>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email personnel <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={personalEmail}
-                    onChange={(e) => setPersonalEmail(e.target.value)}
-                    placeholder="votre@email.com"
-                    required
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Niveau d&apos;expérience en closing
-                </label>
-                <select
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green bg-white"
-                >
-                  <option value="">Sélectionnez...</option>
-                  <option value="junior">Débutant (0-6 mois)</option>
-                  <option value="intermediaire">Intermédiaire (6 mois - 2 ans)</option>
-                  <option value="senior">Confirmé (2-5 ans)</option>
-                  <option value="expert">Expert (5+ ans)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Spécialités (choisissez-en une ou plusieurs)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {closerSpecialties.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => toggleSpecialty(s)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        specialties.includes(s)
-                          ? 'bg-brand-amber/10 border-brand-amber text-brand-amber'
-                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+33 6 12 34 56 78"
-                    required
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                  />
-                </div>
-              </div>
-
-              <p className="text-red-500 text-sm font-medium mt-2">
-                Plus votre profil sera complété, plus il sera mis en avant et aura des chances d&apos;être sélectionné.
-              </p>
-            </div>
-
-            {error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
-            <Button onClick={handleFinish} isLoading={loading} disabled={!phone.trim() || !personalEmail.trim()} className="w-full mt-6">
-              Finaliser mon profil <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        )}
-
-        {/* Step 2: Details - Manager/HOS */}
-        {step === 'details' && selectedRole === 'manager' && (subRole === 'manager' || subRole === 'hos') && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-            <button
-              onClick={() => setStep('role')}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6"
-            >
-              <ArrowLeft className="h-4 w-4" /> Retour
-            </button>
-
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-xl font-bold text-brand-dark">
-                Votre profil {getSubRoleLabel()}
-              </h2>
-              <span className="inline-block px-2.5 py-1 bg-brand-amber/10 text-brand-amber text-xs font-medium rounded-full">
-                {getSubRoleLabel()}
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              Présentez votre activité pour attirer les meilleurs closers
-            </p>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom de votre entreprise / marque
-                </label>
-                <div className="relative">
-                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="Votre entreprise"
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Secteur d&apos;activité
-                </label>
-                <select
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green bg-white"
-                >
-                  <option value="">Sélectionnez...</option>
-                  <option value="infoproduit">Infoproduit / Formation en ligne</option>
-                  <option value="coaching">Coaching / Accompagnement</option>
-                  <option value="saas">SaaS / Tech</option>
-                  <option value="ecommerce">E-commerce</option>
-                  <option value="immobilier">Immobilier</option>
-                  <option value="finance">Finance / Investissement</option>
-                  <option value="sante">Santé / Bien-être</option>
-                  <option value="marketing">Marketing / Agence</option>
-                  <option value="autre">Autre</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Taille de votre équipe sales
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <select
-                    value={teamSize}
-                    onChange={(e) => setTeamSize(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green bg-white"
-                  >
-                    <option value="">Sélectionnez...</option>
-                    <option value="0">Pas encore d&apos;équipe (je démarre)</option>
-                    <option value="2">1-3 personnes</option>
-                    <option value="5">4-10 personnes</option>
-                    <option value="15">11-25 personnes</option>
-                    <option value="50">25+ personnes</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Site web (optionnel)
-                </label>
-                <input
-                  type="url"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://votre-site.com"
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+33 6 12 34 56 78"
-                    required
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                  />
-                </div>
-              </div>
-
-              <p className="text-red-500 text-sm font-medium mt-2">
-                Plus votre profil sera complété, plus il sera mis en avant et aura des chances d&apos;être sélectionné.
-              </p>
-            </div>
-
-            {error && (
-              <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
-            <Button onClick={handleFinish} isLoading={loading} disabled={!phone.trim()} className="w-full mt-6">
-              Finaliser mon profil <ArrowRight className="h-4 w-4 ml-2" />
+            <Button onClick={handleFinish} isLoading={loading} disabled={!selectedRole || !subRole} className="w-full mt-6">
+              Finaliser mon inscription <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         )}
@@ -501,7 +412,7 @@ export default function OnboardingPage() {
               Profil créé avec succès !
             </h2>
             <p className="text-gray-600 mb-2">
-              Bienvenue ! {getSuccessMessage()}
+              {getSuccessMessage()}
             </p>
             <p className="text-sm text-gray-400">
               Redirection vers votre tableau de bord...

@@ -82,28 +82,13 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         // Sinon, confirmation email requise
         setMessage('Un email de confirmation vient d\'être envoyé à ' + email + '. Pensez à vérifier vos spams si vous ne le trouvez pas dans votre boîte de réception.');
       } else {
-        const { data: signInData, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
 
-        // Vérifier le rôle de l'utilisateur pour rediriger correctement
-        if (signInData.user) {
-          const { data: dbUser } = await supabase
-            .from('users')
-            .select('role')
-            .eq('id', signInData.user.id)
-            .maybeSingle();
-
-          if (!dbUser || dbUser.role === 'pending') {
-            router.push('/onboarding');
-            router.refresh();
-            return;
-          }
-        }
-
-        // Sécurité : valider que le redirect est une route interne uniquement
+        // Connexion → toujours vers le dashboard
         const redirectParam = searchParams.get('redirect') || '/dashboard';
         const safeRedirect = redirectParam.startsWith('/') && !redirectParam.startsWith('//')
           ? redirectParam

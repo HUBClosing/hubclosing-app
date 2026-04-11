@@ -2,7 +2,7 @@
 
 import type { User } from '@/types/database';
 import { Card, CardContent, Avatar, Badge, Button } from '@/components/ui';
-import { Edit, Mail, Phone, Globe, Linkedin } from 'lucide-react';
+import { Edit, Mail, Phone, Globe, Linkedin, Clock, Tag, Briefcase } from 'lucide-react';
 
 interface ProfileContentProps {
   user: User;
@@ -10,6 +10,8 @@ interface ProfileContentProps {
 }
 
 export function ProfileContent({ user, profile }: ProfileContentProps) {
+  const u = user as any;
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -25,7 +27,12 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
             <Avatar src={user.avatar_url} fallback={user.full_name || user.email} size="lg" />
             <div>
               <h2 className="text-xl font-bold text-brand-dark">{user.full_name || 'Sans nom'}</h2>
-              <Badge variant={user.role === 'closer' ? 'success' : user.role === 'manager' ? 'info' : 'warning'} className="mt-1 capitalize">{user.role}</Badge>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant={user.role === 'closer' ? 'success' : user.role === 'manager' ? 'info' : 'warning'} className="capitalize">{user.role}</Badge>
+                {u.sub_role && u.sub_role !== user.role && (
+                  <Badge variant="default" className="capitalize">{u.sub_role}</Badge>
+                )}
+              </div>
             </div>
           </div>
 
@@ -34,13 +41,45 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
               <Mail className="h-4 w-4 text-gray-400" />
               {user.email}
             </div>
+            {u.personal_email && u.personal_email !== user.email && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Mail className="h-4 w-4 text-gray-400" />
+                {u.personal_email} <span className="text-xs text-gray-400">(perso)</span>
+              </div>
+            )}
             {user.phone && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Phone className="h-4 w-4 text-gray-400" />
                 {user.phone}
               </div>
             )}
+            {u.years_experience != null && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Clock className="h-4 w-4 text-gray-400" />
+                {u.years_experience} an(s) d&apos;expérience
+              </div>
+            )}
+            {u.infopreneur_type && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Briefcase className="h-4 w-4 text-gray-400" />
+                {u.infopreneur_type}
+              </div>
+            )}
           </div>
+
+          {/* Niches */}
+          {u.niches && u.niches.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-2 flex items-center gap-1"><Tag className="h-3.5 w-3.5" /> Niches</p>
+              <div className="flex flex-wrap gap-2">
+                {u.niches.map((niche: string) => (
+                  <span key={niche} className="px-2.5 py-1 bg-brand-amber/10 text-brand-amber rounded-full text-xs font-medium">
+                    {niche}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {profile && user.role === 'closer' && (
             <div className="mt-6 pt-6 border-t space-y-4">
