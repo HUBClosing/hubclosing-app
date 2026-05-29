@@ -5,12 +5,18 @@ CREATE TABLE public.users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email TEXT NOT NULL,
   full_name TEXT NOT NULL DEFAULT '',
-  role TEXT NOT NULL CHECK (role IN ('closer', 'manager', 'admin')),
+  role TEXT NOT NULL DEFAULT 'pending' CHECK (role IN ('closer', 'manager', 'admin', 'pending')),
   avatar_url TEXT,
   phone TEXT,
+  personal_email TEXT,
+  years_experience INTEGER,
+  niches TEXT[] DEFAULT '{}',
+  infopreneur_type TEXT,
+  sub_role TEXT,
   subscription_plan TEXT NOT NULL DEFAULT 'free' CHECK (subscription_plan IN ('free', 'pro', 'premium')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   is_onboarded BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -187,22 +193,16 @@ CREATE POLICY "Receiver can mark as read" ON public.messages FOR UPDATE USING (a
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
-DECLARE
-  user_role TEXT;
 BEGIN
-  user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'closer');
-  INSERT INTO public.users (id, email, full_name, role)
+  INSERT INTO public.users (id, email, full_name, role, avatar_url)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    user_role
-  );
-  IF user_role = 'closer' THEN
-    INSERT INTO public.closer_profiles (user_id) VALUES (NEW.id);
-  ELSIF user_role = 'manager' THEN
-    INSERT INTO public.manager_profiles (user_id) VALUES (NEW.id);
-  END IF;
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', ''),
+    'pending',
+    NEW.raw_user_meta_data->>'avatar_url'
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

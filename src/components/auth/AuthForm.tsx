@@ -63,13 +63,14 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         if (error) throw error;
 
         // Si la confirmation email est désactivée, l'utilisateur est auto-connecté
-        // → on le redirige directement vers l'onboarding
+        // Le trigger handle_new_user() crée le profil avec role 'pending'
+        // → on redirige directement vers l'onboarding
         if (signUpData.session) {
-          // Créer le profil utilisateur dans la DB
+          // S'assurer que le profil existe (le trigger devrait l'avoir créé)
           if (signUpData.user) {
             await supabase.from('users').upsert({
               id: signUpData.user.id,
-              email: signUpData.user.email || null,
+              email: signUpData.user.email || '',
               role: 'pending',
               full_name: fullName || '',
             }, { onConflict: 'id' });

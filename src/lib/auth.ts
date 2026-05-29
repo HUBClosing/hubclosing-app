@@ -21,31 +21,26 @@ export async function getUser(): Promise<User | null> {
   }
 
   // Si auth user existe mais pas de profil DB, créer avec upsert
-  // upsert évite les race conditions de doublon
+  // Le trigger handle_new_user() aurait dû le créer, mais au cas où
   if (!user) {
-    const { data: newUser, error: upsertError } = await supabase
+    await supabase
       .from('users')
       .upsert({
         id: authUser.id,
-        email: authUser.email || null,
+        email: authUser.email || '',
         role: 'pending',
         full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
         avatar_url: authUser.user_metadata?.avatar_url || null,
-      }, { onConflict: 'id', ignoreDuplicates: true })
-      .select('*')
-      .single();
+      }, { onConflict: 'id' });
 
-    if (upsertError) {
-      console.error('[getUser] upsert error:', upsertError.message);
-      // Tenter une dernière lecture en cas de conflit
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .maybeSingle();
-      return existingUser;
-    }
-    return newUser;
+    // Relire l'utilisateur après upsert (plus fiable que .select() sur upsert)
+    const { data: createdUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .maybeSingle();
+
+    return createdUser;
   }
 
   return user;
