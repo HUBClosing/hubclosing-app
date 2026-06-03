@@ -19,6 +19,9 @@ import {
   Shield,
   Calendar,
   Bell,
+  TrendingUp,
+  Award,
+  Share2,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,23 +30,28 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const closerLinks = [
+const candidateLinks = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/candidatures', label: 'Mes candidatures', icon: FileText },
+  { href: '/dashboard/performance', label: 'Mes performances', icon: TrendingUp },
   { href: '/dashboard/events', label: 'Coaching & Events', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/dashboard/reputation', label: 'Réputation', icon: Award },
+  { href: '/dashboard/referral', label: 'Parrainage', icon: Share2 },
   { href: '/dashboard/profile', label: 'Mon profil', icon: UserCircle },
-  { href: '/dashboard/settings', label: 'Param\u00e8tres', icon: Settings },
+  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
-const managerLinks = [
+const recruiterLinks = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
+  { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users },
   { href: '/dashboard/events', label: 'Coaching & Events', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/dashboard/referral', label: 'Parrainage', icon: Share2 },
   { href: '/dashboard/profile', label: 'Mon profil', icon: UserCircle },
-  { href: '/dashboard/settings', label: 'Param\u00e8tres', icon: Settings },
+  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
 const adminLinks = [
@@ -52,19 +60,34 @@ const adminLinks = [
   { href: '/dashboard/admin/users', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/offers', label: 'Offres', icon: Briefcase },
   { href: '/dashboard/admin/notifications', label: 'Notifications', icon: Bell },
-  { href: '/dashboard/events', label: '\u00c9v\u00e9nements', icon: Calendar },
+  { href: '/dashboard/events', label: 'Événements', icon: Calendar },
   { href: '/dashboard/admin/settings', label: 'Configuration', icon: Shield },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
-  { href: '/dashboard/settings', label: 'Param\u00e8tres', icon: Settings },
+  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
+
+function getRoleLabel(user: User): string {
+  const rt = user.role_type as string || user.role as string;
+  if (rt === 'admin') return 'Admin';
+  if (rt === 'recruiter' || rt === 'manager') return 'Recruteur';
+  if (rt === 'candidate' || rt === 'closer') return 'Candidat';
+  return 'Membre';
+}
+
+function getLinksForUser(user: User) {
+  const rt = user.role_type as string || user.role as string;
+  if (rt === 'admin') return adminLinks;
+  if (rt === 'recruiter' || rt === 'manager') return recruiterLinks;
+  return candidateLinks;
+}
 
 export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
 
-  const links =
-    user.role === 'admin' ? adminLinks : user.role === 'manager' ? managerLinks : closerLinks;
+  const links = getLinksForUser(user);
+  const roleLabel = getRoleLabel(user);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -100,9 +123,16 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           <div className="p-4 border-b border-white/10">
             <p className="text-sm text-white/70">Connecté en tant que</p>
             <p className="font-medium truncate">{user.full_name || user.email}</p>
-            <span className="inline-block mt-1 px-2 py-0.5 bg-brand-amber/20 text-brand-amber rounded text-xs capitalize">
-              {user.role}
-            </span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="inline-block px-2 py-0.5 bg-brand-amber/20 text-brand-amber rounded text-xs">
+                {roleLabel}
+              </span>
+              {user.tier && user.tier !== 'free' && (
+                <span className="inline-block px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-xs capitalize">
+                  {user.tier}
+                </span>
+              )}
+            </div>
           </div>
 
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

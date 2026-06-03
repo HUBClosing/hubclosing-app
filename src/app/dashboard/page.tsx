@@ -9,10 +9,18 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
+/** Résout le rôle effectif : préfère role_type (nouveau), fallback sur role (legacy) */
+function resolveRole(user: { role: string; role_type?: string }): 'candidate' | 'recruiter' | 'admin' {
+  const rt = user.role_type;
+  if (rt === 'admin' || user.role === 'admin') return 'admin';
+  if (rt === 'recruiter' || user.role === 'manager') return 'recruiter';
+  return 'candidate';
+}
+
 async function getDashboardData(userId: string, role: string) {
   const supabase = await createClient();
 
-  if (role === 'closer') {
+  if (role === 'candidate') {
     const [
       { count: applications },
       { count: messages },
@@ -38,7 +46,7 @@ async function getDashboardData(userId: string, role: string) {
     };
   }
 
-  if (role === 'manager') {
+  if (role === 'recruiter') {
     const [
       { count: offers },
       { count: applications },
@@ -77,10 +85,10 @@ async function getDashboardData(userId: string, role: string) {
       supabase.from('offers').select('*', { count: 'exact', head: true }),
       supabase.from('applications').select('*', { count: 'exact', head: true }),
       supabase.from('offers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'closer'),
-      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'manager'),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role_type', 'candidate'),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role_type', 'recruiter'),
       supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('users').select('id, email, full_name, role, created_at').order('created_at', { ascending: false }).limit(5),
+      supabase.from('users').select('id, email, full_name, role, role_type, created_at').order('created_at', { ascending: false }).limit(5),
     ]);
     return {
       totalUsers: totalUsers || 0,
@@ -127,25 +135,26 @@ export default async function DashboardPage() {
   const user = await requireUser();
 
   // Utilisateur pending → rediriger vers l'onboarding pour compléter l'inscription
-  if (user.role === 'pending') {
+  if (user.role === 'pending' || user.role_type === 'pending') {
     redirect('/onboarding');
   }
 
-  const data = await getDashboardData(user.id, user.role);
+  const effectiveRole = resolveRole(user);
+  const data = await getDashboardData(user.id, effectiveRole);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-dark">Tableau de bord</h1>
         <p className="text-gray-500 mt-1">
-          {user.role === 'closer' && 'Retrouvez vos opportunit\u00e9s et suivez vos candidatures'}
-          {user.role === 'manager' && 'G\u00e9rez vos offres et trouvez les meilleurs closers'}
-          {user.role === 'admin' && 'Vue d\'ensemble de la plateforme HUBClosing'}
+          {effectiveRole === 'candidate' && 'Retrouvez vos opportunit\u00e9s et suivez vos candidatures'}
+          {effectiveRole === 'recruiter' && 'G\u00e9rez vos offres et trouvez les meilleurs talents'}
+          {effectiveRole === 'admin' && 'Vue d\'ensemble de la plateforme HUBClosing'}
         </p>
       </div>
 
-      {/* ========== CLOSER DASHBOARD ========== */}
-      {user.role === 'closer' && (
+      {/* ========== CANDIDAT DASHBOARD ========== */}
+      {effectiveRole === 'candidate' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard title="Candidatures envoy\u00e9es" value={data.applications || 0} icon={<FileText className="h-6 w-6" />} />
@@ -230,8 +239,8 @@ export default async function DashboardPage() {
         </>
       )}
 
-      {/* ========== MANAGER DASHBOARD ========== */}
-      {user.role === 'manager' && (
+      {/* ========== RECRUTEUR DASHBOARD ========== */}
+      {effectiveRole === 'recruiter' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard title="Offres publi\u00e9es" value={data.offers || 0} icon={<Briefcase className="h-6 w-6" />} />
@@ -341,7 +350,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ========== ADMIN DASHBOARD ========== */}
-      {user.role === 'admin' && (
+      {effectiveRole === 'admin' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard title="Utilisateurs" value={data.totalUsers || 0} icon={<Users className="h-6 w-6" />} />
@@ -356,14 +365,14 @@ export default async function DashboardPage() {
               <CardContent className="p-6 text-center">
                 <Users className="h-8 w-8 text-blue-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-brand-dark">{data.totalClosers || 0}</p>
-                <p className="text-sm text-gray-500">Closers inscrits</p>
+                <p className="text-sm text-gray-500">Candidats inscrits</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-6 text-center">
                 <Briefcase className="h-8 w-8 text-purple-500 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-brand-dark">{data.totalManagers || 0}</p>
-                <p className="text-sm text-gray-500">Managers / HOS</p>
+                <p className="text-sm text-gray-500">Recruteurs</p>
               </CardContent>
             </Card>
             <Card>
@@ -422,11 +431,12 @@ export default async function DashboardPage() {
                       </div>
                       <div className="text-right">
                         <span className={`text-xs px-2 py-1 rounded-full ${
-                          u.role === 'closer' ? 'bg-blue-100 text-blue-700' :
-                          u.role === 'manager' ? 'bg-purple-100 text-purple-700' :
-                          'bg-red-100 text-red-700'
+                          (u.role_type || u.role) === 'candidate' || u.role === 'closer' ? 'bg-blue-100 text-blue-700' :
+                          (u.role_type || u.role) === 'recruiter' || u.role === 'manager' ? 'bg-purple-100 text-purple-700' :
+                          (u.role_type || u.role) === 'admin' ? 'bg-red-100 text-red-700' :
+                          'bg-gray-100 text-gray-700'
                         }`}>
-                          {u.role}
+                          {u.role_type === 'candidate' ? 'Candidat' : u.role_type === 'recruiter' ? 'Recruteur' : u.role_type === 'admin' ? 'Admin' : u.role}
                         </span>
                         <p className="text-xs text-gray-400 mt-1">{formatDate(u.created_at)}</p>
                       </div>

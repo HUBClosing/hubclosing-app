@@ -33,7 +33,7 @@ export async function GET(request: Request) {
   // Le trigger handle_new_user() peut l'avoir déjà créé automatiquement
   const { data: existingUser, error: fetchError } = await supabase
     .from('users')
-    .select('id, role, email')
+    .select('id, role, role_type, email')
     .eq('id', authUser.id)
     .maybeSingle();
 
@@ -47,6 +47,7 @@ export async function GET(request: Request) {
       id: authUser.id,
       email: authUser.email || '',
       role: 'pending',
+      role_type: 'pending',
       full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
       avatar_url: authUser.user_metadata?.avatar_url || null,
     }, { onConflict: 'id' });
@@ -69,7 +70,7 @@ export async function GET(request: Request) {
   }
 
   // Si l'utilisateur est 'pending', il n'a pas fini l'onboarding → y renvoyer
-  if (existingUser.role === 'pending') {
+  if (existingUser.role === 'pending' || (existingUser as any).role_type === 'pending') {
     return NextResponse.redirect(`${origin}/onboarding`);
   }
 
