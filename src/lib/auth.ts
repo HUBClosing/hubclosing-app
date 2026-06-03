@@ -48,8 +48,8 @@ export async function getUser(): Promise<User | null> {
 export async function requireUser(): Promise<User> {
   const user = await getUser();
   if (!user) {
-    const supabase = await createClient();
-    await supabase.auth.signOut();
+    // NOTE: on ne fait PAS signOut() ici pour préserver les cookies de debug
+    // Le signOut détruisait les preuves, empêchant le diagnostic
     redirect('/auth/login');
   }
   return user;
