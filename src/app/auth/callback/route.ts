@@ -9,7 +9,6 @@ export async function GET(request: Request) {
 
   const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
 
-  // Résoudre l'origin (Vercel proxy)
   const forwardedHost = request.headers.get('x-forwarded-host');
   const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
   const origin = forwardedHost
@@ -22,6 +21,9 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
+  // Capturer TOUS les cookies posés par Supabase pendant l'échange
+  const setCookies: { name: string; value: string; options: Record<string, unknown> }[] = [];
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,6 +34,7 @@ export async function GET(request: Request) {
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
+            setCookies.push({ name, value, options: options || {} });
             try {
               cookieStore.set(name, value, options as any);
             } catch {
@@ -43,7 +46,6 @@ export async function GET(request: Request) {
     }
   );
 
-  // Échanger le code contre une session
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (exchangeError) {
@@ -53,7 +55,6 @@ export async function GET(request: Request) {
     );
   }
 
-  // Vérifier la session
   const {
     data: { user: authUser },
     error: userError,
@@ -64,7 +65,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/auth/login?error=session_failed`);
   }
 
-  // Vérifier le profil utilisateur
   const { data: existingUser, error: fetchError } = await supabase
     .from('users')
     .select('id, role, role_type, email, is_onboarded')
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
   let redirectPath = safeNext;
 
   if (!existingUser && !fetchError) {
-    const { error: insertError } = await supabase.from('users').upsert(
+    await supabase.from('users').upsert(
       {
         id: authUser.id,
         email: authUser.email || '',
@@ -89,10 +89,6 @@ export async function GET(request: Request) {
       },
       { onConflict: 'id' }
     );
-
-    if (insertError) {
-      console.error('[auth/callback] upsert error:', insertError.message);
-    }
     redirectPath = '/onboarding';
   } else if (existingUser) {
     if (authUser.user_metadata?.avatar_url) {
@@ -112,26 +108,19 @@ export async function GET(request: Request) {
     }
   }
 
-  // Workaround : retourner une page HTML qui redirige côté client
-  // Les cookies de session sont déjà posés via cookieStore.set() dans le setAll
-  // Mais NextResponse.redirect() ne les propage pas correctement
-  // En retournant du HTML, le navigateur reçoit les Set-Cookie headers normalement
+  // Construire la réponse HTML avec les cookies de session EXPLICITEMENT posés
   const redirectUrl = `${origin}${redirectPath}`;
+  const html = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"/></head><body><script>window.location.href="${redirectUrl}"</script></body></html>`;
 
-  return new NextResponse(
-    `<!DOCTYPE html>
-    <html>
-      <head>
-        <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
-        <script>window.location.href="${redirectUrl}";</script>
-      </head>
-      <body>
-        <p>Redirection en cours...</p>
-      </body>
-    </html>`,
-    {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    }
-  );
+  const response = new NextResponse(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html' },
+  });
+
+  // CRITIQUE : Appliquer chaque cookie de session sur la réponse
+  setCookies.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options as any);
+  });
+
+  return response;
 }
