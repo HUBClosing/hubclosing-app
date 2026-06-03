@@ -6,12 +6,10 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const next = requestUrl.searchParams.get('next') ?? '/dashboard';
-  const isDebug = requestUrl.searchParams.get('debug') === '1';
 
-  // Sécurité : valider que "next" est une route interne
   const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
 
-  // Résoudre l'origin correctement (Vercel proxy)
+  // Résoudre l'origin (Vercel proxy)
   const forwardedHost = request.headers.get('x-forwarded-host');
   const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
   const origin = forwardedHost
@@ -22,9 +20,10 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/auth/login?error=no_code`);
   }
 
-  // Créer le client Supabase avec gestion des cookies
   const cookieStore = await cookies();
-  const cookiesBeforeExchange = cookieStore.getAll().map(c => c.name);
+
+  // Collecter les cookies pour les appliquer manuellement au redirect
+  const responseCookies: { name: string; value: string; options: Record<string, unknown> }[] = [];
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,10 +35,13 @@ export async function GET(request: Request) {
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
+            // Stocker pour les appliquer au redirect response
+            responseCookies.push({ name, value, options: options || {} });
+            // Aussi mettre à jour le cookieStore pour les lectures suivantes
             try {
               cookieStore.set(name, value, options as any);
-            } catch (e) {
-              console.error('[auth/callback] cookie set error:', name, e);
+            } catch {
+              // Ignoré
             }
           });
         },
@@ -47,19 +49,11 @@ export async function GET(request: Request) {
     }
   );
 
-  // Échanger le code OAuth contre une session
+  // Échanger le code contre une session
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (exchangeError) {
     console.error('[auth/callback] exchange error:', exchangeError.message);
-    if (isDebug) {
-      return NextResponse.json({
-        step: 'exchange',
-        error: exchangeError.message,
-        origin,
-        cookiesBefore: cookiesBeforeExchange,
-      });
-    }
     return NextResponse.redirect(
       `${origin}/auth/login?error=auth_exchange_failed&msg=${encodeURIComponent(exchangeError.message)}`
     );
@@ -73,14 +67,6 @@ export async function GET(request: Request) {
 
   if (userError || !authUser) {
     console.error('[auth/callback] getUser error:', userError?.message);
-    if (isDebug) {
-      return NextResponse.json({
-        step: 'getUser',
-        error: userError?.message || 'No user',
-        cookiesBefore: cookiesBeforeExchange,
-        cookiesAfter: cookieStore.getAll().map(c => c.name),
-      });
-    }
     return NextResponse.redirect(`${origin}/auth/login?error=session_failed`);
   }
 
@@ -115,7 +101,6 @@ export async function GET(request: Request) {
     }
     redirectPath = '/onboarding';
   } else {
-    // Mise à jour avatar Google
     if (authUser.user_metadata?.avatar_url) {
       await supabase
         .from('users')
@@ -132,20 +117,14 @@ export async function GET(request: Request) {
     }
   }
 
-  // Debug mode : retourne les infos au lieu de rediriger
-  if (isDebug) {
-    return NextResponse.json({
-      step: 'success',
-      user: { id: authUser.id, email: authUser.email },
-      existingUser,
-      redirectPath,
-      origin,
-      forwardedHost,
-      cookiesBefore: cookiesBeforeExchange,
-      cookiesAfter: cookieStore.getAll().map(c => c.name),
-    });
-  }
+  // Construire la réponse redirect AVEC les cookies de session
+  const response = NextResponse.redirect(new URL(redirectPath, origin));
 
-  // Rediriger
-  return NextResponse.redirect(new URL(redirectPath, origin));
+  // Appliquer TOUS les cookies de session au redirect response
+  // C'est la clé : sans ça, les cookies de session sont perdus
+  responseCookies.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options as any);
+  });
+
+  return response;
 }
