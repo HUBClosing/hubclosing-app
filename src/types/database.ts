@@ -234,6 +234,42 @@ export interface PerformanceLog {
   updated_at: string;
 }
 
+export interface PortfolioEntry {
+  id: string;
+  user_id: string;
+  offer_name: string;
+  niche: string | null;
+  product_price: number | null;
+  revenue_closed: number;
+  calls_made: number;
+  appointments_booked: number;
+  deals_closed: number;
+  cash_per_call: number;
+  conversion_rate_gross: number | null;
+  conversion_rate_net: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type VideoType = 'presentation' | 'call_recording' | 'testimonial';
+
+export interface PortfolioVideo {
+  id: string;
+  user_id: string;
+  video_type: VideoType;
+  title: string;
+  url: string;
+  description: string | null;
+  offer_name: string | null;
+  is_public: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
 export interface Referral {
   id: string;
   referrer_id: string;
