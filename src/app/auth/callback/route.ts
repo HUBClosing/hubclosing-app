@@ -6,11 +6,12 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
   const next = requestUrl.searchParams.get('next') ?? '/dashboard';
+  const isDebug = requestUrl.searchParams.get('debug') === '1';
 
   // Sécurité : valider que "next" est une route interne
   const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
 
-  // Résoudre l'origin correctement (Vercel peut passer un origin interne)
+  // Résoudre l'origin correctement (Vercel proxy)
   const forwardedHost = request.headers.get('x-forwarded-host');
   const forwardedProto = request.headers.get('x-forwarded-proto') ?? 'https';
   const origin = forwardedHost
@@ -21,8 +22,9 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/auth/login?error=no_code`);
   }
 
-  // Créer le client Supabase avec gestion explicite des cookies
+  // Créer le client Supabase avec gestion des cookies
   const cookieStore = await cookies();
+  const cookiesBeforeExchange = cookieStore.getAll().map(c => c.name);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,8 +38,8 @@ export async function GET(request: Request) {
           cookiesToSet.forEach(({ name, value, options }) => {
             try {
               cookieStore.set(name, value, options as any);
-            } catch {
-              // Ignoré en contexte read-only (Server Component)
+            } catch (e) {
+              console.error('[auth/callback] cookie set error:', name, e);
             }
           });
         },
@@ -49,24 +51,40 @@ export async function GET(request: Request) {
   const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
   if (exchangeError) {
-    console.error('[auth/callback] exchangeCodeForSession error:', exchangeError.message);
+    console.error('[auth/callback] exchange error:', exchangeError.message);
+    if (isDebug) {
+      return NextResponse.json({
+        step: 'exchange',
+        error: exchangeError.message,
+        origin,
+        cookiesBefore: cookiesBeforeExchange,
+      });
+    }
     return NextResponse.redirect(
       `${origin}/auth/login?error=auth_exchange_failed&msg=${encodeURIComponent(exchangeError.message)}`
     );
   }
 
-  // Vérifier que la session est bien établie
+  // Vérifier la session
   const {
     data: { user: authUser },
     error: userError,
   } = await supabase.auth.getUser();
 
   if (userError || !authUser) {
-    console.error('[auth/callback] getUser error:', userError?.message || 'No user returned');
+    console.error('[auth/callback] getUser error:', userError?.message);
+    if (isDebug) {
+      return NextResponse.json({
+        step: 'getUser',
+        error: userError?.message || 'No user',
+        cookiesBefore: cookiesBeforeExchange,
+        cookiesAfter: cookieStore.getAll().map(c => c.name),
+      });
+    }
     return NextResponse.redirect(`${origin}/auth/login?error=session_failed`);
   }
 
-  // Vérifier si le profil utilisateur existe déjà dans la table users
+  // Vérifier le profil utilisateur
   const { data: existingUser, error: fetchError } = await supabase
     .from('users')
     .select('id, role, role_type, email, is_onboarded')
@@ -80,48 +98,54 @@ export async function GET(request: Request) {
   let redirectPath = safeNext;
 
   if (!existingUser) {
-    // Le trigger handle_new_user() n'a pas créé l'utilisateur — création manuelle
     const { error: insertError } = await supabase.from('users').upsert(
       {
         id: authUser.id,
         email: authUser.email || '',
         role: 'pending',
         role_type: 'pending',
-        full_name:
-          authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
         avatar_url: authUser.user_metadata?.avatar_url || null,
       },
       { onConflict: 'id' }
     );
 
     if (insertError) {
-      console.error('[auth/callback] upsert user error:', insertError.message);
+      console.error('[auth/callback] upsert error:', insertError.message);
     }
-
     redirectPath = '/onboarding';
   } else {
-    // Utilisateur existant — mettre à jour l'avatar Google si dispo
+    // Mise à jour avatar Google
     if (authUser.user_metadata?.avatar_url) {
       await supabase
         .from('users')
         .update({
           avatar_url: authUser.user_metadata.avatar_url,
-          full_name:
-            authUser.user_metadata?.full_name ||
-            authUser.user_metadata?.name ||
-            undefined,
+          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || undefined,
         })
         .eq('id', authUser.id);
     }
 
-    // Si l'utilisateur est 'pending' ou n'a pas fini l'onboarding → onboarding
-    const isPending =
-      existingUser.role === 'pending' || existingUser.role_type === 'pending';
+    const isPending = existingUser.role === 'pending' || existingUser.role_type === 'pending';
     if (isPending) {
       redirectPath = '/onboarding';
     }
   }
 
-  // Rediriger vers la destination
+  // Debug mode : retourne les infos au lieu de rediriger
+  if (isDebug) {
+    return NextResponse.json({
+      step: 'success',
+      user: { id: authUser.id, email: authUser.email },
+      existingUser,
+      redirectPath,
+      origin,
+      forwardedHost,
+      cookiesBefore: cookiesBeforeExchange,
+      cookiesAfter: cookieStore.getAll().map(c => c.name),
+    });
+  }
+
+  // Rediriger
   return NextResponse.redirect(new URL(redirectPath, origin));
 }
