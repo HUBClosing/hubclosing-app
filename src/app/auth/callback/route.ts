@@ -79,11 +79,14 @@ export async function GET(request: Request) {
 
   if (fetchError) {
     console.error('[auth/callback] fetch user error:', fetchError.message);
+    // En cas d'erreur DB, on redirige vers le dashboard et on laisse la page gérer
+    // Plutôt que de créer un doublon ou renvoyer vers onboarding par erreur
   }
 
   let redirectPath = safeNext;
 
-  if (!existingUser) {
+  if (!existingUser && !fetchError) {
+    // Vraiment un nouvel utilisateur (pas d'erreur, juste pas trouvé)
     const { error: insertError } = await supabase.from('users').upsert(
       {
         id: authUser.id,
@@ -100,7 +103,8 @@ export async function GET(request: Request) {
       console.error('[auth/callback] upsert error:', insertError.message);
     }
     redirectPath = '/onboarding';
-  } else {
+  } else if (existingUser) {
+    // Mettre à jour l'avatar Google si disponible
     if (authUser.user_metadata?.avatar_url) {
       await supabase
         .from('users')
@@ -111,8 +115,10 @@ export async function GET(request: Request) {
         .eq('id', authUser.id);
     }
 
+    // Vérifier si l'utilisateur doit compléter l'onboarding
     const isPending = existingUser.role === 'pending' || existingUser.role_type === 'pending';
-    if (isPending) {
+    const isOnboarded = existingUser.is_onboarded === true;
+    if (isPending && !isOnboarded) {
       redirectPath = '/onboarding';
     }
   }
