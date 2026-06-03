@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { User } from '@/types/database';
+import type { User, ActiveRole } from '@/types/database';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard,
@@ -22,6 +23,8 @@ import {
   TrendingUp,
   Award,
   Share2,
+  ArrowLeftRight,
+  Target,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -66,28 +69,51 @@ const adminLinks = [
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
-function getRoleLabel(user: User): string {
-  const rt = user.role_type as string || user.role as string;
-  if (rt === 'admin') return 'Admin';
-  if (rt === 'recruiter' || rt === 'manager') return 'Recruteur';
-  if (rt === 'candidate' || rt === 'closer') return 'Candidat';
-  return 'Membre';
+function getActiveRole(user: User): ActiveRole {
+  return (user.active_role as ActiveRole) || 'candidate';
 }
 
-function getLinksForUser(user: User) {
-  const rt = user.role_type as string || user.role as string;
-  if (rt === 'admin') return adminLinks;
-  if (rt === 'recruiter' || rt === 'manager') return recruiterLinks;
-  return candidateLinks;
+function isDualRole(user: User): boolean {
+  return user.role_type === 'both';
+}
+
+function isAdmin(user: User): boolean {
+  return user.role_type === 'admin' || user.role === 'admin';
+}
+
+function getRoleLabel(activeRole: ActiveRole): string {
+  return activeRole === 'candidate' ? 'Candidat' : 'Recruteur';
+}
+
+function getLinksForRole(user: User, activeRole: ActiveRole) {
+  if (isAdmin(user)) return adminLinks;
+  return activeRole === 'recruiter' ? recruiterLinks : candidateLinks;
 }
 
 export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const [activeRole, setActiveRole] = useState<ActiveRole>(getActiveRole(user));
 
-  const links = getLinksForUser(user);
-  const roleLabel = getRoleLabel(user);
+  const links = getLinksForRole(user, activeRole);
+  const dual = isDualRole(user);
+  const admin = isAdmin(user);
+
+  const handleSwitchRole = async () => {
+    const newRole: ActiveRole = activeRole === 'candidate' ? 'recruiter' : 'candidate';
+    setActiveRole(newRole);
+
+    // Persister le changement en BDD
+    await supabase
+      .from('users')
+      .update({ active_role: newRole })
+      .eq('id', user.id);
+
+    // Rafraîchir la page pour charger le bon dashboard
+    router.push('/dashboard');
+    router.refresh();
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -108,6 +134,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="flex flex-col h-full">
+          {/* Logo */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-brand-amber flex items-center justify-center font-bold text-brand-dark">
@@ -120,12 +147,13 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
             </button>
           </div>
 
+          {/* User info */}
           <div className="p-4 border-b border-white/10">
             <p className="text-sm text-white/70">Connecté en tant que</p>
             <p className="font-medium truncate">{user.full_name || user.email}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className="inline-block px-2 py-0.5 bg-brand-amber/20 text-brand-amber rounded text-xs">
-                {roleLabel}
+                {admin ? 'Admin' : getRoleLabel(activeRole)}
               </span>
               {user.tier && user.tier !== 'free' && (
                 <span className="inline-block px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-xs capitalize">
@@ -135,6 +163,31 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
             </div>
           </div>
 
+          {/* Switch de rôle pour les double-rôle */}
+          {dual && !admin && (
+            <div className="px-3 py-2 border-b border-white/10">
+              <button
+                onClick={handleSwitchRole}
+                className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowLeftRight className="h-4 w-4 text-brand-amber" />
+                  <span className="text-white/80">
+                    Vue {activeRole === 'candidate' ? 'candidat' : 'recruteur'}
+                  </span>
+                </div>
+                <span className="text-xs text-white/50 bg-white/10 px-2 py-0.5 rounded">
+                  {activeRole === 'candidate' ? (
+                    <span className="flex items-center gap-1"><Target className="h-3 w-3" /> Candidat</span>
+                  ) : (
+                    <span className="flex items-center gap-1"><Briefcase className="h-3 w-3" /> Recruteur</span>
+                  )}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* Navigation */}
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {links.map((link) => {
               const Icon = link.icon;
@@ -157,6 +210,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
             })}
           </nav>
 
+          {/* Logout */}
           <div className="p-3 border-t border-white/10">
             <button
               onClick={handleLogout}

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
-import type { RoleType, Skill } from '@/types/database';
+import type { RoleType, ActiveRole, Skill } from '@/types/database';
 import {
   ArrowRight,
   ArrowLeft,
@@ -19,12 +19,16 @@ import {
   Clock,
   GraduationCap,
   Users,
+  Square,
+  CheckSquare,
 } from 'lucide-react';
 
 type Step = 'info' | 'role' | 'skills' | 'done';
 
+type SelectableRole = 'candidate' | 'recruiter';
+
 interface RoleOption {
-  roleType: RoleType;
+  value: SelectableRole;
   defaultSkills: Skill[];
   title: string;
   description: string;
@@ -45,12 +49,12 @@ const skillLabels: Record<Skill, { label: string; icon: React.ReactNode; descrip
   management: {
     label: 'Management',
     icon: <Briefcase className="h-4 w-4" />,
-    description: 'Gérer une équipe commerciale',
+    description: "Gérer une équipe commerciale",
   },
   hos: {
     label: 'Head of Sales',
     icon: <Crown className="h-4 w-4" />,
-    description: 'Piloter la stratégie sales',
+    description: "Piloter la stratégie sales",
   },
   coaching: {
     label: 'Coaching',
@@ -60,7 +64,7 @@ const skillLabels: Record<Skill, { label: string; icon: React.ReactNode; descrip
   training: {
     label: 'Formation',
     icon: <Users className="h-4 w-4" />,
-    description: 'Créer et dispenser des formations',
+    description: "Créer et dispenser des formations",
   },
 };
 
@@ -91,7 +95,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const supabase = createClient();
   const [step, setStep] = useState<Step>('info');
-  const [roleType, setRoleType] = useState<RoleType | null>(null);
+  const [selectedRoles, setSelectedRoles] = useState<SelectableRole[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -107,14 +111,14 @@ export default function OnboardingPage() {
 
   const roleOptions: RoleOption[] = [
     {
-      roleType: 'candidate',
+      value: 'candidate',
       defaultSkills: ['closing'],
       title: 'Candidat',
       description: 'Je cherche des missions : closing, setting, management…',
       icon: <Target className="h-6 w-6" />,
     },
     {
-      roleType: 'recruiter',
+      value: 'recruiter',
       defaultSkills: [],
       title: 'Recruteur',
       description: 'Je publie des offres et recrute des talents commerciaux',
@@ -122,11 +126,21 @@ export default function OnboardingPage() {
     },
   ];
 
-  // Skills disponibles selon le rôle
-  const availableSkills: Skill[] =
-    roleType === 'candidate'
-      ? ['closing', 'setting', 'management', 'hos', 'coaching', 'training']
-      : ['management', 'hos', 'coaching', 'training'];
+  // Skills disponibles selon les rôles sélectionnés
+  // If candidate is selected (alone or with recruiter), show all candidate skills
+  // If only recruiter, show recruiter-specific skills
+  const availableSkills: Skill[] = selectedRoles.includes('candidate')
+    ? ['closing', 'setting', 'management', 'hos', 'coaching', 'training']
+    : ['management', 'hos', 'coaching', 'training'];
+
+  const toggleRole = (role: SelectableRole) => {
+    setSelectedRoles((prev) => {
+      const next = prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role];
+      // Reset skills when roles change to avoid stale selections
+      setSelectedSkills([]);
+      return next;
+    });
+  };
 
   const toggleNiche = (niche: string) => {
     setSelectedNiches((prev) =>
@@ -155,7 +169,7 @@ export default function OnboardingPage() {
   };
 
   const handleGoToSkills = () => {
-    if (!roleType) return;
+    if (selectedRoles.length === 0) return;
     setStep('skills');
   };
 
@@ -166,8 +180,17 @@ export default function OnboardingPage() {
     return 'junior';
   };
 
+  // Derive the RoleType for DB based on selected roles
+  const computeRoleType = (): RoleType => {
+    if (selectedRoles.includes('candidate') && selectedRoles.includes('recruiter')) {
+      return 'both';
+    }
+    if (selectedRoles.includes('candidate')) return 'candidate';
+    return 'recruiter';
+  };
+
   const handleFinish = async () => {
-    if (!roleType || selectedSkills.length === 0) return;
+    if (selectedRoles.length === 0 || selectedSkills.length === 0) return;
     setLoading(true);
     setError('');
 
@@ -178,13 +201,16 @@ export default function OnboardingPage() {
       if (!authUser) throw new Error('Non authentifié');
 
       const years = parseInt(yearsExperience);
+      const roleType = computeRoleType();
+      const activeRole: ActiveRole = selectedRoles[0]; // First selected role as default active
 
       // 1. Mettre à jour le user avec le nouveau modèle
       const { error: userError } = await supabase
         .from('users')
         .update({
-          role: roleType === 'candidate' ? 'closer' : 'manager', // Legacy compat
+          role: selectedRoles.includes('candidate') ? 'closer' : 'manager', // Legacy compat
           role_type: roleType,
+          active_role: activeRole,
           full_name: `${firstName.trim()} ${lastName.trim()}`,
           personal_email: personalEmail.trim(),
           phone: phone.trim(),
@@ -204,11 +230,13 @@ export default function OnboardingPage() {
         specialties: selectedNiches,
       };
 
-      if (roleType === 'candidate') {
+      if (selectedRoles.includes('candidate')) {
         profileData.experience_level = getExperienceLevel(years);
         profileData.preferred_niches = selectedNiches;
         profileData.availability = true;
-      } else {
+      }
+
+      if (selectedRoles.includes('recruiter')) {
         profileData.industry = infoType;
         profileData.company_name = null; // À remplir ensuite
       }
@@ -219,8 +247,8 @@ export default function OnboardingPage() {
 
       if (profileError) throw profileError;
 
-      // 3. Legacy : aussi écrire dans l'ancien profil pour rétrocompat
-      if (roleType === 'candidate') {
+      // 3. Legacy : aussi écrire dans les anciens profils pour rétrocompat
+      if (selectedRoles.includes('candidate')) {
         await supabase.from('closer_profiles').upsert(
           {
             user_id: authUser.id,
@@ -229,7 +257,9 @@ export default function OnboardingPage() {
           },
           { onConflict: 'user_id' }
         );
-      } else {
+      }
+
+      if (selectedRoles.includes('recruiter')) {
         await supabase.from('manager_profiles').upsert(
           {
             user_id: authUser.id,
@@ -253,6 +283,10 @@ export default function OnboardingPage() {
   };
 
   const getSuccessMessage = () => {
+    const roleType = computeRoleType();
+    if (roleType === 'both') {
+      return 'Accédez à vos missions et publiez vos offres depuis le tableau de bord.';
+    }
     if (roleType === 'recruiter') {
       return 'Publiez votre première offre et trouvez les meilleurs talents.';
     }
@@ -302,7 +336,7 @@ export default function OnboardingPage() {
                 Bienvenue sur HUBClosing !
               </h1>
               <p className="text-gray-600">
-                Complétez votre fiche pour accéder à la plateforme
+                Compl&eacute;tez votre fiche pour acc&eacute;der &agrave; la plateforme
               </p>
             </div>
 
@@ -328,7 +362,7 @@ export default function OnboardingPage() {
               {/* Prénom */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prénom <span className="text-red-500">*</span>
+                  Pr&eacute;nom <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -364,7 +398,7 @@ export default function OnboardingPage() {
               {/* Téléphone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone <span className="text-red-500">*</span>
+                  T&eacute;l&eacute;phone <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -382,7 +416,7 @@ export default function OnboardingPage() {
               {/* Années d'expérience */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre d&apos;années d&apos;expérience <span className="text-red-500">*</span>
+                  Nombre d&apos;ann&eacute;es d&apos;exp&eacute;rience <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -391,11 +425,11 @@ export default function OnboardingPage() {
                     onChange={(e) => setYearsExperience(e.target.value)}
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber bg-white"
                   >
-                    <option value="">Sélectionnez...</option>
+                    <option value="">S&eacute;lectionnez...</option>
                     <option value="0">Moins de 1 an</option>
-                    <option value="1">1 à 2 ans</option>
-                    <option value="3">3 à 5 ans</option>
-                    <option value="5">5 à 10 ans</option>
+                    <option value="1">1 &agrave; 2 ans</option>
+                    <option value="3">3 &agrave; 5 ans</option>
+                    <option value="5">5 &agrave; 10 ans</option>
                     <option value="10">10+ ans</option>
                   </select>
                 </div>
@@ -404,7 +438,7 @@ export default function OnboardingPage() {
               {/* Niche travaillée */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Niche(s) travaillée(s) <span className="text-red-500">*</span>
+                  Niche(s) travaill&eacute;e(s) <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {niches.map((niche) => (
@@ -434,7 +468,7 @@ export default function OnboardingPage() {
                   onChange={(e) => setInfoType(e.target.value)}
                   className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber bg-white"
                 >
-                  <option value="">Sélectionnez...</option>
+                  <option value="">S&eacute;lectionnez...</option>
                   {typesInfopreneur.map((type) => (
                     <option key={type} value={type}>
                       {type}
@@ -456,7 +490,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2: Choix candidat / recruteur */}
+        {/* Step 2: Choix candidat / recruteur (multi-select avec checkboxes) */}
         {step === 'role' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             <button
@@ -470,49 +504,65 @@ export default function OnboardingPage() {
               Que recherchez-vous ?
             </h2>
             <p className="text-sm text-gray-500 mb-6">
-              Choisissez votre profil principal
+              S&eacute;lectionnez un ou plusieurs profils (au moins un)
             </p>
 
             <div className="space-y-3">
-              {roleOptions.map((option) => (
-                <button
-                  key={option.roleType}
-                  onClick={() => {
-                    setRoleType(option.roleType);
-                    setSelectedSkills(option.defaultSkills);
-                  }}
-                  className={`w-full p-5 rounded-xl border-2 text-left transition-all ${
-                    roleType === option.roleType
-                      ? 'border-brand-amber bg-brand-amber/5 shadow-sm'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`p-2.5 rounded-lg ${
-                        roleType === option.roleType ? 'bg-brand-amber/10' : 'bg-gray-100'
-                      }`}
-                    >
+              {roleOptions.map((option) => {
+                const isChecked = selectedRoles.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => toggleRole(option.value)}
+                    className={`w-full p-5 rounded-xl border-2 text-left transition-all ${
+                      isChecked
+                        ? 'border-brand-amber bg-brand-amber/5 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Checkbox indicator */}
+                      <div className="mt-0.5 shrink-0">
+                        {isChecked ? (
+                          <CheckSquare className="h-5 w-5 text-brand-amber" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-300" />
+                        )}
+                      </div>
                       <div
-                        className={
-                          roleType === option.roleType ? 'text-brand-amber' : 'text-gray-500'
-                        }
+                        className={`p-2.5 rounded-lg ${
+                          isChecked ? 'bg-brand-amber/10' : 'bg-gray-100'
+                        }`}
                       >
-                        {option.icon}
+                        <div
+                          className={
+                            isChecked ? 'text-brand-amber' : 'text-gray-500'
+                          }
+                        >
+                          {option.icon}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-brand-dark">{option.title}</h3>
+                        <p className="text-sm text-gray-500 mt-1">{option.description}</p>
                       </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-brand-dark">{option.title}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{option.description}</p>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
+
+            {selectedRoles.length === 2 && (
+              <div className="mt-4 p-3 rounded-lg bg-brand-amber/5 border border-brand-amber/20">
+                <p className="text-sm text-brand-dark">
+                  Vous pourrez basculer entre les deux profils depuis votre tableau de bord.
+                </p>
+              </div>
+            )}
 
             <Button
               onClick={handleGoToSkills}
-              disabled={!roleType}
+              disabled={selectedRoles.length === 0}
               className="w-full mt-6"
             >
               Continuer <ArrowRight className="h-4 w-4 ml-2" />
@@ -531,12 +581,12 @@ export default function OnboardingPage() {
             </button>
 
             <h2 className="text-xl font-bold text-brand-dark mb-2">
-              {roleType === 'candidate'
+              {selectedRoles.includes('candidate')
                 ? 'Quelles sont vos compétences ?'
                 : 'Quel type de profil recherchez-vous ?'}
             </h2>
             <p className="text-sm text-gray-500 mb-6">
-              {roleType === 'candidate'
+              {selectedRoles.includes('candidate')
                 ? 'Sélectionnez tout ce que vous savez faire'
                 : 'Sélectionnez les compétences que vous recrutez'}
             </p>
@@ -600,7 +650,7 @@ export default function OnboardingPage() {
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <h2 className="text-xl font-bold text-brand-dark mb-2">
-              Profil créé avec succès !
+              Profil cr&eacute;&eacute; avec succ&egrave;s !
             </h2>
             <p className="text-gray-600 mb-2">{getSuccessMessage()}</p>
             <p className="text-sm text-gray-400">

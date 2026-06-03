@@ -9,10 +9,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-/** Résout le rôle effectif : préfère role_type (nouveau), fallback sur role (legacy) */
-function resolveRole(user: { role: string; role_type?: string }): 'candidate' | 'recruiter' | 'admin' {
+/** Résout le rôle effectif pour le dashboard : utilise active_role pour les double-rôles */
+function resolveRole(user: { role: string; role_type?: string; active_role?: string }): 'candidate' | 'recruiter' | 'admin' {
   const rt = user.role_type;
   if (rt === 'admin' || user.role === 'admin') return 'admin';
+  if (rt === 'both') return (user.active_role as 'candidate' | 'recruiter') || 'candidate';
   if (rt === 'recruiter' || user.role === 'manager') return 'recruiter';
   return 'candidate';
 }

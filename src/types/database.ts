@@ -4,8 +4,11 @@
 
 // --- Enums ---
 
-/** Rôle principal : candidat cherche des missions, recruteur publie des offres */
-export type RoleType = 'pending' | 'candidate' | 'recruiter' | 'admin';
+/** Rôle principal : candidat, recruteur, les deux, ou admin */
+export type RoleType = 'pending' | 'candidate' | 'recruiter' | 'both' | 'admin';
+
+/** Rôle actif dans le dashboard (pour les utilisateurs double-rôle) */
+export type ActiveRole = 'candidate' | 'recruiter';
 
 /** Ancien rôle — gardé pour rétrocompatibilité pendant la migration */
 export type UserRole = 'closer' | 'manager' | 'admin' | 'pending';
@@ -54,7 +57,8 @@ export interface User {
   id: string;
   email: string;
   role: UserRole;              // Legacy — sera supprimé
-  role_type: RoleType;         // Nouveau rôle principal
+  role_type: RoleType;         // Nouveau rôle principal (candidate, recruiter, both, admin)
+  active_role: ActiveRole;     // Rôle actif dans le dashboard (switch candidat/recruteur)
   full_name: string | null;
   avatar_url: string | null;
   phone: string | null;
