@@ -22,9 +22,6 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
-  // Collecter les cookies pour les appliquer manuellement au redirect
-  const responseCookies: { name: string; value: string; options: Record<string, unknown> }[] = [];
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -35,9 +32,6 @@ export async function GET(request: Request) {
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            // Stocker pour les appliquer au redirect response
-            responseCookies.push({ name, value, options: options || {} });
-            // Aussi mettre à jour le cookieStore pour les lectures suivantes
             try {
               cookieStore.set(name, value, options as any);
             } catch {
@@ -79,14 +73,11 @@ export async function GET(request: Request) {
 
   if (fetchError) {
     console.error('[auth/callback] fetch user error:', fetchError.message);
-    // En cas d'erreur DB, on redirige vers le dashboard et on laisse la page gérer
-    // Plutôt que de créer un doublon ou renvoyer vers onboarding par erreur
   }
 
   let redirectPath = safeNext;
 
   if (!existingUser && !fetchError) {
-    // Vraiment un nouvel utilisateur (pas d'erreur, juste pas trouvé)
     const { error: insertError } = await supabase.from('users').upsert(
       {
         id: authUser.id,
@@ -104,7 +95,6 @@ export async function GET(request: Request) {
     }
     redirectPath = '/onboarding';
   } else if (existingUser) {
-    // Mettre à jour l'avatar Google si disponible
     if (authUser.user_metadata?.avatar_url) {
       await supabase
         .from('users')
@@ -115,7 +105,6 @@ export async function GET(request: Request) {
         .eq('id', authUser.id);
     }
 
-    // Vérifier si l'utilisateur doit compléter l'onboarding
     const isPending = existingUser.role === 'pending' || existingUser.role_type === 'pending';
     const isOnboarded = existingUser.is_onboarded === true;
     if (isPending && !isOnboarded) {
@@ -123,14 +112,26 @@ export async function GET(request: Request) {
     }
   }
 
-  // Construire la réponse redirect AVEC les cookies de session
-  const response = NextResponse.redirect(new URL(redirectPath, origin));
+  // Workaround : retourner une page HTML qui redirige côté client
+  // Les cookies de session sont déjà posés via cookieStore.set() dans le setAll
+  // Mais NextResponse.redirect() ne les propage pas correctement
+  // En retournant du HTML, le navigateur reçoit les Set-Cookie headers normalement
+  const redirectUrl = `${origin}${redirectPath}`;
 
-  // Appliquer TOUS les cookies de session au redirect response
-  // C'est la clé : sans ça, les cookies de session sont perdus
-  responseCookies.forEach(({ name, value, options }) => {
-    response.cookies.set(name, value, options as any);
-  });
-
-  return response;
+  return new NextResponse(
+    `<!DOCTYPE html>
+    <html>
+      <head>
+        <meta http-equiv="refresh" content="0;url=${redirectUrl}" />
+        <script>window.location.href="${redirectUrl}";</script>
+      </head>
+      <body>
+        <p>Redirection en cours...</p>
+      </body>
+    </html>`,
+    {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    }
+  );
 }
