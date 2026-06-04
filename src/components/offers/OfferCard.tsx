@@ -4,7 +4,7 @@ import type { Offer, User } from '@/types/database';
 import { Lock, MapPin, Clock, Percent, Banknote, Eye, Zap, Crown, ArrowRight, Timer, AlertTriangle, Users } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays, differenceInHours, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { canUserDo } from '@/types/database';
+import { canUserDo, isOfferPremium } from '@/types/database';
 
 interface OfferCardProps {
   offer: Offer;
@@ -25,7 +25,8 @@ const nicheColors: Record<string, string> = {
 };
 
 export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
-  const isLocked = locked || (offer.is_premium && !canUserDo(user, 'see_premium_offers'));
+  const isPremium = isOfferPremium(offer);
+  const isLocked = locked || (isPremium && !canUserDo(user, 'see_premium_offers'));
   const timeAgo = formatDistanceToNow(new Date(offer.created_at), { addSuffix: true, locale: fr });
   const nicheColor = nicheColors[offer.niche || ''] || 'bg-gray-100 text-gray-700';
 
@@ -125,7 +126,7 @@ export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
         {!isLocked && <DeadlineBadge offer={offer} />}
 
         {/* Premium badge */}
-        {offer.is_premium && !isLocked && (
+        {isPremium && !isLocked && (
           <div className="flex items-center gap-1.5 text-xs text-brand-amber bg-brand-amber/10 px-2.5 py-1 rounded-lg mb-3 w-fit">
             <Crown className="h-3.5 w-3.5" /> Offre Premium
           </div>

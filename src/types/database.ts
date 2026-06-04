@@ -435,6 +435,23 @@ export function canUserDo(user: User, action: string): boolean {
   return false;
 }
 
+/** Qualifie si une offre est premium : produit >= 10 000€ OU commission > 10% */
+export function isOfferPremium(offer: Offer): boolean {
+  // Flag manuel en BDD a priorité
+  if (offer.is_premium) return true;
+  // Auto-qualification par prix produit
+  if (offer.product_price_range) {
+    const match = offer.product_price_range.match(/(\d[\d\s]*)/g);
+    if (match) {
+      const maxPrice = Math.max(...match.map(s => parseInt(s.replace(/\s/g, '')) || 0));
+      if (maxPrice >= 10000) return true;
+    }
+  }
+  // Auto-qualification par commission
+  if (offer.commission_rate && offer.commission_rate > 10) return true;
+  return false;
+}
+
 /** Retourne le nombre de candidatures restantes ce mois */
 export function getRemainingApplications(user: User): number {
   const limits = TIER_LIMITS[user.tier as keyof typeof TIER_LIMITS];

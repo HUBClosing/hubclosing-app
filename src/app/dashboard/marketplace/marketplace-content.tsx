@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Offer, User } from '@/types/database';
 import { OfferCard } from '@/components/offers/OfferCard';
 import { RemainingApplicationsBanner } from '@/components/paywall/RemainingApplicationsBanner';
+import { isOfferPremium } from '@/types/database';
 import {
   Target, PhoneCall, Crown, Briefcase, LayoutGrid, Layers,
   ShoppingBag,
@@ -39,10 +40,10 @@ export function MarketplaceContent({ offers, user }: MarketplaceContentProps) {
 
   const filteredOffers = offers.filter(o => matchesTab(o, activeTab));
 
-  // Separate boosted, regular, and premium-locked
+  // Separate boosted, regular, and premium (auto-qualifié ou manuel)
   const boostedOffers = filteredOffers.filter(o => o.is_boosted);
-  const regularOffers = filteredOffers.filter(o => !o.is_boosted && !o.is_premium);
-  const premiumOffers = filteredOffers.filter(o => o.is_premium && !o.is_boosted);
+  const regularOffers = filteredOffers.filter(o => !o.is_boosted && !isOfferPremium(o));
+  const premiumOffers = filteredOffers.filter(o => isOfferPremium(o) && !o.is_boosted);
 
   return (
     <div className="space-y-4">
