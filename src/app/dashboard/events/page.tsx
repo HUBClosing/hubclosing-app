@@ -97,7 +97,7 @@ export default function EventsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-dark">Coaching &amp; \u00c9v\u00e9nements</h1>
+        <h1 className="text-2xl font-bold text-brand-dark">Coaching &amp; Événements</h1>
         <p className="text-gray-500 mt-1">Participez aux sessions de coaching, webinaires et networking</p>
       </div>
 
@@ -130,7 +130,7 @@ export default function EventsPage() {
                       {eventTypeLabels[event.event_type] || event.event_type}
                     </span>
                     {event.price > 0 ? (
-                      <span className="text-sm font-bold text-brand-dark">{event.price}\u20ac</span>
+                      <span className="text-sm font-bold text-brand-dark">{event.price}€</span>
                     ) : (
                       <span className="text-sm font-medium text-green-600">Gratuit</span>
                     )}
@@ -152,12 +152,12 @@ export default function EventsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {event.is_online ? <Video className="h-4 w-4" /> : <MapPin className="h-4 w-4" />}
-                      <span>{event.is_online ? 'En ligne' : event.location || 'Pr\u00e9sentiel'}</span>
+                      <span>{event.is_online ? 'En ligne' : event.location || 'Présentiel'}</span>
                     </div>
                     {event.host?.full_name && (
                       <div className="flex items-center gap-2">
                         <GraduationCap className="h-4 w-4" />
-                        <span>Anim\u00e9 par {event.host.full_name}</span>
+                        <span>Animé par {event.host.full_name}</span>
                       </div>
                     )}
                     {event.max_participants && (
@@ -193,10 +193,10 @@ export default function EventsPage() {
       ) : (
         <EmptyState
           icon={<Calendar className="h-12 w-12" />}
-          title="Aucun \u00e9v\u00e9nement disponible"
+          title="Aucun événement disponible"
           description={filter !== 'all'
-            ? `Aucun ${eventTypeLabels[filter]?.toLowerCase()} pr\u00e9vu prochainement.`
-            : 'Les coaching, webinaires et \u00e9v\u00e9nements seront affich\u00e9s ici d\u00e8s qu\'ils seront programm\u00e9s.'
+            ? `Aucun ${eventTypeLabels[filter]?.toLowerCase()} prévu prochainement.`
+            : 'Les coaching, webinaires et événements seront affichés ici dès qu\'ils seront programmés.'
           }
         />
       )}

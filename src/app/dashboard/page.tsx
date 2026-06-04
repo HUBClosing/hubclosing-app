@@ -148,8 +148,8 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold text-brand-dark">Tableau de bord</h1>
         <p className="text-gray-500 mt-1">
-          {effectiveRole === 'candidate' && 'Retrouvez vos opportunit\u00e9s et suivez vos candidatures'}
-          {effectiveRole === 'recruiter' && 'G\u00e9rez vos offres et trouvez les meilleurs talents'}
+          {effectiveRole === 'candidate' && 'Retrouvez vos opportunités et suivez vos candidatures'}
+          {effectiveRole === 'recruiter' && 'Gérez vos offres et trouvez les meilleurs talents'}
           {effectiveRole === 'admin' && 'Vue d\'ensemble de la plateforme HUBClosing'}
         </p>
       </div>
@@ -158,8 +158,8 @@ export default async function DashboardPage() {
       {effectiveRole === 'candidate' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard title="Candidatures envoy\u00e9es" value={data.applications || 0} icon={<FileText className="h-6 w-6" />} />
-            <StatsCard title="Candidatures accept\u00e9es" value={data.acceptedApps || 0} icon={<CheckCircle className="h-6 w-6" />} />
+            <StatsCard title="Candidatures envoyées" value={data.applications || 0} icon={<FileText className="h-6 w-6" />} />
+            <StatsCard title="Candidatures acceptées" value={data.acceptedApps || 0} icon={<CheckCircle className="h-6 w-6" />} />
             <StatsCard title="Offres disponibles" value={data.activeOffers || 0} icon={<ShoppingBag className="h-6 w-6" />} />
             <StatsCard title="Messages" value={data.messages || 0} icon={<MessageSquare className="h-6 w-6" />} />
           </div>
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-brand-dark flex items-center gap-2">
-                  <Rocket className="h-5 w-5 text-brand-amber" /> Offres r\u00e9centes
+                  <Rocket className="h-5 w-5 text-brand-amber" /> Offres récentes
                 </h2>
                 <Link href="/dashboard/marketplace" className="text-sm text-brand-green hover:underline flex items-center gap-1">
                   Voir tout <ArrowRight className="h-4 w-4" />
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
                       <p className="text-sm text-gray-500 mt-1">{offer.manager?.full_name}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                          {offer.commission_value}{offer.commission_type === 'percentage' ? '%' : '\u20ac'} commission
+                          {offer.commission_value}{offer.commission_type === 'percentage' ? '%' : '€'} commission
                         </span>
                         <span className="text-xs text-gray-400">{formatDate(offer.created_at)}</span>
                       </div>
@@ -203,7 +203,7 @@ export default async function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-brand-dark flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-brand-amber" /> Coaching &amp; \u00c9v\u00e9nements
+                  <GraduationCap className="h-5 w-5 text-brand-amber" /> Coaching &amp; Événements
                 </h2>
                 <Link href="/dashboard/events" className="text-sm text-brand-green hover:underline flex items-center gap-1">
                   Voir tout <ArrowRight className="h-4 w-4" />
@@ -231,8 +231,8 @@ export default async function DashboardPage() {
               ) : (
                 <div className="text-center py-6">
                   <Calendar className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-gray-500">Aucun \u00e9v\u00e9nement \u00e0 venir pour le moment.</p>
-                  <p className="text-sm text-gray-400 mt-1">Les coaching et webinaires seront affich\u00e9s ici.</p>
+                  <p className="text-gray-500">Aucun événement à venir pour le moment.</p>
+                  <p className="text-sm text-gray-400 mt-1">Les coaching et webinaires seront affichés ici.</p>
                 </div>
               )}
             </CardContent>
@@ -244,8 +244,8 @@ export default async function DashboardPage() {
       {effectiveRole === 'recruiter' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard title="Offres publi\u00e9es" value={data.offers || 0} icon={<Briefcase className="h-6 w-6" />} />
-            <StatsCard title="Candidatures re\u00e7ues" value={data.applications || 0} icon={<Users className="h-6 w-6" />} />
+            <StatsCard title="Offres publiées" value={data.offers || 0} icon={<Briefcase className="h-6 w-6" />} />
+            <StatsCard title="Candidatures reçues" value={data.applications || 0} icon={<Users className="h-6 w-6" />} />
             <StatsCard title="Taux de conversion" value={`${data.conversionRate || 0}%`} icon={<TrendingUp className="h-6 w-6" />} />
             <StatsCard title="Messages" value="—" icon={<MessageSquare className="h-6 w-6" />} />
           </div>
@@ -273,7 +273,7 @@ export default async function DashboardPage() {
                     <Calendar className="h-6 w-6 text-brand-amber" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-brand-dark">\u00c9v\u00e9nements</h3>
+                    <h3 className="font-semibold text-brand-dark">Événements</h3>
                     <p className="text-sm text-gray-500">Coaching, webinaires et networking</p>
                   </div>
                   <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
@@ -285,7 +285,7 @@ export default async function DashboardPage() {
           {/* Recent Applications */}
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-brand-dark">Derni\u00e8res candidatures re\u00e7ues</h2>
+              <h2 className="text-lg font-semibold text-brand-dark">Dernières candidatures reçues</h2>
             </CardHeader>
             <CardContent>
               {data.recentApps && data.recentApps.length > 0 ? (
@@ -301,13 +301,13 @@ export default async function DashboardPage() {
                         app.status === 'accepted' ? 'bg-green-100 text-green-700' :
                         'bg-red-100 text-red-700'
                       }`}>
-                        {app.status === 'pending' ? 'En attente' : app.status === 'accepted' ? 'Accept\u00e9e' : 'Refus\u00e9e'}
+                        {app.status === 'pending' ? 'En attente' : app.status === 'accepted' ? 'Acceptée' : 'Refusée'}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-6">Aucune candidature re\u00e7ue pour le moment.</p>
+                <p className="text-gray-500 text-center py-6">Aucune candidature reçue pour le moment.</p>
               )}
             </CardContent>
           </Card>
@@ -317,7 +317,7 @@ export default async function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-brand-dark flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-brand-amber" /> Prochains \u00e9v\u00e9nements
+                  <Calendar className="h-5 w-5 text-brand-amber" /> Prochains événements
                 </h2>
                 <Link href="/dashboard/events" className="text-sm text-brand-green hover:underline flex items-center gap-1">
                   Voir tout <ArrowRight className="h-4 w-4" />
@@ -343,7 +343,7 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">Aucun \u00e9v\u00e9nement \u00e0 venir.</p>
+                <p className="text-gray-500 text-center py-4">Aucun événement à venir.</p>
               )}
             </CardContent>
           </Card>
@@ -391,7 +391,7 @@ export default async function DashboardPage() {
               <Card hover>
                 <CardContent className="p-4 flex items-center gap-3">
                   <Users className="h-5 w-5 text-brand-green" />
-                  <span className="font-medium text-brand-dark">G\u00e9rer les utilisateurs</span>
+                  <span className="font-medium text-brand-dark">Gérer les utilisateurs</span>
                   <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
                 </CardContent>
               </Card>
@@ -400,7 +400,7 @@ export default async function DashboardPage() {
               <Card hover>
                 <CardContent className="p-4 flex items-center gap-3">
                   <Briefcase className="h-5 w-5 text-brand-green" />
-                  <span className="font-medium text-brand-dark">G\u00e9rer les offres</span>
+                  <span className="font-medium text-brand-dark">Gérer les offres</span>
                   <ArrowRight className="h-4 w-4 text-gray-400 ml-auto" />
                 </CardContent>
               </Card>
