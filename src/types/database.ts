@@ -31,13 +31,68 @@ export type CompanySize = 'solo' | 'small' | 'medium' | 'large';
 // --- Limites par tier ---
 
 export const TIER_LIMITS = {
-  // Candidats
-  free: { applications_per_month: 3, can_see_premium: false, has_badge: false, has_matching: false, has_coaching: false, has_direct_contact: false, has_advanced_stats: false },
-  starter: { applications_per_month: 15, can_see_premium: true, has_badge: false, has_matching: false, has_coaching: false, has_direct_contact: false, has_advanced_stats: false },
-  pro: { applications_per_month: Infinity, can_see_premium: true, has_badge: true, has_matching: true, has_coaching: false, has_direct_contact: false, has_advanced_stats: false },
-  elite: { applications_per_month: Infinity, can_see_premium: true, has_badge: true, has_matching: true, has_coaching: true, has_direct_contact: true, has_advanced_stats: true },
-  // Recruteurs
-  business: { active_offers: 5, contacts_per_month: 10, has_boost: 1, has_matching: false, has_analytics: false, team_members: 1 },
+  // --- Candidats (chaque tier inclut tout le tier inférieur) ---
+  free: {
+    applications_per_month: 3,
+    can_see_premium: false,
+    has_tracker: false,         // Tracker de performance quotidien
+    has_cv_performance: false,  // CV de performance partageable
+    has_reputation_score: false, // Score de réputation public
+    has_badge: false,           // Badge "Profil vérifié"
+    has_matching: false,        // Matching auto avec offres
+    has_replays: false,         // Replays masterclasses
+    has_coaching: false,        // Coaching 1:1 mensuel
+    has_direct_contact: false,  // Contact direct recruteurs
+    has_advanced_stats: false,  // Stats avancées + export
+    has_private_circle: false,  // Cercle privé top closers
+  },
+  starter: {
+    // Free + outils quotidiens (ancre de rétention clé)
+    applications_per_month: 15,
+    can_see_premium: true,
+    has_tracker: true,
+    has_cv_performance: true,
+    has_reputation_score: true,
+    has_badge: false,
+    has_matching: false,
+    has_replays: false,
+    has_coaching: false,
+    has_direct_contact: false,
+    has_advanced_stats: false,
+    has_private_circle: false,
+  },
+  pro: {
+    // Starter + visibilité & formation
+    applications_per_month: Infinity,
+    can_see_premium: true,
+    has_tracker: true,
+    has_cv_performance: true,
+    has_reputation_score: true,
+    has_badge: true,
+    has_matching: true,
+    has_replays: true,
+    has_coaching: false,
+    has_direct_contact: false,
+    has_advanced_stats: false,
+    has_private_circle: false,
+  },
+  elite: {
+    // Pro + réseau & coaching (tout inclus)
+    applications_per_month: Infinity,
+    can_see_premium: true,
+    has_tracker: true,
+    has_cv_performance: true,
+    has_reputation_score: true,
+    has_badge: true,
+    has_matching: true,
+    has_replays: true,
+    has_coaching: true,
+    has_direct_contact: true,
+    has_advanced_stats: true,
+    has_private_circle: true,
+  },
+  // --- Recruteurs ---
+  business: { active_offers: 5, contacts_per_month: 30, has_boost: 1, has_matching: false, has_analytics: false, team_members: 1 },
   agency: { active_offers: Infinity, contacts_per_month: Infinity, has_boost: Infinity, has_matching: true, has_analytics: true, team_members: Infinity },
 } as const;
 
@@ -348,23 +403,36 @@ export function canUserDo(user: User, action: string): boolean {
   const limits = TIER_LIMITS[user.tier as keyof typeof TIER_LIMITS];
   if (!limits) return false;
 
-  switch (action) {
-    case 'see_premium_offers':
-      return 'can_see_premium' in limits && limits.can_see_premium;
-    case 'apply':
-      if ('applications_per_month' in limits) {
-        return user.monthly_applications_count < limits.applications_per_month;
-      }
-      return true;
-    case 'direct_contact':
-      return 'has_direct_contact' in limits && limits.has_direct_contact;
-    case 'access_coaching':
-      return 'has_coaching' in limits && limits.has_coaching;
-    case 'matching':
-      return 'has_matching' in limits && limits.has_matching;
-    default:
-      return false;
+  // Mapping action → clé dans TIER_LIMITS
+  const featureMap: Record<string, string> = {
+    'see_premium_offers': 'can_see_premium',
+    'tracker': 'has_tracker',
+    'cv_performance': 'has_cv_performance',
+    'reputation_score': 'has_reputation_score',
+    'badge': 'has_badge',
+    'matching': 'has_matching',
+    'replays': 'has_replays',
+    'access_coaching': 'has_coaching',
+    'direct_contact': 'has_direct_contact',
+    'advanced_stats': 'has_advanced_stats',
+    'private_circle': 'has_private_circle',
+  };
+
+  // Check candidature limit
+  if (action === 'apply') {
+    if ('applications_per_month' in limits) {
+      return user.monthly_applications_count < limits.applications_per_month;
+    }
+    return true;
   }
+
+  // Check boolean feature
+  const key = featureMap[action];
+  if (key && key in limits) {
+    return (limits as Record<string, unknown>)[key] === true;
+  }
+
+  return false;
 }
 
 /** Retourne le nombre de candidatures restantes ce mois */
