@@ -5,7 +5,7 @@ import { EmptyState, Button } from '@/components/ui';
 import { Briefcase, Plus } from 'lucide-react';
 
 export default async function OffersPage() {
-  const user = await requireRole('manager');
+  const user = await requireRole('manager') as any;
   const supabase = await createClient();
 
   const { data: offers } = await supabase
@@ -29,7 +29,7 @@ export default async function OffersPage() {
       {offers && offers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {offers.map((offer) => (
-            <OfferCard key={offer.id} offer={offer} />
+            <OfferCard key={offer.id} offer={offer} user={user} />
           ))}
         </div>
       ) : (

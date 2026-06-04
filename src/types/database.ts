@@ -162,19 +162,25 @@ export interface ManagerProfile {
   updated_at: string;
 }
 
+export type OfferType = 'full_time' | 'part_time' | 'mission' | 'commission_only';
+
 export interface Offer {
   id: string;
   manager_id: string;
   title: string;
   description: string;
-  requirements: string | null;
-  commission_type: string;
-  commission_value: number;
+  offer_type: OfferType;
+  commission_rate: number | null;
+  fixed_salary: number | null;
   product_type: string | null;
-  product_url: string | null;
+  product_price_range: string | null;
+  required_experience: ExperienceLevel | null;
+  required_specialties: string[];
+  required_languages: string[];
+  location: string | null;
   status: OfferStatus;
-  max_closers: number | null;
-  applications_count: number;
+  application_count: number;
+  views_count: number;
   required_skills: Skill[];
   experience_required: string | null;
   is_premium: boolean;

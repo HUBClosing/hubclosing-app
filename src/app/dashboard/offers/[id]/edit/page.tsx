@@ -58,16 +58,16 @@ export default function EditOfferPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input name="title" label="Titre" defaultValue={offer.title} required />
             <Textarea name="description" label="Description" defaultValue={offer.description} rows={5} required />
-            <Textarea name="requirements" label="Prérequis" defaultValue={offer.requirements || ''} rows={3} />
             <div className="grid grid-cols-2 gap-4">
-              <Select name="commission_type" label="Type de commission" defaultValue={offer.commission_type}
-                options={[{ value: 'percentage', label: 'Pourcentage' }, { value: 'fixed', label: 'Montant fixe' }]} />
-              <Input name="commission_value" label="Valeur" type="number" step="0.01" defaultValue={offer.commission_value} required />
+              <Select name="offer_type" label="Type d'offre" defaultValue={offer.offer_type}
+                options={[{ value: 'commission_only', label: 'Commission seule' }, { value: 'full_time', label: 'Temps plein' }, { value: 'part_time', label: 'Temps partiel' }, { value: 'mission', label: 'Mission' }]} />
+              <Input name="commission_rate" label="Commission (%)" type="number" step="0.01" defaultValue={offer.commission_rate || ''} />
             </div>
+            <Input name="fixed_salary" label="Salaire fixe (€)" type="number" defaultValue={offer.fixed_salary || ''} />
             <Select name="status" label="Statut" defaultValue={offer.status}
               options={[{ value: 'active', label: 'Active' }, { value: 'paused', label: 'En pause' }, { value: 'closed', label: 'Fermée' }]} />
             <Input name="product_type" label="Type de produit" defaultValue={offer.product_type || ''} />
-            <Input name="product_url" label="URL du produit" type="url" defaultValue={offer.product_url || ''} />
+            <Input name="product_price_range" label="Fourchette de prix" defaultValue={offer.product_price_range || ''} />
 
             {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200"><p className="text-sm text-red-600">{error}</p></div>}
 
