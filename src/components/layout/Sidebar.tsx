@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { User, ActiveRole } from '@/types/database';
+import type { User, ActiveRole, SubscriptionTier } from '@/types/database';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard,
@@ -25,6 +25,10 @@ import {
   Share2,
   ArrowLeftRight,
   Target,
+  Lock,
+  CreditCard,
+  Receipt,
+  type LucideIcon,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,39 +37,70 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const candidateLinks = [
+interface NavLink {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  minTier?: SubscriptionTier; // Tier minimum requis (undefined = accessible à tous)
+}
+
+// Ordre des tiers pour comparaison
+const TIER_ORDER: Record<string, number> = {
+  free: 0, starter: 1, pro: 2, elite: 3,
+  business: 1, agency: 2,
+};
+
+function hasTierAccess(userTier: string, requiredTier?: string): boolean {
+  if (!requiredTier) return true;
+  return (TIER_ORDER[userTier] || 0) >= (TIER_ORDER[requiredTier] || 0);
+}
+
+function getTierLabel(tier: string): string {
+  const labels: Record<string, string> = {
+    starter: 'Starter', pro: 'Pro', elite: 'Élite',
+    business: 'Business', agency: 'Agence',
+  };
+  return labels[tier] || tier;
+}
+
+const candidateLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/candidatures', label: 'Mes candidatures', icon: FileText },
-  { href: '/dashboard/performance', label: 'Mes performances', icon: TrendingUp },
-  { href: '/dashboard/events', label: 'Coaching & Events', icon: Calendar },
+  { href: '/dashboard/performance', label: 'Mes performances', icon: TrendingUp, minTier: 'starter' },
+  { href: '/dashboard/reputation', label: 'Réputation', icon: Award, minTier: 'starter' },
+  { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar, minTier: 'pro' },
+  { href: '/dashboard/accounting', label: 'Comptabilité', icon: Receipt, minTier: 'elite' },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
-  { href: '/dashboard/reputation', label: 'Réputation', icon: Award },
   { href: '/dashboard/referral', label: 'Parrainage', icon: Share2 },
+  { href: '/dashboard/subscription', label: 'Abonnement', icon: CreditCard },
   { href: '/dashboard/profile', label: 'Mon profil', icon: UserCircle },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
-const recruiterLinks = [
+const recruiterLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
-  { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users },
-  { href: '/dashboard/events', label: 'Coaching & Events', icon: Calendar },
+  { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'business' },
+  { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/referral', label: 'Parrainage', icon: Share2 },
+  { href: '/dashboard/subscription', label: 'Abonnement', icon: CreditCard },
   { href: '/dashboard/profile', label: 'Mon profil', icon: UserCircle },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
-const adminLinks = [
+const adminLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/admin', label: 'Vue d\'ensemble', icon: BarChart3 },
   { href: '/dashboard/admin/users', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/offers', label: 'Offres', icon: Briefcase },
   { href: '/dashboard/admin/notifications', label: 'Notifications', icon: Bell },
+  { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/events', label: 'Événements', icon: Calendar },
   { href: '/dashboard/admin/settings', label: 'Configuration', icon: Shield },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/dashboard/subscription', label: 'Abonnement', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
@@ -85,7 +120,7 @@ function getRoleLabel(activeRole: ActiveRole): string {
   return activeRole === 'candidate' ? 'Candidat' : 'Recruteur';
 }
 
-function getLinksForRole(user: User, activeRole: ActiveRole) {
+function getLinksForRole(user: User, activeRole: ActiveRole): NavLink[] {
   if (isAdmin(user)) return adminLinks;
   return activeRole === 'recruiter' ? recruiterLinks : candidateLinks;
 }
@@ -99,18 +134,12 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
   const links = getLinksForRole(user, activeRole);
   const dual = isDualRole(user);
   const admin = isAdmin(user);
+  const userTier = user.tier || 'free';
 
   const handleSwitchRole = async () => {
     const newRole: ActiveRole = activeRole === 'candidate' ? 'recruiter' : 'candidate';
     setActiveRole(newRole);
-
-    // Persister le changement en BDD
-    await supabase
-      .from('users')
-      .update({ active_role: newRole })
-      .eq('id', user.id);
-
-    // Rafraîchir la page pour charger le bon dashboard
+    await supabase.from('users').update({ active_role: newRole }).eq('id', user.id);
     router.push('/dashboard');
     router.refresh();
   };
@@ -137,9 +166,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           {/* Logo */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-brand-amber flex items-center justify-center font-bold text-brand-dark">
-                H
-              </div>
+              <div className="h-8 w-8 rounded-lg bg-brand-amber flex items-center justify-center font-bold text-brand-dark">H</div>
               <span className="font-bold text-lg">HUBClosing</span>
             </div>
             <button onClick={onClose} className="lg:hidden text-white/70 hover:text-white">
@@ -155,15 +182,15 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
               <span className="inline-block px-2 py-0.5 bg-brand-amber/20 text-brand-amber rounded text-xs">
                 {admin ? 'Admin' : getRoleLabel(activeRole)}
               </span>
-              {user.tier && user.tier !== 'free' && (
+              {userTier !== 'free' && (
                 <span className="inline-block px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-xs capitalize">
-                  {user.tier}
+                  {userTier}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Switch de rôle pour les double-rôle */}
+          {/* Switch de rôle */}
           {dual && !admin && (
             <div className="px-3 py-2 border-b border-white/10">
               <button
@@ -188,10 +215,30 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
             {links.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
+              const hasAccess = admin || hasTierAccess(userTier, link.minTier);
+
+              if (!hasAccess) {
+                // Lien verrouillé — visible mais grisé avec cadenas
+                return (
+                  <a
+                    key={link.href}
+                    href="/dashboard/subscription"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/30 hover:bg-white/5 transition-colors group"
+                  >
+                    <Icon className="h-5 w-5 shrink-0" />
+                    <span className="flex-1">{link.label}</span>
+                    <span className="flex items-center gap-1 text-xs text-brand-amber/60 group-hover:text-brand-amber">
+                      <Lock className="h-3 w-3" />
+                      {link.minTier && getTierLabel(link.minTier)}
+                    </span>
+                  </a>
+                );
+              }
+
               return (
                 <a
                   key={link.href}
@@ -209,6 +256,19 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
               );
             })}
           </nav>
+
+          {/* Upgrade CTA pour les Free */}
+          {userTier === 'free' && !admin && (
+            <div className="px-3 pb-2">
+              <a
+                href="/dashboard/subscription"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium bg-brand-amber/20 text-brand-amber hover:bg-brand-amber/30 transition-colors"
+              >
+                <CreditCard className="h-4 w-4" />
+                Passer au Starter — 9€/mois
+              </a>
+            </div>
+          )}
 
           {/* Logout */}
           <div className="p-3 border-t border-white/10">
