@@ -239,6 +239,8 @@ export interface Offer {
   is_boosted: boolean;
   boost_expires_at: string | null;
   niche: string | null;
+  application_deadline: string | null;
+  max_applicants: number | null;
   created_at: string;
   updated_at: string;
   manager?: User;

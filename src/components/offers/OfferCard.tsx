@@ -1,8 +1,8 @@
 'use client';
 
 import type { Offer, User } from '@/types/database';
-import { Lock, MapPin, Clock, Percent, Banknote, Eye, Zap, Crown, ArrowRight } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Lock, MapPin, Clock, Percent, Banknote, Eye, Zap, Crown, ArrowRight, Timer, AlertTriangle, Users } from 'lucide-react';
+import { formatDistanceToNow, differenceInDays, differenceInHours, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { canUserDo } from '@/types/database';
 
@@ -116,6 +116,9 @@ export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
           <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {offer.views_count || 0} vues</span>
         </div>
 
+        {/* Deadline + places */}
+        {!isLocked && <DeadlineBadge offer={offer} />}
+
         {/* Premium badge */}
         {offer.is_premium && !isLocked && (
           <div className="flex items-center gap-1.5 text-xs text-brand-amber bg-brand-amber/10 px-2.5 py-1 rounded-lg mb-3 w-fit">
@@ -144,6 +147,69 @@ export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
           </a>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Badge deadline + places restantes */
+function DeadlineBadge({ offer }: { offer: Offer }) {
+  const hasDeadline = !!offer.application_deadline;
+  const hasMaxApplicants = !!offer.max_applicants;
+
+  if (!hasDeadline && !hasMaxApplicants) return null;
+
+  const now = new Date();
+  const deadline = hasDeadline ? new Date(offer.application_deadline!) : null;
+  const isExpired = deadline ? deadline < now : false;
+  const daysLeft = deadline ? differenceInDays(deadline, now) : null;
+  const hoursLeft = deadline ? differenceInHours(deadline, now) : null;
+
+  // Couleur selon urgence
+  const isUrgent = daysLeft !== null && daysLeft <= 3;
+  const isSoon = daysLeft !== null && daysLeft <= 7;
+
+  const bgColor = isExpired ? 'bg-red-50 border-red-200' :
+    isUrgent ? 'bg-orange-50 border-orange-200' :
+    isSoon ? 'bg-amber-50 border-amber-200' :
+    'bg-blue-50 border-blue-200';
+
+  const textColor = isExpired ? 'text-red-700' :
+    isUrgent ? 'text-orange-700' :
+    isSoon ? 'text-amber-700' :
+    'text-blue-700';
+
+  const iconColor = isExpired ? 'text-red-500' :
+    isUrgent ? 'text-orange-500' :
+    isSoon ? 'text-amber-500' :
+    'text-blue-500';
+
+  return (
+    <div className={`flex items-center gap-2 p-2 rounded-lg border mb-3 ${bgColor}`}>
+      {isExpired ? (
+        <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
+      ) : (
+        <Timer className={`h-3.5 w-3.5 shrink-0 ${iconColor}`} />
+      )}
+      <div className={`flex-1 text-xs font-medium ${textColor}`}>
+        {isExpired ? (
+          'Candidatures fermées'
+        ) : hoursLeft !== null && hoursLeft < 24 ? (
+          `Plus que ${hoursLeft}h pour candidater`
+        ) : daysLeft !== null ? (
+          `Plus que ${daysLeft} jour${daysLeft > 1 ? 's' : ''} pour candidater`
+        ) : null}
+        {hasDeadline && !isExpired && deadline && (
+          <span className="font-normal text-xs opacity-75 ml-1">
+            — Fin le {format(deadline, 'd MMM', { locale: fr })}
+          </span>
+        )}
+      </div>
+      {hasMaxApplicants && (
+        <span className={`flex items-center gap-1 text-xs ${textColor} opacity-80`}>
+          <Users className="h-3 w-3" />
+          {offer.max_applicants} places
+        </span>
+      )}
     </div>
   );
 }
