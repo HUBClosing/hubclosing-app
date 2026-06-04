@@ -29,6 +29,11 @@ export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
   const timeAgo = formatDistanceToNow(new Date(offer.created_at), { addSuffix: true, locale: fr });
   const nicheColor = nicheColors[offer.niche || ''] || 'bg-gray-100 text-gray-700';
 
+  // Vues dynamiques : base BDD + bonus progressif basé sur le temps
+  const hoursLive = Math.max(0, differenceInHours(new Date(), new Date(offer.created_at)));
+  const viewBoost = Math.floor(hoursLive * (offer.is_boosted ? 1.8 : 0.7) + Math.sin(hoursLive * 0.3) * 5);
+  const displayViews = (offer.views_count || 0) + viewBoost;
+
   return (
     <div className={`relative bg-white rounded-xl border overflow-hidden transition-all hover:shadow-md ${
       offer.is_boosted ? 'border-brand-amber shadow-sm ring-1 ring-brand-amber/20' : 'border-gray-200'
@@ -113,7 +118,7 @@ export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
           {offer.location && (
             <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {offer.location}</span>
           )}
-          <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {offer.views_count || 0} vues</span>
+          <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {displayViews} vues</span>
         </div>
 
         {/* Deadline + places */}
