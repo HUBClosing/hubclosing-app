@@ -11,7 +11,7 @@ interface TierInfo {
   subtitle: string;
   icon: React.ReactNode;
   highlight?: string;
-  features: { label: string; included: boolean; isNew?: boolean }[];
+  features: { label: string; included: boolean; }[];
   loseIfDowngrade?: string[];
 }
 
@@ -43,10 +43,10 @@ const CANDIDATE_TIERS: TierInfo[] = [
     icon: <TrendingUp className="h-6 w-6" />,
     features: [
       { label: '15 candidatures / mois', included: true },
-      { label: 'Accès offres premium', included: true, isNew: true },
-      { label: 'Tracker de performance', included: true, isNew: true },
-      { label: 'CV de performance partageable', included: true, isNew: true },
-      { label: 'Score de réputation public', included: true, isNew: true },
+      { label: 'Accès offres premium', included: true},
+      { label: 'Tracker de performance', included: true},
+      { label: 'CV de performance partageable', included: true},
+      { label: 'Score de réputation public', included: true},
       { label: 'Badge vérifié', included: false },
       { label: 'Matching auto', included: false },
       { label: 'Replays masterclasses', included: false },
@@ -69,9 +69,9 @@ const CANDIDATE_TIERS: TierInfo[] = [
     features: [
       { label: 'Candidatures illimitées', included: true },
       { label: 'Tout Starter inclus', included: true },
-      { label: 'Badge "Profil vérifié"', included: true, isNew: true },
-      { label: 'Matching auto avec offres', included: true, isNew: true },
-      { label: 'Replays masterclasses', included: true, isNew: true },
+      { label: 'Badge "Profil vérifié"', included: true},
+      { label: 'Matching auto avec offres', included: true},
+      { label: 'Replays masterclasses', included: true},
       { label: 'Montée en compétence mensuelle', included: false },
       { label: 'Contact direct recruteur', included: false },
       { label: 'Stats avancées + export', included: false },
@@ -91,10 +91,10 @@ const CANDIDATE_TIERS: TierInfo[] = [
     features: [
       { label: 'Candidatures illimitées', included: true },
       { label: 'Tout Pro inclus', included: true },
-      { label: 'Montée en compétence mensuelle', included: true, isNew: true },
-      { label: 'Contact direct recruteurs', included: true, isNew: true },
-      { label: 'Stats avancées + export PDF', included: true, isNew: true },
-      { label: 'Cercle privé top closers', included: true, isNew: true },
+      { label: 'Montée en compétence mensuelle', included: true},
+      { label: 'Contact direct recruteurs', included: true},
+      { label: 'Stats avancées + export PDF', included: true},
+      { label: 'Cercle privé top closers', included: true},
     ],
     loseIfDowngrade: [
       'Montée en compétence mensuelle',
@@ -130,10 +130,10 @@ const RECRUITER_TIERS: TierInfo[] = [
     highlight: 'Recommandé',
     features: [
       { label: '5 offres actives', included: true },
-      { label: '30 contacts / mois', included: true, isNew: true },
-      { label: '1 boost / mois inclus', included: true, isNew: true },
-      { label: 'CVthèque complète', included: true, isNew: true },
-      { label: 'Filtres avancés', included: true, isNew: true },
+      { label: '30 contacts / mois', included: true},
+      { label: '1 boost / mois inclus', included: true},
+      { label: 'CVthèque complète', included: true},
+      { label: 'Filtres avancés', included: true},
       { label: 'Matching IA', included: false },
       { label: 'Analytics avancés', included: false },
       { label: 'Multi-utilisateurs', included: false },
@@ -149,9 +149,9 @@ const RECRUITER_TIERS: TierInfo[] = [
       { label: 'Contacts illimités', included: true },
       { label: 'Boosts illimités', included: true },
       { label: 'Tout Business inclus', included: true },
-      { label: 'Matching IA', included: true, isNew: true },
-      { label: 'Analytics avancés', included: true, isNew: true },
-      { label: 'Multi-utilisateurs', included: true, isNew: true },
+      { label: 'Matching IA', included: true},
+      { label: 'Analytics avancés', included: true},
+      { label: 'Multi-utilisateurs', included: true},
     ],
   },
 ];
@@ -196,13 +196,12 @@ function TierCard({ info, isCurrent }: { info: TierInfo; isCurrent: boolean }) {
           {info.features.map((feature) => (
             <li key={feature.label} className="flex items-start gap-2 text-sm">
               {feature.included ? (
-                <Check className={`h-4 w-4 mt-0.5 shrink-0 ${feature.isNew ? 'text-brand-amber' : 'text-green-500'}`} />
+                <Check className="h-4 w-4 mt-0.5 shrink-0 text-green-500" />
               ) : (
                 <X className="h-4 w-4 text-gray-300 mt-0.5 shrink-0" />
               )}
-              <span className={`${feature.included ? 'text-gray-700' : 'text-gray-400'} ${feature.isNew ? 'font-medium' : ''}`}>
+              <span className={feature.included ? 'text-gray-700' : 'text-gray-400'}>
                 {feature.label}
-                {feature.isNew && <span className="text-xs text-brand-amber ml-1">nouveau</span>}
               </span>
             </li>
           ))}
