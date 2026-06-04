@@ -35,49 +35,46 @@ export const TIER_LIMITS = {
   free: {
     applications_per_month: 3,
     can_see_premium: false,
-    has_tracker: false,         // Tracker de performance quotidien
-    has_cv_performance: false,  // CV de performance partageable
-    has_reputation_score: false, // Score de réputation public
-    has_badge: false,           // Badge "Profil vérifié"
-    has_matching: false,        // Matching auto avec offres
-    has_replays: false,         // Replays masterclasses
-    has_coaching: false,        // Coaching 1:1 mensuel
-    has_direct_contact: false,  // Contact direct recruteurs
-    has_advanced_stats: false,  // Stats avancées + export
-    has_private_circle: false,  // Cercle privé top closers
+    has_tracker: false,
+    has_cv_performance: false,
+    has_reputation_score: false,
+    has_badge: false,
+    has_matching: false,
+    has_masterclass: false,
+    has_replays: false,
+    has_upskill: false,          // Montée en compétence mensuelle
+    has_accounting: false,       // Outils de comptabilité
+    has_direct_contact: false,
   },
   starter: {
-    // Free + outils quotidiens (ancre de rétention clé)
-    applications_per_month: 15,
-    can_see_premium: true,
+    applications_per_month: 6,
+    can_see_premium: false,
     has_tracker: true,
     has_cv_performance: true,
     has_reputation_score: true,
     has_badge: false,
     has_matching: false,
+    has_masterclass: false,
     has_replays: false,
-    has_coaching: false,
+    has_upskill: false,
+    has_accounting: false,
     has_direct_contact: false,
-    has_advanced_stats: false,
-    has_private_circle: false,
   },
   pro: {
-    // Starter + visibilité & formation
-    applications_per_month: Infinity,
+    applications_per_month: 15,
     can_see_premium: true,
     has_tracker: true,
     has_cv_performance: true,
     has_reputation_score: true,
     has_badge: true,
     has_matching: true,
+    has_masterclass: true,
     has_replays: true,
-    has_coaching: false,
+    has_upskill: false,
+    has_accounting: false,
     has_direct_contact: false,
-    has_advanced_stats: false,
-    has_private_circle: false,
   },
   elite: {
-    // Pro + réseau & coaching (tout inclus)
     applications_per_month: Infinity,
     can_see_premium: true,
     has_tracker: true,
@@ -85,11 +82,11 @@ export const TIER_LIMITS = {
     has_reputation_score: true,
     has_badge: true,
     has_matching: true,
+    has_masterclass: true,
     has_replays: true,
-    has_coaching: true,
+    has_upskill: true,
+    has_accounting: true,
     has_direct_contact: true,
-    has_advanced_stats: true,
-    has_private_circle: true,
   },
   // --- Recruteurs ---
   business: { active_offers: 5, contacts_per_month: 30, has_boost: 1, has_matching: false, has_analytics: false, team_members: 1 },
@@ -411,11 +408,12 @@ export function canUserDo(user: User, action: string): boolean {
     'reputation_score': 'has_reputation_score',
     'badge': 'has_badge',
     'matching': 'has_matching',
+    'masterclass': 'has_masterclass',
     'replays': 'has_replays',
-    'access_coaching': 'has_coaching',
+    'upskill': 'has_upskill',
+    'accounting': 'has_accounting',
     'direct_contact': 'has_direct_contact',
-    'advanced_stats': 'has_advanced_stats',
-    'private_circle': 'has_private_circle',
+    'access_coaching': 'has_upskill',
   };
 
   // Check candidature limit
