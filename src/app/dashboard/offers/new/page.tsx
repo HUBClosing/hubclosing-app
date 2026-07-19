@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, Button, Input, Textarea, Select } from '@/components/ui';
 import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle } from 'lucide-react';
-import type { Skill, OfferType } from '@/types/database';
+import type { Skill, OfferType, Questionnaire } from '@/types/database';
 
 const OFFER_TYPES: { value: OfferType; label: string; desc: string }[] = [
   { value: 'challenge', label: 'Challenge', desc: 'Mission courte avec objectif de performance' },
@@ -126,6 +126,21 @@ export default function NewOfferPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [offerType, setOfferType] = useState<OfferType>('challenge');
   const [deadline, setDeadline] = useState('');
+  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<string>('');
+  const [questionnaires, setQuestionnaires] = useState<Questionnaire[]>([]);
+
+  // Charger les questionnaires du recruteur
+  useEffect(() => {
+    async function loadQuestionnaires() {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('questionnaires')
+        .select('id, title')
+        .order('created_at', { ascending: false });
+      setQuestionnaires((data || []) as Questionnaire[]);
+    }
+    loadQuestionnaires();
+  }, []);
 
   // Produits multiples avec commission individuelle
   const [products, setProducts] = useState<ProductLine[]>([
@@ -261,6 +276,7 @@ export default function NewOfferPage() {
       required_experience: experienceRequired,
       required_skills: selectedSkills,
       required_languages: selectedLanguages,
+      questionnaire_id: selectedQuestionnaire || null,
       application_deadline: deadline || null,
       max_applicants: maxApplicants,
       status: 'active',
@@ -583,6 +599,29 @@ export default function NewOfferPage() {
 
             {/* Décompte temps réel */}
             {deadline && <DeadlineCountdown deadline={deadline} />}
+
+            {/* Questionnaire lié */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Questionnaire de qualification
+              </label>
+              <select
+                value={selectedQuestionnaire}
+                onChange={(e) => setSelectedQuestionnaire(e.target.value)}
+                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
+              >
+                <option value="">Aucun questionnaire</option>
+                {questionnaires.map(q => (
+                  <option key={q.id} value={q.id}>{q.title}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400">
+                Le candidat devra remplir ce questionnaire après avoir postulé.{' '}
+                <a href="/dashboard/questionnaires" className="text-brand-amber hover:underline">
+                  Créer un questionnaire
+                </a>
+              </p>
+            </div>
 
             <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
               <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />

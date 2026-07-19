@@ -239,11 +239,13 @@ export interface Offer {
   is_boosted: boolean;
   boost_expires_at: string | null;
   niche: string | null;
+  questionnaire_id: string | null;
   application_deadline: string | null;
   max_applicants: number | null;
   created_at: string;
   updated_at: string;
   manager?: User;
+  questionnaire?: Questionnaire;
 }
 
 export interface Application {
@@ -350,6 +352,41 @@ export interface Message {
   content: string;
   read_at: string | null;
   created_at: string;
+}
+
+// --- Questionnaires ---
+
+export type QuestionType = 'text' | 'mcq' | 'yesno';
+
+export interface Questionnaire {
+  id: string;
+  recruiter_id: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  questions?: QuestionnaireQuestion[];
+}
+
+export interface QuestionnaireQuestion {
+  id: string;
+  questionnaire_id: string;
+  question_text: string;
+  question_type: QuestionType;
+  options: string[];           // Pour QCM : les choix possibles
+  is_required: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface QuestionnaireResponse {
+  id: string;
+  application_id: string;
+  question_id: string;
+  answer_text: string | null;   // Pour texte libre et oui/non
+  answer_options: string[] | null; // Pour QCM : options sélectionnées
+  created_at: string;
+  question?: QuestionnaireQuestion;
 }
 
 export interface Conversation {
