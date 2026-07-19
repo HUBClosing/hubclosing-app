@@ -213,8 +213,9 @@ export default function NewOfferPage() {
     const fixedSalary = formData.get('fixed_salary') ? parseFloat(formData.get('fixed_salary') as string) : null;
     const priceRange = buildPriceRange() || null;
     const niche = (formData.get('niche') as string)?.trim() || null;
-    const location = (formData.get('location') as string)?.trim() || null;
-    const productType = (formData.get('product_type') as string)?.trim() || null;
+    const infoproductName = (formData.get('infoproduct_name') as string)?.trim() || null;
+    const instagramUrl = (formData.get('instagram_url') as string)?.trim() || null;
+    const linkedinUrl = (formData.get('linkedin_url') as string)?.trim() || null;
     const experienceRequired = (formData.get('required_experience') as string) || null;
     const maxApplicants = formData.get('max_applicants') ? parseInt(formData.get('max_applicants') as string) : null;
 
@@ -237,10 +238,10 @@ export default function NewOfferPage() {
       offer_type: offerType,
       commission_rate: commRate,
       fixed_salary: fixedSalary,
-      product_type: productType,
+      product_type: infoproductName,
       product_price_range: priceRange,
       niche,
-      location,
+      location: [instagramUrl, linkedinUrl].filter(Boolean).join(' | ') || null,
       required_experience: experienceRequired,
       required_skills: selectedSkills,
       required_languages: selectedLanguages,
@@ -331,16 +332,26 @@ export default function NewOfferPage() {
             />
 
             <Input
-              name="product_type"
-              label="Type de produit"
-              placeholder="Ex : Formation en ligne, coaching, SaaS..."
+              name="infoproduct_name"
+              label="Nom de l'infoproduit"
+              placeholder="Ex : Formation « Investir en immobilier », Coaching Mindset Pro..."
+              required
             />
 
-            <Input
-              name="location"
-              label="Localisation"
-              placeholder="Remote, Paris, Lyon... (laisser vide = Remote)"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                name="instagram_url"
+                label="Lien Instagram"
+                type="url"
+                placeholder="https://instagram.com/..."
+              />
+              <Input
+                name="linkedin_url"
+                label="Lien LinkedIn"
+                type="url"
+                placeholder="https://linkedin.com/in/..."
+              />
+            </div>
           </CardContent>
         </Card>
 
