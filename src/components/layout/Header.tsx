@@ -2,7 +2,8 @@
 
 import type { User } from '@/types/database';
 import { Avatar } from '@/components/ui';
-import { Menu, Bell } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface HeaderProps {
   user: User;
@@ -26,9 +27,7 @@ export function Header({ user, onMenuToggle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-            <Bell className="h-5 w-5" />
-          </button>
+          <NotificationBell userId={user.id} />
           <Avatar
             src={user.avatar_url}
             fallback={user.full_name || user.email}

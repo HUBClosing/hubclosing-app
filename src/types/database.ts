@@ -23,7 +23,7 @@ export type SubscriptionTier = 'free' | 'starter' | 'business' | 'pro' | 'elite'
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
 
 export type OfferStatus = 'active' | 'paused' | 'closed';
-export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+export type ApplicationStatus = 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'withdrawn';
 export type ExperienceLevel = 'junior' | 'intermediaire' | 'senior' | 'expert';
 export type BadgeLevel = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
 export type CompanySize = 'solo' | 'small' | 'medium' | 'large';
@@ -388,6 +388,68 @@ export interface QuestionnaireResponse {
   created_at: string;
   question?: QuestionnaireQuestion;
 }
+
+// --- Notifications ---
+
+export type NotificationType =
+  | 'new_application'
+  | 'status_change'
+  | 'questionnaire_filled'
+  | 'offer_expiring'
+  | 'message_received'
+  | 'system';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  link: string | null;
+  is_read: boolean;
+  email_sent: boolean;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+/** Labels et couleurs des statuts de candidature */
+export const APPLICATION_STATUS_CONFIG: Record<ApplicationStatus, {
+  label: string;
+  color: string;
+  bgColor: string;
+  description: string;
+}> = {
+  pending: {
+    label: 'En attente',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+    description: 'Candidature reçue, en attente de traitement',
+  },
+  reviewing: {
+    label: 'À étudier',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
+    description: 'Profil en cours d\'examen par le recruteur',
+  },
+  accepted: {
+    label: 'Profil validé',
+    color: 'text-green-700',
+    bgColor: 'bg-green-100',
+    description: 'Le recruteur a validé ce profil',
+  },
+  rejected: {
+    label: 'Non retenu',
+    color: 'text-red-700',
+    bgColor: 'bg-red-100',
+    description: 'Le profil n\'a pas été retenu pour cette offre',
+  },
+  withdrawn: {
+    label: 'Retiré',
+    color: 'text-gray-600',
+    bgColor: 'bg-gray-100',
+    description: 'Le candidat a retiré sa candidature',
+  },
+};
 
 export interface Conversation {
   id: string;

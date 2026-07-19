@@ -444,7 +444,7 @@ export default function QuestionnairesPage() {
         ) : (
           <div className="space-y-3">
             {questionnaires.map((q) => {
-              const questionCount = (q as Record<string, unknown>).questionnaire_questions as { count: number }[] | undefined;
+              const questionCount = (q as unknown as Record<string, unknown>).questionnaire_questions as { count: number }[] | undefined;
               const count = questionCount?.[0]?.count || 0;
               return (
                 <Card key={q.id}>

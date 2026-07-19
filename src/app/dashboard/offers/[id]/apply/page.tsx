@@ -132,6 +132,18 @@ export default function ApplyPage() {
 
     setApplicationId(app.id);
 
+    // Notifier le recruteur de la nouvelle candidature
+    if (offer?.manager_id) {
+      await supabase.from('notifications').insert({
+        user_id: offer.manager_id,
+        type: 'new_application',
+        title: 'Nouvelle candidature',
+        body: `Un candidat a postulé à "${offer.title}".`,
+        link: `/dashboard/offers/${offerId}/candidates/${app.id}`,
+        metadata: { application_id: app.id, offer_id: offerId },
+      });
+    }
+
     // Si l'offre a un questionnaire, passer à l'étape questionnaire
     if (offer?.questionnaire_id) {
       await loadQuestions(offer.questionnaire_id);
@@ -182,6 +194,18 @@ export default function ApplyPage() {
       setError(insertErr.message);
       setSubmitting(false);
       return;
+    }
+
+    // Notifier le recruteur que le questionnaire a été rempli
+    if (offer?.manager_id) {
+      await supabase.from('notifications').insert({
+        user_id: offer.manager_id,
+        type: 'questionnaire_filled',
+        title: 'Questionnaire complété',
+        body: `Un candidat a rempli le questionnaire pour "${offer.title}".`,
+        link: `/dashboard/offers/${offerId}/responses`,
+        metadata: { application_id: applicationId, offer_id: offerId },
+      });
     }
 
     setStep('done');
