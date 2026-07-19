@@ -231,6 +231,19 @@ export default function NewOfferPage() {
       return;
     }
 
+    if (selectedLanguages.length === 0) {
+      setError('Sélectionnez au moins une langue requise.');
+      setLoading(false);
+      return;
+    }
+
+    const hasValidProduct = products.some(p => p.name.trim() && p.price.trim());
+    if (!hasValidProduct) {
+      setError('Ajoutez au moins un produit avec un nom et un prix.');
+      setLoading(false);
+      return;
+    }
+
     const { error: insertError } = await supabase.from('offers').insert({
       manager_id: user.id,
       title,
@@ -329,6 +342,7 @@ export default function NewOfferPage() {
               label="Niche / Secteur"
               placeholder="Ex : Immobilier, Crypto, Coaching, E-commerce, Santé..."
               helperText="Écrivez librement le secteur de votre offre"
+              required
             />
 
             <Input
@@ -373,6 +387,7 @@ export default function NewOfferPage() {
               placeholder="Ex : 10"
               value={commissionRate}
               onChange={(e) => setCommissionRate(e.target.value)}
+              required
             />
 
             {offerType === 'recurring' && (
@@ -390,7 +405,7 @@ export default function NewOfferPage() {
             {/* Produits multiples */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
-                Produits à vendre
+                Produits à vendre <span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-gray-400">
                 Ajoutez chaque produit/offre avec son prix. Le candidat saura exactement ce qu&apos;il vendra.
@@ -405,6 +420,7 @@ export default function NewOfferPage() {
                         placeholder={`Produit ${idx + 1} — nom`}
                         value={product.name}
                         onChange={(e) => updateProduct(product.id, 'name', e.target.value)}
+                        required={idx === 0}
                         className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
                       />
                       <div className="relative">
@@ -415,6 +431,7 @@ export default function NewOfferPage() {
                           min="0"
                           value={product.price}
                           onChange={(e) => updateProduct(product.id, 'price', e.target.value)}
+                          required={idx === 0}
                           className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">€</span>
@@ -491,14 +508,15 @@ export default function NewOfferPage() {
             <Select
               name="required_experience"
               label="Niveau d'expérience requis"
-              placeholder="Tous niveaux"
+              placeholder="Sélectionner..."
               options={EXPERIENCE_LEVELS}
+              required
             />
 
             {/* Languages multi-select */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Langues requises
+                Langues requises <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {LANGUAGES.map((lang) => {
@@ -539,15 +557,15 @@ export default function NewOfferPage() {
                 min={new Date().toISOString().split('T')[0]}
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                helperText="Laissez vide pour aucune limite"
+                required
               />
               <Input
                 name="max_applicants"
                 label="Nombre maximum de candidats"
                 type="number"
                 min="1"
-                placeholder="Illimité"
-                helperText="Laissez vide pour illimité"
+                placeholder="Ex : 10"
+                required
               />
             </div>
 
