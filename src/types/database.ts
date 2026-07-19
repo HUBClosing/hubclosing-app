@@ -214,7 +214,7 @@ export interface ManagerProfile {
   updated_at: string;
 }
 
-export type OfferType = 'full_time' | 'part_time' | 'mission' | 'commission_only';
+export type OfferType = 'challenge' | 'recurring' | 'mission' | 'full_time' | 'part_time' | 'commission_only';
 
 export interface Offer {
   id: string;

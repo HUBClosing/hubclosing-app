@@ -1,30 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, Button, Input, Textarea, Select } from '@/components/ui';
-import { ArrowLeft, Send, Info, Crown } from 'lucide-react';
+import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle } from 'lucide-react';
 import type { Skill, OfferType } from '@/types/database';
 
-const OFFER_TYPES: { value: OfferType; label: string }[] = [
-  { value: 'commission_only', label: 'Commission uniquement' },
-  { value: 'full_time', label: 'Temps plein (fixe + commission)' },
-  { value: 'part_time', label: 'Temps partiel' },
-  { value: 'mission', label: 'Mission ponctuelle' },
-];
-
-const NICHES = [
-  'Immobilier',
-  'Bourse / Trading',
-  'Crypto / Blockchain',
-  'Coaching / Développement personnel',
-  'E-commerce / Dropshipping',
-  'Marketing digital',
-  'Santé / Bien-être',
-  'Finance / Investissement',
-  'Formation professionnelle',
-  'Autre',
+const OFFER_TYPES: { value: OfferType; label: string; desc: string }[] = [
+  { value: 'challenge', label: 'Challenge', desc: 'Mission courte avec objectif de performance' },
+  { value: 'recurring', label: 'Recurring à l\'année', desc: 'Collaboration longue durée, récurrente' },
+  { value: 'mission', label: 'Mission ponctuelle', desc: 'Mission unique avec début et fin définis' },
 ];
 
 const SKILLS: { value: Skill; label: string }[] = [
@@ -51,19 +37,130 @@ const LANGUAGES = [
   { value: 'Portugais', label: 'Portugais' },
 ];
 
+interface ProductLine {
+  id: string;
+  name: string;
+  price: string;
+}
+
+function DeadlineCountdown({ deadline }: { deadline: string }) {
+  const [timeLeft, setTimeLeft] = useState('');
+  const [urgency, setUrgency] = useState<'normal' | 'soon' | 'urgent' | 'expired'>('normal');
+
+  const computeCountdown = useCallback(() => {
+    const now = new Date();
+    const end = new Date(deadline + 'T23:59:59');
+    const diff = end.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      setTimeLeft('Expirée');
+      setUrgency('expired');
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    if (days > 7) {
+      setTimeLeft(`${days}j ${hours}h restants`);
+      setUrgency('normal');
+    } else if (days > 3) {
+      setTimeLeft(`${days}j ${hours}h ${minutes}min restants`);
+      setUrgency('soon');
+    } else if (days > 0) {
+      setTimeLeft(`${days}j ${hours}h ${minutes}min restants`);
+      setUrgency('urgent');
+    } else {
+      setTimeLeft(`${hours}h ${minutes}min ${seconds}s restants`);
+      setUrgency('urgent');
+    }
+  }, [deadline]);
+
+  useEffect(() => {
+    computeCountdown();
+    const interval = setInterval(computeCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [computeCountdown]);
+
+  if (!deadline) return null;
+
+  const styles = {
+    normal: 'bg-blue-50 border-blue-200 text-blue-700',
+    soon: 'bg-amber-50 border-amber-200 text-amber-700',
+    urgent: 'bg-orange-50 border-orange-200 text-orange-700',
+    expired: 'bg-red-50 border-red-200 text-red-700',
+  };
+
+  const iconStyles = {
+    normal: 'text-blue-500',
+    soon: 'text-amber-500',
+    urgent: 'text-orange-500',
+    expired: 'text-red-500',
+  };
+
+  return (
+    <div className={`flex items-center gap-2 p-3 rounded-lg border ${styles[urgency]}`}>
+      {urgency === 'expired' ? (
+        <AlertTriangle className={`h-4 w-4 shrink-0 ${iconStyles[urgency]}`} />
+      ) : (
+        <Timer className={`h-4 w-4 shrink-0 ${iconStyles[urgency]}`} />
+      )}
+      <div className="flex-1">
+        <span className="text-sm font-semibold tabular-nums">{timeLeft}</span>
+        <span className="text-xs opacity-75 ml-2">
+          pour candidater (fin le {new Date(deadline).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })})
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function NewOfferPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [offerType, setOfferType] = useState<OfferType>('commission_only');
+  const [offerType, setOfferType] = useState<OfferType>('challenge');
   const [commissionRate, setCommissionRate] = useState('');
-  const [productPrice, setProductPrice] = useState('');
+  const [deadline, setDeadline] = useState('');
 
-  // Auto-qualification premium
-  const isPremiumPreview = (parseFloat(commissionRate) || 0) >= 12 &&
-    (parseFloat(productPrice) || 0) >= 5000;
+  // Produits multiples
+  const [products, setProducts] = useState<ProductLine[]>([
+    { id: '1', name: '', price: '' },
+  ]);
+
+  const addProduct = () => {
+    setProducts(prev => [...prev, { id: Date.now().toString(), name: '', price: '' }]);
+  };
+
+  const removeProduct = (id: string) => {
+    if (products.length <= 1) return;
+    setProducts(prev => prev.filter(p => p.id !== id));
+  };
+
+  const updateProduct = (id: string, field: 'name' | 'price', value: string) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
+  };
+
+  // Auto-qualification premium : regarde le prix max parmi tous les produits
+  const maxProductPrice = Math.max(...products.map(p => parseFloat(p.price) || 0), 0);
+  const isPremiumPreview = (parseFloat(commissionRate) || 0) >= 12 && maxProductPrice >= 5000;
+
+  // Concaténer les produits en une string pour product_price_range
+  const buildPriceRange = (): string => {
+    return products
+      .filter(p => p.name.trim() || p.price.trim())
+      .map(p => {
+        const parts = [];
+        if (p.name.trim()) parts.push(p.name.trim());
+        if (p.price.trim()) parts.push(`${parseFloat(p.price).toLocaleString('fr-FR')}€`);
+        return parts.join(' : ');
+      })
+      .join(' | ');
+  };
 
   const toggleSkill = (skill: Skill) => {
     setSelectedSkills(prev =>
@@ -112,14 +209,13 @@ export default function NewOfferPage() {
 
     const title = (formData.get('title') as string).trim();
     const description = (formData.get('description') as string).trim();
-    const commRate = formData.get('commission_rate') ? parseFloat(formData.get('commission_rate') as string) : null;
+    const commRate = commissionRate ? parseFloat(commissionRate) : null;
     const fixedSalary = formData.get('fixed_salary') ? parseFloat(formData.get('fixed_salary') as string) : null;
-    const priceRange = (formData.get('product_price_range') as string)?.trim() || null;
-    const niche = (formData.get('niche') as string) || null;
+    const priceRange = buildPriceRange() || null;
+    const niche = (formData.get('niche') as string)?.trim() || null;
     const location = (formData.get('location') as string)?.trim() || null;
     const productType = (formData.get('product_type') as string)?.trim() || null;
     const experienceRequired = (formData.get('required_experience') as string) || null;
-    const deadline = (formData.get('application_deadline') as string) || null;
     const maxApplicants = formData.get('max_applicants') ? parseInt(formData.get('max_applicants') as string) : null;
 
     if (!title || !description) {
@@ -197,21 +293,42 @@ export default function NewOfferPage() {
               required
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Select
-                name="offer_type"
-                label="Type de contrat"
-                value={offerType}
-                onChange={(e) => setOfferType(e.target.value as OfferType)}
-                options={OFFER_TYPES}
-              />
-              <Select
-                name="niche"
-                label="Niche / Secteur"
-                placeholder="Sélectionner..."
-                options={NICHES.map(n => ({ value: n, label: n }))}
-              />
+            {/* Type de contrat — boutons radio visuels */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Type de contrat <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {OFFER_TYPES.map((type) => {
+                  const isSelected = offerType === type.value;
+                  return (
+                    <button
+                      key={type.value}
+                      type="button"
+                      onClick={() => setOfferType(type.value)}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        isSelected
+                          ? 'bg-brand-dark text-white border-brand-dark'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-brand-dark'
+                      }`}
+                    >
+                      <span className="text-sm font-medium block">{type.label}</span>
+                      <span className={`text-xs block mt-0.5 ${isSelected ? 'text-white/70' : 'text-gray-400'}`}>
+                        {type.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Niche — champ libre */}
+            <Input
+              name="niche"
+              label="Niche / Secteur"
+              placeholder="Ex : Immobilier, Crypto, Coaching, E-commerce, Santé..."
+              helperText="Écrivez librement le secteur de votre offre"
+            />
 
             <Input
               name="product_type"
@@ -227,46 +344,92 @@ export default function NewOfferPage() {
           </CardContent>
         </Card>
 
-        {/* Section 2 : Rémunération */}
+        {/* Section 2 : Rémunération & Produits */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h2 className="text-base font-semibold text-brand-dark flex items-center gap-2">
               <div className="h-6 w-6 rounded-full bg-brand-amber/10 text-brand-amber text-xs font-bold flex items-center justify-center">2</div>
-              Rémunération
+              Rémunération et produits
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                name="commission_rate"
-                label="Taux de commission (%)"
-                type="number"
-                step="0.5"
-                min="0"
-                max="100"
-                placeholder="Ex : 10"
-                value={commissionRate}
-                onChange={(e) => setCommissionRate(e.target.value)}
-              />
-              {(offerType === 'full_time' || offerType === 'part_time') && (
-                <Input
-                  name="fixed_salary"
-                  label="Salaire fixe mensuel (€)"
-                  type="number"
-                  step="100"
-                  min="0"
-                  placeholder="Ex : 2000"
-                />
-              )}
-            </div>
-
             <Input
-              name="product_price_range"
-              label="Prix du produit / Fourchette"
-              placeholder="Ex : 2 000€ - 5 000€"
-              value={productPrice}
-              onChange={(e) => setProductPrice(e.target.value)}
-              helperText="Indiquez le prix ou la fourchette de prix du produit à vendre"
+              name="commission_rate"
+              label="Taux de commission (%)"
+              type="number"
+              step="0.5"
+              min="0"
+              max="100"
+              placeholder="Ex : 10"
+              value={commissionRate}
+              onChange={(e) => setCommissionRate(e.target.value)}
             />
+
+            {offerType === 'recurring' && (
+              <Input
+                name="fixed_salary"
+                label="Salaire fixe mensuel (€)"
+                type="number"
+                step="100"
+                min="0"
+                placeholder="Ex : 2000"
+                helperText="Optionnel — rémunération fixe en plus de la commission"
+              />
+            )}
+
+            {/* Produits multiples */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Produits à vendre
+              </label>
+              <p className="text-xs text-gray-400">
+                Ajoutez chaque produit/offre avec son prix. Le candidat saura exactement ce qu&apos;il vendra.
+              </p>
+
+              <div className="space-y-2">
+                {products.map((product, idx) => (
+                  <div key={product.id} className="flex items-center gap-2">
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder={`Produit ${idx + 1} — nom`}
+                        value={product.name}
+                        onChange={(e) => updateProduct(product.id, 'name', e.target.value)}
+                        className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
+                      />
+                      <div className="relative">
+                        <input
+                          type="number"
+                          placeholder="Prix (€)"
+                          step="100"
+                          min="0"
+                          value={product.price}
+                          onChange={(e) => updateProduct(product.id, 'price', e.target.value)}
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">€</span>
+                      </div>
+                    </div>
+                    {products.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeProduct(product.id)}
+                        className="shrink-0 h-9 w-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={addProduct}
+                className="flex items-center gap-1.5 text-sm text-brand-dark hover:text-brand-amber transition-colors font-medium"
+              >
+                <Plus className="h-4 w-4" /> Ajouter un produit
+              </button>
+            </div>
 
             {/* Preview premium */}
             {isPremiumPreview && (
@@ -349,7 +512,7 @@ export default function NewOfferPage() {
           </CardContent>
         </Card>
 
-        {/* Section 4 : Paramètres */}
+        {/* Section 4 : Paramètres + Décompte */}
         <Card>
           <CardContent className="p-6 space-y-4">
             <h2 className="text-base font-semibold text-brand-dark flex items-center gap-2">
@@ -363,6 +526,8 @@ export default function NewOfferPage() {
                 label="Date limite de candidature"
                 type="date"
                 min={new Date().toISOString().split('T')[0]}
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
                 helperText="Laissez vide pour aucune limite"
               />
               <Input
@@ -375,10 +540,13 @@ export default function NewOfferPage() {
               />
             </div>
 
+            {/* Décompte temps réel */}
+            {deadline && <DeadlineCountdown deadline={deadline} />}
+
             <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
               <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">
-                L&apos;offre sera visible immédiatement dans la marketplace. Vous pourrez la mettre en pause ou la fermer à tout moment depuis votre tableau de bord.
+                L&apos;offre sera visible immédiatement dans la marketplace. Les candidats verront le décompte en temps réel. Vous pourrez la mettre en pause ou la fermer à tout moment.
               </p>
             </div>
           </CardContent>
