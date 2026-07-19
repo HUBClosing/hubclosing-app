@@ -41,6 +41,7 @@ interface ProductLine {
   id: string;
   name: string;
   price: string;
+  commission: string; // Taux de commission propre au produit (%)
 }
 
 function DeadlineCountdown({ deadline }: { deadline: string }) {
@@ -124,16 +125,15 @@ export default function NewOfferPage() {
   const [selectedSkills, setSelectedSkills] = useState<Skill[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [offerType, setOfferType] = useState<OfferType>('challenge');
-  const [commissionRate, setCommissionRate] = useState('');
   const [deadline, setDeadline] = useState('');
 
-  // Produits multiples
+  // Produits multiples avec commission individuelle
   const [products, setProducts] = useState<ProductLine[]>([
-    { id: '1', name: '', price: '' },
+    { id: '1', name: '', price: '', commission: '' },
   ]);
 
   const addProduct = () => {
-    setProducts(prev => [...prev, { id: Date.now().toString(), name: '', price: '' }]);
+    setProducts(prev => [...prev, { id: Date.now().toString(), name: '', price: '', commission: '' }]);
   };
 
   const removeProduct = (id: string) => {
@@ -141,15 +141,16 @@ export default function NewOfferPage() {
     setProducts(prev => prev.filter(p => p.id !== id));
   };
 
-  const updateProduct = (id: string, field: 'name' | 'price', value: string) => {
+  const updateProduct = (id: string, field: 'name' | 'price' | 'commission', value: string) => {
     setProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
-  // Auto-qualification premium : regarde le prix max parmi tous les produits
+  // Auto-qualification premium : regarde si AU MOINS UN produit a commission >= 12% ET prix >= 5000€
+  const maxProductCommission = Math.max(...products.map(p => parseFloat(p.commission) || 0), 0);
   const maxProductPrice = Math.max(...products.map(p => parseFloat(p.price) || 0), 0);
-  const isPremiumPreview = (parseFloat(commissionRate) || 0) >= 12 && maxProductPrice >= 5000;
+  const isPremiumPreview = maxProductCommission >= 12 && maxProductPrice >= 5000;
 
-  // Concaténer les produits en une string pour product_price_range
+  // Concaténer les produits en une string pour product_price_range (inclut commission par produit)
   const buildPriceRange = (): string => {
     return products
       .filter(p => p.name.trim() || p.price.trim())
@@ -157,6 +158,7 @@ export default function NewOfferPage() {
         const parts = [];
         if (p.name.trim()) parts.push(p.name.trim());
         if (p.price.trim()) parts.push(`${parseFloat(p.price).toLocaleString('fr-FR')}€`);
+        if (p.commission.trim()) parts.push(`${p.commission}%`);
         return parts.join(' : ');
       })
       .join(' | ');
@@ -209,7 +211,8 @@ export default function NewOfferPage() {
 
     const title = (formData.get('title') as string).trim();
     const description = (formData.get('description') as string).trim();
-    const commRate = commissionRate ? parseFloat(commissionRate) : null;
+    // Commission stockée en BDD = max parmi tous les produits (les détails par produit sont dans product_price_range)
+    const commRate = maxProductCommission > 0 ? maxProductCommission : null;
     const fixedSalary = formData.get('fixed_salary') ? parseFloat(formData.get('fixed_salary') as string) : null;
     const priceRange = buildPriceRange() || null;
     const niche = (formData.get('niche') as string)?.trim() || null;
@@ -237,9 +240,9 @@ export default function NewOfferPage() {
       return;
     }
 
-    const hasValidProduct = products.some(p => p.name.trim() && p.price.trim());
+    const hasValidProduct = products.some(p => p.name.trim() && p.price.trim() && p.commission.trim());
     if (!hasValidProduct) {
-      setError('Ajoutez au moins un produit avec un nom et un prix.');
+      setError('Ajoutez au moins un produit complet (nom, prix et taux de commission).');
       setLoading(false);
       return;
     }
@@ -377,19 +380,6 @@ export default function NewOfferPage() {
               Rémunération et produits
             </h2>
 
-            <Input
-              name="commission_rate"
-              label="Taux de commission (%)"
-              type="number"
-              step="0.5"
-              min="0"
-              max="100"
-              placeholder="Ex : 10"
-              value={commissionRate}
-              onChange={(e) => setCommissionRate(e.target.value)}
-              required
-            />
-
             {offerType === 'recurring' && (
               <Input
                 name="fixed_salary"
@@ -402,19 +392,27 @@ export default function NewOfferPage() {
               />
             )}
 
-            {/* Produits multiples */}
+            {/* Produits multiples avec commission individuelle */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Produits à vendre <span className="text-red-500">*</span>
               </label>
               <p className="text-xs text-gray-400">
-                Ajoutez chaque produit/offre avec son prix. Le candidat saura exactement ce qu&apos;il vendra.
+                Ajoutez chaque produit/offre avec son prix et son taux de commission. Chaque produit peut avoir un taux différent.
               </p>
+
+              {/* En-têtes des colonnes */}
+              <div className="hidden sm:grid grid-cols-[1fr_120px_100px_36px] gap-2 px-1">
+                <span className="text-xs text-gray-400 font-medium">Nom du produit</span>
+                <span className="text-xs text-gray-400 font-medium">Prix</span>
+                <span className="text-xs text-gray-400 font-medium">Commission</span>
+                <span></span>
+              </div>
 
               <div className="space-y-2">
                 {products.map((product, idx) => (
                   <div key={product.id} className="flex items-center gap-2">
-                    <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-[1fr_120px_100px] gap-2">
                       <input
                         type="text"
                         placeholder={`Produit ${idx + 1} — nom`}
@@ -426,7 +424,7 @@ export default function NewOfferPage() {
                       <div className="relative">
                         <input
                           type="number"
-                          placeholder="Prix (€)"
+                          placeholder="Prix"
                           step="100"
                           min="0"
                           value={product.price}
@@ -435,6 +433,20 @@ export default function NewOfferPage() {
                           className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">€</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          placeholder="Taux"
+                          step="0.5"
+                          min="0"
+                          max="100"
+                          value={product.commission}
+                          onChange={(e) => updateProduct(product.id, 'commission', e.target.value)}
+                          required={idx === 0}
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-8 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">%</span>
                       </div>
                     </div>
                     {products.length > 1 && (
