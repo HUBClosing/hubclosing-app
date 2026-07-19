@@ -81,6 +81,7 @@ const candidateLinks: NavLink[] = [
 const recruiterLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
+  { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'business' },
   { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
