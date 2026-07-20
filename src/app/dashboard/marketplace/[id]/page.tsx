@@ -84,10 +84,12 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
   const daysLeft = deadline ? differenceInDays(deadline, new Date()) : null;
 
   // Show apply button for candidates who haven't applied yet
+  const isExpired = daysLeft !== null && daysLeft < 0;
   const canApply = (user.role_type === 'candidate' || user.role_type === 'both')
     && user.active_role === 'candidate'
     && offer.status === 'active'
-    && !existingApp;
+    && !existingApp
+    && !isExpired;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

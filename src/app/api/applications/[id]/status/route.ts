@@ -5,6 +5,16 @@ import type { ApplicationStatus } from '@/types/database';
 
 const VALID_STATUSES: ApplicationStatus[] = ['pending', 'reviewing', 'accepted', 'rejected', 'completed'];
 
+// Transitions autorisées : from → [to, to, ...]
+const ALLOWED_TRANSITIONS: Record<string, ApplicationStatus[]> = {
+  pending: ['reviewing', 'rejected'],
+  reviewing: ['accepted', 'rejected'],
+  accepted: ['completed', 'rejected'],
+  rejected: [],       // Terminal
+  withdrawn: [],      // Terminal
+  completed: [],      // Terminal
+};
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -41,9 +51,18 @@ export async function PATCH(
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const oldStatus = application.status;
+  const oldStatus = application.status as string;
   if (oldStatus === newStatus) {
     return NextResponse.json({ message: 'Statut inchangé' });
+  }
+
+  // Vérifier que la transition est autorisée
+  const allowed = ALLOWED_TRANSITIONS[oldStatus] || [];
+  if (!allowed.includes(newStatus)) {
+    return NextResponse.json(
+      { error: `Transition "${oldStatus}" → "${newStatus}" non autorisée` },
+      { status: 400 }
+    );
   }
 
   // Mettre à jour le statut
@@ -53,7 +72,8 @@ export async function PATCH(
     .eq('id', params.id);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    console.error('[status] update error:', updateError.message);
+    return NextResponse.json({ error: 'Erreur lors de la mise à jour du statut' }, { status: 500 });
   }
 
   const statusConfig = APPLICATION_STATUS_CONFIG[newStatus];
@@ -81,11 +101,8 @@ export async function PATCH(
     .single();
 
   // TODO: Intégrer un service d'email (Resend, SendGrid, etc.)
-  console.log('[EMAIL] Notification statut candidature:', {
-    to: candidateUser?.email,
-    subject: `HUBClosing — Votre candidature est "${statusConfig.label}"`,
-    body: `Bonjour ${candidateUser?.full_name || ''},\n\nVotre candidature pour "${offer.title}" est passée au statut "${statusConfig.label}".\n\n${statusConfig.description}\n\nConnectez-vous pour voir les détails : https://hubclosing.fr/dashboard/candidatures`,
-  });
+  // Note: on ne log PAS l'email du candidat (PII)
+  console.log('[EMAIL] Notification statut candidature envoyée pour application:', params.id);
 
   // Si la collaboration est terminée → envoyer une demande d'avis aux deux parties
   if (newStatus === 'completed') {

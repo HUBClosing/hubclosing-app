@@ -35,6 +35,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Vous ne pouvez pas vous noter vous-même' }, { status: 400 });
   }
 
+  // Valider les sous-notes (1-5 si fournies)
+  const subRatings = [rating_reactivity, rating_quality, rating_communication, rating_results];
+  for (const sr of subRatings) {
+    if (sr !== undefined && sr !== null && (sr < 1 || sr > 5)) {
+      return NextResponse.json({ error: 'Les sous-notes doivent être entre 1 et 5' }, { status: 400 });
+    }
+  }
+
+  // Valider longueur commentaire
+  if (comment && comment.length > 2000) {
+    return NextResponse.json({ error: 'Commentaire trop long (2000 car. max)' }, { status: 400 });
+  }
+
   // Vérifier que la candidature existe et est 'completed'
   const { data: application } = await supabase
     .from('applications')
@@ -58,6 +71,12 @@ export async function POST(request: NextRequest) {
 
   if (!isRecruiter && !isCandidate) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+  }
+
+  // Vérifier que reviewed_id est bien la contrepartie (pas un user arbitraire)
+  const expectedReviewedId = isRecruiter ? application.closer_id : offer.manager_id;
+  if (reviewed_id !== expectedReviewedId) {
+    return NextResponse.json({ error: 'Vous ne pouvez noter que votre contrepartie dans cette collaboration' }, { status: 403 });
   }
 
   // Vérifier qu'un avis n'existe pas déjà
@@ -94,7 +113,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (insertError) {
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    console.error('[reviews] insert error:', insertError.message);
+    return NextResponse.json({ error: 'Erreur lors de la création de l\'avis' }, { status: 500 });
   }
 
   // Recalculer le score moyen du profil noté

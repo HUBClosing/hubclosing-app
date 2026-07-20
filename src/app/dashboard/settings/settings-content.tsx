@@ -88,6 +88,7 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
   // ── UI state ──
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState('');
   const [savingNotif, setSavingNotif] = useState(false);
   const [notifSaved, setNotifSaved] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -121,9 +122,10 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
 
   const saveProfile = async () => {
     setSavingProfile(true);
+    setProfileError('');
     try {
       // Update users table
-      await supabase
+      const { error: userErr } = await supabase
         .from('users')
         .update({
           full_name: fullName.trim() || null,
@@ -135,11 +137,17 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
         })
         .eq('id', user.id);
 
+      if (userErr) {
+        setProfileError('Erreur lors de la sauvegarde du profil utilisateur');
+        console.error('Save user error:', userErr.message);
+        return;
+      }
+
       // Update profiles table
-      await supabase
+      const { error: profileErr } = await supabase
         .from('profiles')
         .update({
-          bio: bio.trim() || null,
+          bio: (bio.trim() || '').slice(0, 500) || null,
           linkedin_url: linkedinUrl.trim() || null,
           portfolio_url: portfolioUrl.trim() || null,
           website_url: websiteUrl.trim() || null,
@@ -156,10 +164,17 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
         })
         .eq('user_id', user.id);
 
+      if (profileErr) {
+        setProfileError('Erreur lors de la sauvegarde du profil détaillé');
+        console.error('Save profile error:', profileErr.message);
+        return;
+      }
+
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
       router.refresh();
     } catch (err) {
+      setProfileError('Erreur inattendue');
       console.error('Save profile error:', err);
     } finally {
       setSavingProfile(false);
@@ -310,12 +325,23 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
-                <Globe className="h-3.5 w-3.5" /> Portfolio / Site
+                <Globe className="h-3.5 w-3.5" /> Portfolio
               </label>
               <input
-                value={portfolioUrl || websiteUrl}
-                onChange={(e) => { setPortfolioUrl(e.target.value); setWebsiteUrl(e.target.value); }}
-                placeholder="https://..."
+                value={portfolioUrl}
+                onChange={(e) => setPortfolioUrl(e.target.value)}
+                placeholder="https://monportfolio.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                <Globe className="h-3.5 w-3.5" /> Site web
+              </label>
+              <input
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                placeholder="https://monsite.com"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
               />
             </div>
@@ -528,6 +554,9 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
               )}
               {profileSaved ? 'Profil sauvegardé !' : 'Sauvegarder le profil'}
             </button>
+            {profileError && (
+              <p className="text-sm text-red-500 mt-2">{profileError}</p>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -384,7 +384,7 @@ function CandidateCard({ candidate }: { candidate: CandidateProfile }) {
         <CardContent className="p-5">
           {/* Header : avatar + name + badge */}
           <div className="flex items-start gap-3 mb-3">
-            <Avatar src={u.avatar_url} fallback={u.full_name || u.email} size="lg" />
+            <Avatar src={u.avatar_url} fallback={u.full_name || 'Anonyme'} size="lg" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-brand-dark truncate">{u.full_name || 'Anonyme'}</h3>

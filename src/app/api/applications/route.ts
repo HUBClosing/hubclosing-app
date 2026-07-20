@@ -27,11 +27,31 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
   }
 
-  const body = await request.json();
+  // ── Vérification rôle candidat ──
+  const isCandidate =
+    user.role_type === 'candidate' ||
+    (user.role_type === 'both' && user.active_role === 'candidate') ||
+    user.role_type === 'admin';
+
+  if (!isCandidate) {
+    return NextResponse.json({ error: 'Seuls les candidats peuvent postuler' }, { status: 403 });
+  }
+
+  let body: { offer_id?: string; cover_letter?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Corps de requête invalide' }, { status: 400 });
+  }
   const { offer_id, cover_letter } = body;
 
   if (!offer_id) {
     return NextResponse.json({ error: 'offer_id requis' }, { status: 400 });
+  }
+
+  // Validation longueur cover_letter (max 5000 caractères)
+  if (cover_letter && cover_letter.length > 5000) {
+    return NextResponse.json({ error: 'Lettre de motivation trop longue (5000 car. max)' }, { status: 400 });
   }
 
   // Récupérer l'offre
@@ -121,7 +141,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (insertErr) {
-    return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    console.error('[applications] insert error:', insertErr.message);
+    return NextResponse.json({ error: 'Erreur lors de la création de la candidature' }, { status: 500 });
   }
 
   // ── Incrémenter le compteur mensuel ──
@@ -206,7 +227,8 @@ export async function PATCH(request: NextRequest) {
     .eq('id', application_id);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    console.error('[applications] withdraw error:', updateError.message);
+    return NextResponse.json({ error: 'Erreur lors du retrait de la candidature' }, { status: 500 });
   }
 
   // Décrémenter le compteur mensuel (rendre la candidature)

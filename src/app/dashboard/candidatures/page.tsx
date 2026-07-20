@@ -31,7 +31,8 @@ export default async function CandidaturesPage() {
       )
     `)
     .eq('closer_id', user.id)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(100);
 
   return (
     <div className="space-y-6">

@@ -25,12 +25,13 @@ export default async function CvthequePage() {
     .select(`
       *,
       user:users!user_id(
-        id, full_name, avatar_url, email, skills, niches,
+        id, full_name, avatar_url, skills, niches,
         years_experience, role_type, active_role, tier, is_active, created_at
       )
     `)
     .eq('is_public', true)
-    .order('score', { ascending: false });
+    .order('score', { ascending: false })
+    .limit(300);
 
   // Filtrer : garder uniquement les candidats actifs
   const candidates = (profiles || []).filter((p: any) => {

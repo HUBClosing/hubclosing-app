@@ -6,8 +6,9 @@ import {
   ArrowLeft, Star, Shield, Trophy, Crown, Gem,
   Briefcase, DollarSign, Phone, Handshake, TrendingUp,
   MapPin, Linkedin, Globe, CheckCircle2, XCircle,
-  Video, ExternalLink, MessageSquare, Lock, Mail,
+  Video, ExternalLink,
 } from 'lucide-react';
+import { ContactButton } from './contact-button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { BadgeLevel, ExperienceLevel, Skill, PortfolioEntry, PortfolioVideo, Review } from '@/types/database';
@@ -72,7 +73,7 @@ export default async function CandidateProfilePage({ params }: { params: Promise
     .select(`
       *,
       user:users!user_id(
-        id, full_name, avatar_url, email, skills, niches,
+        id, full_name, avatar_url, skills, niches,
         years_experience, role_type, active_role, tier, is_active, created_at
       )
     `)
@@ -145,7 +146,7 @@ export default async function CandidateProfilePage({ params }: { params: Promise
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <Avatar src={candidate.avatar_url} fallback={candidate.full_name || candidate.email} size="lg" className="!h-20 !w-20 !text-2xl" />
+            <Avatar src={candidate.avatar_url} fallback={candidate.full_name || 'Anonyme'} size="lg" className="!h-20 !w-20 !text-2xl" />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
@@ -209,33 +210,12 @@ export default async function CandidateProfilePage({ params }: { params: Promise
 
             {/* CTA Contact */}
             <div className="shrink-0 sm:text-right">
-              {existingConv ? (
-                <a
-                  href={`/dashboard/messages`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white rounded-lg font-medium text-sm hover:bg-brand-dark transition-colors"
-                >
-                  <MessageSquare className="h-4 w-4" /> Voir la conversation
-                </a>
-              ) : canContact ? (
-                <a
-                  href={`/api/contacts?candidate_id=${id}`}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-green text-white rounded-lg font-medium text-sm hover:bg-brand-dark transition-colors"
-                >
-                  <Mail className="h-4 w-4" /> Contacter ce candidat
-                </a>
-              ) : (
-                <div className="text-center">
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed">
-                    <Lock className="h-4 w-4" /> Quota contacts atteint
-                  </div>
-                  <a href="/dashboard/subscription" className="block text-xs text-brand-amber hover:underline mt-2 font-medium">
-                    Augmenter mon quota →
-                  </a>
-                </div>
-              )}
-              {canContact && remainingContacts !== Infinity && (
-                <p className="text-xs text-gray-400 mt-2">{remainingContacts} contact{remainingContacts > 1 ? 's' : ''} restant{remainingContacts > 1 ? 's' : ''}</p>
-              )}
+              <ContactButton
+                candidateId={id}
+                canContact={canContact}
+                hasExistingConversation={!!existingConv}
+                remainingContacts={remainingContacts}
+              />
             </div>
           </div>
         </CardContent>

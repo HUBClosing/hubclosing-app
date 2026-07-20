@@ -1,32 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getRemainingContacts, TIER_LIMITS } from '@/types/database';
+import { getRemainingContacts } from '@/types/database';
+
+// UUID v4 regex pour validation
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * GET /api/contacts?candidate_id=xxx
+ * POST /api/contacts
+ * Body: { candidate_id: string }
  *
- * Initie un contact avec un candidat :
- * 1. Vérifie que l'utilisateur est recruteur
- * 2. Vérifie le quota contacts_per_month
- * 3. Crée ou récupère la conversation existante
- * 4. Incrémente monthly_contacts_count
- * 5. Redirige vers /dashboard/messages
+ * Initie un contact avec un candidat (MÉTHODE POST — pas GET pour éviter CSRF) :
+ * 1. Valide le format UUID du candidate_id
+ * 2. Vérifie que l'utilisateur est recruteur
+ * 3. Vérifie si une conversation existe déjà
+ * 4. Vérifie le quota contacts_per_month
+ * 5. Crée la conversation + incrémente le compteur (atomique via RPC ou double-check)
+ * 6. Notifie le candidat
  */
-export async function GET(request: NextRequest) {
-  const candidateId = request.nextUrl.searchParams.get('candidate_id');
-
-  if (!candidateId) {
-    return NextResponse.redirect(new URL('/dashboard/cvtheque', request.url));
-  }
-
+export async function POST(request: NextRequest) {
   const supabase = await createClient();
 
   // 1. Auth
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   }
 
+  // 2. Parse body
+  let body: { candidate_id?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Corps de requête invalide' }, { status: 400 });
+  }
+
+  const candidateId = body.candidate_id;
+
+  // 3. Validation UUID (anti-injection SQL)
+  if (!candidateId || !UUID_RE.test(candidateId)) {
+    return NextResponse.json({ error: 'candidate_id invalide' }, { status: 400 });
+  }
+
+  // 4. Récupérer le profil utilisateur
   const { data: user } = await supabase
     .from('users')
     .select('*')
@@ -34,10 +49,10 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (!user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
   }
 
-  // 2. Check recruteur
+  // 5. Vérifier rôle recruteur
   const isRecruiter =
     user.role_type === 'recruiter' ||
     (user.role_type === 'both' && user.active_role === 'recruiter') ||
@@ -45,64 +60,106 @@ export async function GET(request: NextRequest) {
     user.role_type === 'admin';
 
   if (!isRecruiter) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.json({ error: 'Réservé aux recruteurs' }, { status: 403 });
   }
 
-  // 3. Check si conversation existe déjà
-  const { data: existingConv } = await supabase
+  // 6. Pas de self-contact
+  if (candidateId === user.id) {
+    return NextResponse.json({ error: 'Vous ne pouvez pas vous contacter vous-même' }, { status: 400 });
+  }
+
+  // 7. Check conversation existante (requêtes séparées, pas d'interpolation .or())
+  const { data: conv1 } = await supabase
     .from('conversations')
     .select('id')
-    .or(`and(participant_1.eq.${user.id},participant_2.eq.${candidateId}),and(participant_1.eq.${candidateId},participant_2.eq.${user.id})`)
+    .eq('participant_1', user.id)
+    .eq('participant_2', candidateId)
     .maybeSingle();
 
+  const { data: conv2 } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('participant_1', candidateId)
+    .eq('participant_2', user.id)
+    .maybeSingle();
+
+  const existingConv = conv1 || conv2;
+
   if (existingConv) {
-    // Conversation existe → rediriger directement
-    return NextResponse.redirect(new URL('/dashboard/messages', request.url));
+    return NextResponse.json({ success: true, conversation_id: existingConv.id, existing: true });
   }
 
-  // 4. Vérifier quota (sauf admin)
+  // 8. Vérifier quota (sauf admin)
   if (user.role_type !== 'admin') {
-    const remaining = getRemainingContacts(user);
+    // Re-fetch le user pour avoir le count le plus à jour (anti race condition basique)
+    const { data: freshUser } = await supabase
+      .from('users')
+      .select('monthly_contacts_count')
+      .eq('id', user.id)
+      .single();
+
+    const freshCount = freshUser?.monthly_contacts_count || 0;
+    const remaining = getRemainingContacts({ ...user, monthly_contacts_count: freshCount });
+
     if (remaining <= 0) {
-      return NextResponse.redirect(new URL('/dashboard/subscription?reason=contacts_quota', request.url));
+      return NextResponse.json(
+        { error: 'Quota de contacts atteint ce mois. Passez au tier supérieur.', code: 'CONTACTS_QUOTA_EXCEEDED' },
+        { status: 403 }
+      );
     }
   }
 
-  // 5. Vérifier que le candidat existe
+  // 9. Vérifier que le candidat existe et est actif
   const { data: candidate } = await supabase
     .from('users')
-    .select('id, is_active')
+    .select('id, is_active, full_name')
     .eq('id', candidateId)
     .single();
 
   if (!candidate || !candidate.is_active) {
-    return NextResponse.redirect(new URL('/dashboard/cvtheque', request.url));
+    return NextResponse.json({ error: 'Candidat introuvable ou inactif' }, { status: 404 });
   }
 
-  // 6. Créer la conversation
-  const { error: convError } = await supabase
+  // 10. Créer la conversation
+  const { data: newConv, error: convError } = await supabase
     .from('conversations')
     .insert({
       participant_1: user.id,
       participant_2: candidateId,
       last_message_at: new Date().toISOString(),
-    });
+    })
+    .select('id')
+    .single();
 
   if (convError) {
-    console.error('[contacts] conversation error:', convError.message);
-    return NextResponse.redirect(new URL('/dashboard/cvtheque', request.url));
+    // Doublon possible si race condition → re-check
+    const { data: recheck1 } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('participant_1', user.id)
+      .eq('participant_2', candidateId)
+      .maybeSingle();
+    if (recheck1) {
+      return NextResponse.json({ success: true, conversation_id: recheck1.id, existing: true });
+    }
+    return NextResponse.json({ error: 'Erreur lors de la création de la conversation' }, { status: 500 });
   }
 
-  // 7. Incrémenter le compteur de contacts mensuels
-  await supabase
-    .from('users')
-    .update({
-      monthly_contacts_count: user.monthly_contacts_count + 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', user.id);
+  // 11. Incrémenter le compteur de contacts
+  // Tentative via RPC atomique, fallback sur update classique
+  const { error: rpcErr } = await supabase.rpc('increment_monthly_contacts', { user_id_param: user.id });
+  if (rpcErr) {
+    // Fallback si la RPC n'existe pas encore
+    await supabase
+      .from('users')
+      .update({
+        monthly_contacts_count: (user.monthly_contacts_count || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+  }
 
-  // 8. Envoyer une notification au candidat
+  // 12. Notifier le candidat
   await supabase.from('notifications').insert({
     user_id: candidateId,
     type: 'message_received',
@@ -112,6 +169,9 @@ export async function GET(request: NextRequest) {
     metadata: { recruiter_id: user.id },
   });
 
-  // 9. Rediriger vers messages
-  return NextResponse.redirect(new URL('/dashboard/messages', request.url));
+  return NextResponse.json({
+    success: true,
+    conversation_id: newConv.id,
+    existing: false,
+  });
 }

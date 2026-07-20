@@ -12,7 +12,8 @@ export default async function MarketplacePage() {
     .select('*, manager:users!manager_id(id, full_name, avatar_url)')
     .eq('status', 'active')
     .order('is_boosted', { ascending: false })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(200);
 
   return (
     <div className="space-y-6">
