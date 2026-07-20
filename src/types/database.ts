@@ -27,6 +27,7 @@ export type ApplicationStatus = 'pending' | 'reviewing' | 'accepted' | 'rejected
 export type ExperienceLevel = 'junior' | 'intermediaire' | 'senior' | 'expert';
 export type BadgeLevel = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
 export type CompanySize = 'solo' | 'small' | 'medium' | 'large';
+export type StripeSubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'incomplete' | 'trialing' | 'inactive';
 
 // --- Limites par tier ---
 
@@ -123,6 +124,9 @@ export interface User {
   subscription_plan: SubscriptionPlan; // Legacy
   tier: SubscriptionTier;      // Nouveau tier d'abonnement
   stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_status: StripeSubscriptionStatus;
+  subscription_period_end: string | null;
   tier_expires_at: string | null;
   referral_code: string | null;
   referred_by: string | null;

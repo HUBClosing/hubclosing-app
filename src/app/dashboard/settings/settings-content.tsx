@@ -245,11 +245,23 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
               </a>
             )}
           </div>
-          {user.tier_expires_at && (
+          {(user.tier_expires_at || user.subscription_period_end) && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Calendar className="h-4 w-4" />
-              Renouvellement : {new Date(user.tier_expires_at).toLocaleDateString('fr-FR')}
+              Renouvellement : {new Date(user.subscription_period_end || user.tier_expires_at || '').toLocaleDateString('fr-FR')}
             </div>
+          )}
+          {user.stripe_subscription_id && (
+            <button
+              onClick={async () => {
+                const res = await fetch('/api/stripe/portal', { method: 'POST' });
+                const data = await res.json();
+                if (data.url) window.location.href = data.url;
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-dark border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <CreditCard className="h-4 w-4" /> Gérer facturation &amp; paiement
+            </button>
           )}
         </CardContent>
       </Card>
