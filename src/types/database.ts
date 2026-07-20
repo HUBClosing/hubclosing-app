@@ -607,6 +607,15 @@ export function getRemainingApplications(user: User): number {
   return Math.max(0, max - user.monthly_applications_count);
 }
 
+/** Retourne le nombre de contacts restants ce mois (recruteurs) */
+export function getRemainingContacts(user: User): number {
+  const limits = TIER_LIMITS[user.tier as keyof typeof TIER_LIMITS];
+  if (!limits || !('contacts_per_month' in limits)) return 0;
+  const max = (limits as { contacts_per_month: number }).contacts_per_month;
+  if (max === Infinity) return Infinity;
+  return Math.max(0, max - user.monthly_contacts_count);
+}
+
 /** Retourne le tier supérieur pour l'upsell */
 export function getUpgradeTier(currentTier: SubscriptionTier, roleType: RoleType): SubscriptionTier | null {
   if (roleType === 'candidate') {

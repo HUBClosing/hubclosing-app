@@ -1,59 +1,58 @@
 import { requireUser } from '@/lib/auth';
-import { Card, CardContent, CardHeader } from '@/components/ui';
-import { BookUser, Search, Filter, UserCheck } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { CvthequeContent } from './cvtheque-content';
 
 export default async function CvthequePage() {
-  await requireUser();
+  const user = await requireUser();
+
+  // Seuls les recruteurs (ou both en mode recruteur) et admins voient cette page
+  const isRecruiter =
+    user.role_type === 'recruiter' ||
+    (user.role_type === 'both' && user.active_role === 'recruiter') ||
+    user.role === 'manager' ||
+    user.role_type === 'admin';
+
+  if (!isRecruiter) {
+    redirect('/dashboard');
+  }
+
+  const supabase = await createClient();
+
+  // Récupérer tous les candidats avec profil public + données portfolio agrégées
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select(`
+      *,
+      user:users!user_id(
+        id, full_name, avatar_url, email, skills, niches,
+        years_experience, role_type, active_role, tier, is_active, created_at
+      )
+    `)
+    .eq('is_public', true)
+    .order('score', { ascending: false });
+
+  // Filtrer : garder uniquement les candidats actifs
+  const candidates = (profiles || []).filter((p: any) => {
+    const u = p.user;
+    if (!u || !u.is_active) return false;
+    return (
+      u.role_type === 'candidate' ||
+      u.role_type === 'both' ||
+      u.role_type === 'admin'
+    );
+  });
 
   return (
     <div className="space-y-6">
       <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-brand-dark">CVthèque</h1>
-          <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-xs font-medium">
-            Bientôt disponible
-          </span>
-        </div>
+        <h1 className="text-2xl font-bold text-brand-dark">CVthèque</h1>
         <p className="text-gray-500 mt-1">
-          Parcourez les profils des candidats et trouvez les meilleurs talents pour vos missions.
+          {candidates.length} profil{candidates.length > 1 ? 's' : ''} de candidats disponibles
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-brand-dark flex items-center gap-2">
-            <BookUser className="h-5 w-5 text-brand-amber" />
-            Base de candidats
-          </h2>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
-            <div className="mx-auto h-16 w-16 bg-brand-amber/10 rounded-2xl flex items-center justify-center mb-4">
-              <BookUser className="h-8 w-8 text-brand-amber" />
-            </div>
-            <h3 className="text-lg font-semibold text-brand-dark mb-2">
-              Trouvez les meilleurs closers
-            </h3>
-            <p className="text-gray-500 max-w-md mx-auto mb-6">
-              Bientôt, les recruteurs pourront parcourir une base de profils qualifiés.
-              Filtrez par compétences, niches, niveau d&apos;expérience et score de
-              réputation. Contactez directement les candidats qui correspondent à vos
-              besoins et consultez leurs statistiques de performance.
-            </p>
-            <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
-              <span className="flex items-center gap-1.5">
-                <Search className="h-4 w-4" /> Recherche
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Filter className="h-4 w-4" /> Filtres
-              </span>
-              <span className="flex items-center gap-1.5">
-                <UserCheck className="h-4 w-4" /> Contact direct
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <CvthequeContent candidates={candidates} user={user} />
     </div>
   );
 }
