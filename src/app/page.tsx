@@ -1195,9 +1195,9 @@ img{max-width:100%;height:auto;}
           </div>
           <div className="footer-col">
             <h4>Légal</h4>
-            <a href="#">Mentions légales</a>
-            <a href="#">CGU</a>
-            <a href="#">Politique de confidentialité</a>
+            <Link href="/legal/mentions">Mentions légales</Link>
+            <Link href="/legal/cgu">CGU</Link>
+            <Link href="/legal/privacy">Politique de confidentialité</Link>
           </div>
           <div className="footer-col">
             <h4>Contact</h4>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { APPLICATION_STATUS_CONFIG } from '@/types/database';
 import type { ApplicationStatus } from '@/types/database';
+import { sendEmail } from '@/lib/email';
+import { applicationStatusEmail } from '@/lib/email/templates/application-status';
 
 const VALID_STATUSES: ApplicationStatus[] = ['pending', 'reviewing', 'accepted', 'rejected', 'completed'];
 
@@ -93,16 +95,32 @@ export async function PATCH(
     },
   });
 
-  // Récupérer l'email du candidat pour envoi email
+  // Récupérer l'email du candidat + nom du recruteur pour envoi email
   const { data: candidateUser } = await supabase
     .from('users')
     .select('email, full_name')
     .eq('id', application.closer_id)
     .single();
 
-  // TODO: Intégrer un service d'email (Resend, SendGrid, etc.)
-  // Note: on ne log PAS l'email du candidat (PII)
-  console.log('[EMAIL] Notification statut candidature envoyée pour application:', params.id);
+  const { data: recruiterUser } = await supabase
+    .from('users')
+    .select('full_name')
+    .eq('id', user.id)
+    .single();
+
+  // Envoyer l'email de changement de statut au candidat
+  if (candidateUser?.email && ['reviewing', 'accepted', 'rejected', 'completed'].includes(newStatus)) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const { subject, html } = applicationStatusEmail({
+      candidateName: candidateUser.full_name || 'Candidat',
+      offerTitle: offer.title,
+      recruiterName: recruiterUser?.full_name || 'Recruteur',
+      status: newStatus as 'reviewing' | 'accepted' | 'rejected' | 'completed',
+      appUrl,
+    });
+    // Fire-and-forget
+    sendEmail({ to: candidateUser.email, subject, html }).catch(() => {});
+  }
 
   // Si la collaboration est terminée → envoyer une demande d'avis aux deux parties
   if (newStatus === 'completed') {

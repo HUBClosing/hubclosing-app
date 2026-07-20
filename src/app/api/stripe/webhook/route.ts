@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, getTierFromPriceId } from '@/lib/stripe/server';
+import { stripe, getTierFromPriceId, TIER_NAMES } from '@/lib/stripe/server';
 import { createClient } from '@supabase/supabase-js';
 import type { SubscriptionTier } from '@/types/database';
+import { sendEmail } from '@/lib/email';
+import { paymentConfirmationEmail } from '@/lib/email/templates/payment-confirmation';
 
 /**
  * Webhook Stripe — endpoint public, authentifié par signature webhook.
@@ -126,6 +128,28 @@ export async function POST(request: NextRequest) {
           subscription_status: 'active',
           subscription_period_end: periodEnd,
         });
+
+        // Envoyer l'email de confirmation de paiement
+        const supabaseAdmin = getSupabaseAdmin();
+        const { data: paidUser } = await supabaseAdmin
+          .from('users')
+          .select('email, full_name')
+          .eq('id', userId)
+          .single();
+
+        if (paidUser?.email) {
+          const tierDisplay = TIER_NAMES[tier]?.split(' (')[0] || tier;
+          const tierAmount = TIER_NAMES[tier]?.match(/\((.+)\)/)?.[1] || '';
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+          const emailData = paymentConfirmationEmail({
+            fullName: paidUser.full_name || 'Utilisateur',
+            tierName: tierDisplay,
+            amount: tierAmount,
+            appUrl,
+          });
+          sendEmail({ to: paidUser.email, subject: emailData.subject, html: emailData.html }).catch(() => {});
+        }
 
         console.log(`✅ Checkout completed: user=${userId} tier=${tier}`);
         break;

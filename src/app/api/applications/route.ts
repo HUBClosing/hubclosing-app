@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getRemainingApplications, canUserDo, isOfferPremium } from '@/types/database';
 import type { User } from '@/types/database';
+import { sendEmail } from '@/lib/email';
+import { newApplicationEmail } from '@/lib/email/templates/new-application';
 
 /**
  * POST /api/applications
@@ -153,7 +155,7 @@ export async function POST(request: NextRequest) {
     })
     .eq('id', authUser.id);
 
-  // ── Notifier le recruteur ──
+  // ── Notifier le recruteur (in-app + email) ──
   if (offer.manager_id) {
     await supabase.from('notifications').insert({
       user_id: offer.manager_id,
@@ -163,6 +165,27 @@ export async function POST(request: NextRequest) {
       link: `/dashboard/offers/${offer_id}/candidates/${app.id}`,
       metadata: { application_id: app.id, offer_id },
     });
+
+    // Email au recruteur
+    const { data: recruiter } = await supabase
+      .from('users')
+      .select('email, full_name')
+      .eq('id', offer.manager_id)
+      .single();
+
+    if (recruiter?.email) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const { subject, html } = newApplicationEmail({
+        recruiterName: recruiter.full_name || 'Recruteur',
+        candidateName: user.full_name || 'Candidat',
+        offerTitle: offer.title,
+        offerId: offer_id,
+        candidateRole: user.role || 'closer',
+        appUrl,
+      });
+      // Fire-and-forget — on ne bloque pas la réponse
+      sendEmail({ to: recruiter.email, subject, html }).catch(() => {});
+    }
   }
 
   return NextResponse.json({

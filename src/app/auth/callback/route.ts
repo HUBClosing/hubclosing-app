@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { sendEmail } from '@/lib/email';
+import { welcomeEmail } from '@/lib/email/templates/welcome';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -78,18 +80,30 @@ export async function GET(request: Request) {
   let redirectPath = safeNext;
 
   if (!existingUser && !fetchError) {
+    const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || '';
     await supabase.from('users').upsert(
       {
         id: authUser.id,
         email: authUser.email || '',
         role: 'pending',
         role_type: 'pending',
-        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || '',
+        full_name: fullName,
         avatar_url: authUser.user_metadata?.avatar_url || null,
       },
       { onConflict: 'id' }
     );
     redirectPath = '/onboarding';
+
+    // Email de bienvenue (envoyé en tant que candidat par défaut, le rôle sera précisé à l'onboarding)
+    if (authUser.email) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const { subject, html } = welcomeEmail({
+        fullName: fullName || 'Nouveau membre',
+        role: 'candidate',
+        appUrl,
+      });
+      sendEmail({ to: authUser.email, subject, html }).catch(() => {});
+    }
   } else if (existingUser) {
     if (authUser.user_metadata?.avatar_url) {
       await supabase
