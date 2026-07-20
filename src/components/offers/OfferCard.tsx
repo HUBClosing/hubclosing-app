@@ -1,10 +1,19 @@
 'use client';
 
-import type { Offer, User } from '@/types/database';
-import { Lock, MapPin, Clock, Percent, Banknote, Eye, Zap, Crown, ArrowRight, Timer, AlertTriangle, Users } from 'lucide-react';
+import type { Offer, User, OfferType } from '@/types/database';
+import { Lock, MapPin, Clock, Percent, Banknote, Eye, Zap, Crown, ArrowRight, Timer, AlertTriangle, Users, Repeat, Target, Briefcase, Clock4, CalendarCheck } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays, differenceInHours, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { canUserDo, isOfferPremium } from '@/types/database';
+
+const OFFER_TYPE_CONFIG: Record<OfferType, { label: string; color: string; icon: typeof Target }> = {
+  challenge: { label: 'Challenge', color: 'bg-violet-100 text-violet-700', icon: Target },
+  recurring: { label: 'Récurrent', color: 'bg-teal-100 text-teal-700', icon: Repeat },
+  mission: { label: 'Mission', color: 'bg-sky-100 text-sky-700', icon: Briefcase },
+  full_time: { label: 'Temps plein', color: 'bg-indigo-100 text-indigo-700', icon: CalendarCheck },
+  part_time: { label: 'Temps partiel', color: 'bg-amber-100 text-amber-700', icon: Clock4 },
+  commission_only: { label: 'Commission', color: 'bg-emerald-100 text-emerald-700', icon: Percent },
+};
 
 interface OfferCardProps {
   offer: Offer;
@@ -47,14 +56,26 @@ export function OfferCard({ offer, user, locked = false }: OfferCardProps) {
       )}
 
       <div className="p-4">
-        {/* Top: niche + time */}
+        {/* Top: niche + offer type + time */}
         <div className="flex items-center justify-between mb-3">
-          {offer.niche && (
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${nicheColor}`}>
-              {offer.niche}
-            </span>
-          )}
-          <span className="text-xs text-gray-400 flex items-center gap-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {offer.niche && (
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${nicheColor}`}>
+                {offer.niche}
+              </span>
+            )}
+            {offer.offer_type && OFFER_TYPE_CONFIG[offer.offer_type] && (() => {
+              const cfg = OFFER_TYPE_CONFIG[offer.offer_type];
+              const TypeIcon = cfg.icon;
+              return (
+                <span className={`text-xs font-medium px-2 py-1 rounded-full flex items-center gap-1 ${cfg.color}`}>
+                  <TypeIcon className="h-3 w-3" />
+                  {cfg.label}
+                </span>
+              );
+            })()}
+          </div>
+          <span className="text-xs text-gray-400 flex items-center gap-1 shrink-0">
             <Clock className="h-3 w-3" /> {timeAgo}
           </span>
         </div>
