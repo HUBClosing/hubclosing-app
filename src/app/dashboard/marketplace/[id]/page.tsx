@@ -1,16 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { Card, CardContent, Badge, Button, Avatar } from '@/components/ui';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import {
   DollarSign, Users, Clock, ExternalLink, MapPin, Percent,
   Banknote, Briefcase, Target, Repeat, CalendarCheck, Clock4,
-  ArrowLeft, Crown, Zap, Timer, AlertTriangle,
+  ArrowLeft, Crown, Zap, Timer, AlertTriangle, Lock,
 } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { OfferType } from '@/types/database';
-import { isOfferPremium, APPLICATION_STATUS_CONFIG } from '@/types/database';
+import { isOfferPremium, canUserDo, APPLICATION_STATUS_CONFIG } from '@/types/database';
 
 const OFFER_TYPE_LABELS: Record<OfferType, { label: string; color: string; icon: typeof Target }> = {
   challenge: { label: 'Challenge', color: 'bg-violet-100 text-violet-700', icon: Target },
@@ -33,6 +33,39 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
     .single();
 
   if (!offer) notFound();
+
+  // ── Gate premium côté serveur ──
+  // Si l'offre est premium et que l'utilisateur n'a pas le droit de la voir,
+  // on redirige vers la page d'upgrade au lieu de montrer le contenu
+  if (isOfferPremium(offer) && !canUserDo(user, 'see_premium_offers')) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6 py-12">
+        <div>
+          <a href="/dashboard/marketplace" className="text-sm text-brand-green hover:underline flex items-center gap-1">
+            <ArrowLeft className="h-3.5 w-3.5" /> Retour à la marketplace
+          </a>
+        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="h-16 w-16 rounded-full bg-brand-amber/10 flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-8 w-8 text-brand-amber" />
+            </div>
+            <h1 className="text-xl font-bold text-brand-dark mb-2">Offre Premium</h1>
+            <p className="text-gray-500 mb-6">
+              Cette offre est réservée aux abonnés <strong>Pro</strong> et supérieurs.
+              Passez au tier supérieur pour accéder aux meilleures offres de la marketplace.
+            </p>
+            <a
+              href="/dashboard/subscription"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-amber text-white rounded-lg hover:bg-brand-amber/90 transition-colors font-medium"
+            >
+              <Crown className="h-4 w-4" /> Améliorer mon abonnement
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const { data: existingApp } = await supabase
     .from('applications')

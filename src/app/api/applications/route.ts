@@ -1,5 +1,156 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getRemainingApplications, canUserDo, isOfferPremium } from '@/types/database';
+import type { User } from '@/types/database';
+
+/**
+ * POST /api/applications
+ * Crée une candidature avec vérification quota + premium côté serveur.
+ * Body: { offer_id: string, cover_letter?: string }
+ */
+export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+
+  if (!authUser) {
+    return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  }
+
+  // Récupérer le profil complet de l'utilisateur
+  const { data: user } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', authUser.id)
+    .single();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
+  }
+
+  const body = await request.json();
+  const { offer_id, cover_letter } = body;
+
+  if (!offer_id) {
+    return NextResponse.json({ error: 'offer_id requis' }, { status: 400 });
+  }
+
+  // Récupérer l'offre
+  const { data: offer } = await supabase
+    .from('offers')
+    .select('*')
+    .eq('id', offer_id)
+    .single();
+
+  if (!offer) {
+    return NextResponse.json({ error: 'Offre introuvable' }, { status: 404 });
+  }
+
+  if (offer.status !== 'active') {
+    return NextResponse.json({ error: 'Cette offre n\'est plus active' }, { status: 400 });
+  }
+
+  // ── Vérification 1 : Offre premium ──
+  if (isOfferPremium(offer) && !canUserDo(user as User, 'see_premium_offers')) {
+    return NextResponse.json(
+      { error: 'Cette offre est réservée aux abonnés Pro et supérieurs.', code: 'PREMIUM_REQUIRED' },
+      { status: 403 }
+    );
+  }
+
+  // ── Vérification 2 : Quota mensuel ──
+  const remaining = getRemainingApplications(user as User);
+  if (remaining <= 0) {
+    return NextResponse.json(
+      { error: 'Vous avez atteint votre limite de candidatures ce mois-ci. Passez au tier supérieur pour postuler davantage.', code: 'QUOTA_EXCEEDED' },
+      { status: 403 }
+    );
+  }
+
+  // ── Vérification 3 : Deadline ──
+  if (offer.application_deadline) {
+    const deadline = new Date(offer.application_deadline);
+    if (deadline < new Date()) {
+      return NextResponse.json(
+        { error: 'La date limite de candidature est dépassée.' },
+        { status: 400 }
+      );
+    }
+  }
+
+  // ── Vérification 4 : Max applicants ──
+  if (offer.max_applicants) {
+    const { count } = await supabase
+      .from('applications')
+      .select('id', { count: 'exact', head: true })
+      .eq('offer_id', offer_id)
+      .not('status', 'eq', 'withdrawn');
+
+    if ((count || 0) >= offer.max_applicants) {
+      return NextResponse.json(
+        { error: 'Le nombre maximum de candidatures pour cette offre a été atteint.' },
+        { status: 400 }
+      );
+    }
+  }
+
+  // ── Vérification 5 : Doublon ──
+  const { data: existing } = await supabase
+    .from('applications')
+    .select('id')
+    .eq('offer_id', offer_id)
+    .eq('closer_id', authUser.id)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json(
+      { error: 'Vous avez déjà postulé à cette offre.', code: 'ALREADY_APPLIED', application_id: existing.id },
+      { status: 409 }
+    );
+  }
+
+  // ── Créer la candidature ──
+  const { data: app, error: insertErr } = await supabase
+    .from('applications')
+    .insert({
+      offer_id,
+      closer_id: authUser.id,
+      cover_letter: cover_letter?.trim() || null,
+      status: 'pending',
+    })
+    .select('id')
+    .single();
+
+  if (insertErr) {
+    return NextResponse.json({ error: insertErr.message }, { status: 500 });
+  }
+
+  // ── Incrémenter le compteur mensuel ──
+  await supabase
+    .from('users')
+    .update({
+      monthly_applications_count: (user.monthly_applications_count || 0) + 1,
+    })
+    .eq('id', authUser.id);
+
+  // ── Notifier le recruteur ──
+  if (offer.manager_id) {
+    await supabase.from('notifications').insert({
+      user_id: offer.manager_id,
+      type: 'new_application',
+      title: 'Nouvelle candidature',
+      body: `Un candidat a postulé à "${offer.title}".`,
+      link: `/dashboard/offers/${offer_id}/candidates/${app.id}`,
+      metadata: { application_id: app.id, offer_id },
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    application_id: app.id,
+    has_questionnaire: !!offer.questionnaire_id,
+    questionnaire_id: offer.questionnaire_id,
+  });
+}
 
 /**
  * PATCH /api/applications
@@ -56,6 +207,22 @@ export async function PATCH(request: NextRequest) {
 
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  // Décrémenter le compteur mensuel (rendre la candidature)
+  const { data: candidateUser } = await supabase
+    .from('users')
+    .select('monthly_applications_count')
+    .eq('id', application.closer_id)
+    .single();
+
+  if (candidateUser && candidateUser.monthly_applications_count > 0) {
+    await supabase
+      .from('users')
+      .update({
+        monthly_applications_count: candidateUser.monthly_applications_count - 1,
+      })
+      .eq('id', application.closer_id);
   }
 
   // Notifier le recruteur

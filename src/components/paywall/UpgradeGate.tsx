@@ -20,6 +20,14 @@ const FEATURE_LABELS: Record<string, string> = {
   matching: 'Matching intelligent',
   access_coaching: 'Accès coaching',
   advanced_stats: 'Statistiques avancées',
+  tracker: 'Suivi des candidatures',
+  cv_performance: 'CV de performance',
+  reputation_score: 'Score de réputation',
+  badge: 'Badges',
+  masterclass: 'Masterclass',
+  replays: 'Replays',
+  upskill: 'Montée en compétence',
+  accounting: 'Outils comptabilité',
 };
 
 interface UpgradeGateProps {

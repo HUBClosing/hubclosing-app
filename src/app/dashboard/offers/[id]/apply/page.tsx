@@ -101,55 +101,52 @@ export default function ApplyPage() {
     setAnswers(initial);
   };
 
-  // Étape 1 : Postuler
+  // Étape 1 : Postuler (via API sécurisée avec quota + premium check)
   const handleApply = async () => {
     setSubmitting(true);
     setError('');
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError('Non connecté'); setSubmitting(false); return; }
-
-    const { data: app, error: appErr } = await supabase
-      .from('applications')
-      .insert({
-        offer_id: offerId,
-        closer_id: user.id,
-        cover_letter: coverLetter.trim() || null,
-        status: 'pending',
-      })
-      .select('id')
-      .single();
-
-    if (appErr) {
-      if (appErr.message.includes('duplicate') || appErr.message.includes('unique')) {
-        setError('Vous avez déjà postulé à cette offre.');
-      } else {
-        setError(appErr.message);
-      }
-      setSubmitting(false);
-      return;
-    }
-
-    setApplicationId(app.id);
-
-    // Notifier le recruteur de la nouvelle candidature
-    if (offer?.manager_id) {
-      await supabase.from('notifications').insert({
-        user_id: offer.manager_id,
-        type: 'new_application',
-        title: 'Nouvelle candidature',
-        body: `Un candidat a postulé à "${offer.title}".`,
-        link: `/dashboard/offers/${offerId}/candidates/${app.id}`,
-        metadata: { application_id: app.id, offer_id: offerId },
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: offerId, cover_letter: coverLetter.trim() || null }),
       });
-    }
 
-    // Si l'offre a un questionnaire, passer à l'étape questionnaire
-    if (offer?.questionnaire_id) {
-      await loadQuestions(offer.questionnaire_id);
-      setStep('questionnaire');
-    } else {
-      setStep('done');
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.code === 'PREMIUM_REQUIRED') {
+          setError('Cette offre est réservée aux abonnés Pro+. Améliorez votre abonnement pour postuler.');
+        } else if (data.code === 'QUOTA_EXCEEDED') {
+          setError('Vous avez atteint votre limite de candidatures ce mois-ci. Passez au tier supérieur pour continuer.');
+        } else if (data.code === 'ALREADY_APPLIED') {
+          setApplicationId(data.application_id);
+          if (offer?.questionnaire_id) {
+            await loadQuestions(offer.questionnaire_id);
+            setStep('questionnaire');
+          } else {
+            setStep('done');
+          }
+          setSubmitting(false);
+          return;
+        } else {
+          setError(data.error || 'Erreur lors de la candidature');
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      setApplicationId(data.application_id);
+
+      if (data.has_questionnaire && data.questionnaire_id) {
+        await loadQuestions(data.questionnaire_id);
+        setStep('questionnaire');
+      } else {
+        setStep('done');
+      }
+    } catch {
+      setError('Erreur réseau. Veuillez réessayer.');
     }
 
     setSubmitting(false);
