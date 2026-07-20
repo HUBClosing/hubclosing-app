@@ -21,6 +21,7 @@ const STATUS_LIST: { status: ApplicationStatus; label: string; emoji: string }[]
   { status: 'reviewing', label: 'À étudier', emoji: '🔍' },
   { status: 'accepted', label: 'Profil validé', emoji: '✅' },
   { status: 'rejected', label: 'Non retenu', emoji: '❌' },
+  { status: 'completed', label: 'Terminé', emoji: '🏁' },
 ];
 
 // ============================================================

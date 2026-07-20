@@ -18,6 +18,8 @@ const NOTIF_TYPE_CONFIG: Record<string, { emoji: string; color: string; label: s
   questionnaire_filled: { emoji: '📝', color: 'bg-green-100', label: 'Questionnaire rempli' },
   offer_expiring:       { emoji: '⏰', color: 'bg-red-100', label: 'Offre expirante' },
   message_received:     { emoji: '💬', color: 'bg-purple-100', label: 'Nouveau message' },
+  review_request:       { emoji: '⭐', color: 'bg-yellow-100', label: 'Demande d\'avis' },
+  review_received:      { emoji: '🌟', color: 'bg-yellow-100', label: 'Avis reçu' },
   system:               { emoji: '📢', color: 'bg-gray-100', label: 'Système' },
 };
 
@@ -27,6 +29,7 @@ const FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: 'new_application', label: 'Candidatures' },
   { value: 'status_change', label: 'Statuts' },
   { value: 'questionnaire_filled', label: 'Questionnaires' },
+  { value: 'review_request', label: 'Avis' },
   { value: 'message_received', label: 'Messages' },
   { value: 'system', label: 'Système' },
 ];

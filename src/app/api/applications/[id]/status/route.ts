@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { APPLICATION_STATUS_CONFIG } from '@/types/database';
 import type { ApplicationStatus } from '@/types/database';
 
-const VALID_STATUSES: ApplicationStatus[] = ['pending', 'reviewing', 'accepted', 'rejected'];
+const VALID_STATUSES: ApplicationStatus[] = ['pending', 'reviewing', 'accepted', 'rejected', 'completed'];
 
 export async function PATCH(
   request: NextRequest,
@@ -81,12 +81,36 @@ export async function PATCH(
     .single();
 
   // TODO: Intégrer un service d'email (Resend, SendGrid, etc.)
-  // Pour l'instant, on log l'email à envoyer
   console.log('[EMAIL] Notification statut candidature:', {
     to: candidateUser?.email,
     subject: `HUBClosing — Votre candidature est "${statusConfig.label}"`,
     body: `Bonjour ${candidateUser?.full_name || ''},\n\nVotre candidature pour "${offer.title}" est passée au statut "${statusConfig.label}".\n\n${statusConfig.description}\n\nConnectez-vous pour voir les détails : https://hubclosing.fr/dashboard/candidatures`,
   });
+
+  // Si la collaboration est terminée → envoyer une demande d'avis aux deux parties
+  if (newStatus === 'completed') {
+    const reviewLink = `/dashboard/reviews/${params.id}/new`;
+
+    // Demande d'avis au candidat (pour noter le recruteur)
+    await supabase.from('notifications').insert({
+      user_id: application.closer_id,
+      type: 'review_request',
+      title: 'Laissez un avis',
+      body: `La collaboration pour "${offer.title}" est terminée. Partagez votre retour d'expérience !`,
+      link: reviewLink,
+      metadata: { application_id: params.id, offer_id: offer.id, target_id: offer.manager_id },
+    });
+
+    // Demande d'avis au recruteur (pour noter le candidat)
+    await supabase.from('notifications').insert({
+      user_id: offer.manager_id,
+      type: 'review_request',
+      title: 'Laissez un avis',
+      body: `La collaboration pour "${offer.title}" est terminée. Notez votre closer !`,
+      link: reviewLink,
+      metadata: { application_id: params.id, offer_id: offer.id, target_id: application.closer_id },
+    });
+  }
 
   return NextResponse.json({
     success: true,

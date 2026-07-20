@@ -23,7 +23,7 @@ export type SubscriptionTier = 'free' | 'starter' | 'business' | 'pro' | 'elite'
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
 
 export type OfferStatus = 'active' | 'paused' | 'closed';
-export type ApplicationStatus = 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'withdrawn';
+export type ApplicationStatus = 'pending' | 'reviewing' | 'accepted' | 'rejected' | 'withdrawn' | 'completed';
 export type ExperienceLevel = 'junior' | 'intermediaire' | 'senior' | 'expert';
 export type BadgeLevel = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
 export type CompanySize = 'solo' | 'small' | 'medium' | 'large';
@@ -265,12 +265,48 @@ export interface Review {
   reviewer_id: string;
   reviewed_id: string;
   offer_id: string | null;
+  application_id: string | null;
   rating: number;
+  rating_reactivity: number | null;
+  rating_quality: number | null;
+  rating_communication: number | null;
+  rating_results: number | null;
+  reviewer_role: 'candidate' | 'recruiter' | null;
   comment: string | null;
   is_public: boolean;
   created_at: string;
+  updated_at: string;
   reviewer?: User;
   reviewed?: User;
+  offer?: Offer;
+}
+
+/** Critères de notation pour les avis */
+export const REVIEW_CRITERIA = [
+  { key: 'rating_reactivity', label: 'Réactivité', icon: '⚡', description: 'Rapidité de réponse et disponibilité' },
+  { key: 'rating_quality', label: 'Qualité', icon: '💎', description: 'Qualité du travail ou de l\'offre' },
+  { key: 'rating_communication', label: 'Communication', icon: '💬', description: 'Clarté et transparence des échanges' },
+  { key: 'rating_results', label: 'Résultats', icon: '📈', description: 'Atteinte des objectifs fixés' },
+] as const;
+
+export type ReviewCriteriaKey = typeof REVIEW_CRITERIA[number]['key'];
+
+/** Seuils de badges par score de réputation */
+export const BADGE_THRESHOLDS: Record<BadgeLevel, { min: number; max: number; label: string; color: string; bgColor: string }> = {
+  bronze:   { min: 0, max: 30,  label: 'Bronze',   color: 'text-amber-700',   bgColor: 'bg-amber-100' },
+  silver:   { min: 31, max: 50, label: 'Silver',   color: 'text-gray-500',    bgColor: 'bg-gray-100' },
+  gold:     { min: 51, max: 70, label: 'Gold',     color: 'text-yellow-600',  bgColor: 'bg-yellow-100' },
+  platinum: { min: 71, max: 90, label: 'Platinum', color: 'text-blue-600',    bgColor: 'bg-blue-100' },
+  diamond:  { min: 91, max: 100, label: 'Diamond', color: 'text-purple-600',  bgColor: 'bg-purple-100' },
+};
+
+/** Calcule le badge à partir d'un score */
+export function getBadgeForScore(score: number): BadgeLevel {
+  if (score >= 91) return 'diamond';
+  if (score >= 71) return 'platinum';
+  if (score >= 51) return 'gold';
+  if (score >= 31) return 'silver';
+  return 'bronze';
 }
 
 export interface UserBadge {
@@ -397,6 +433,8 @@ export type NotificationType =
   | 'questionnaire_filled'
   | 'offer_expiring'
   | 'message_received'
+  | 'review_request'
+  | 'review_received'
   | 'system';
 
 export interface Notification {
@@ -448,6 +486,12 @@ export const APPLICATION_STATUS_CONFIG: Record<ApplicationStatus, {
     color: 'text-gray-600',
     bgColor: 'bg-gray-100',
     description: 'Le candidat a retiré sa candidature',
+  },
+  completed: {
+    label: 'Terminé',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-100',
+    description: 'Collaboration terminée — en attente d\'avis',
   },
 };
 
