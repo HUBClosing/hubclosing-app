@@ -54,6 +54,13 @@ BEGIN
 END$$;
 
 -- ============================================
+-- Ajout colonne read_at pour le suivi de lecture
+-- ============================================
+
+-- Colonne read_at : null = non lu, timestamp = lu
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ DEFAULT NULL;
+
+-- ============================================
 -- Index pour accélérer les requêtes de messages non lus
 -- ============================================
 
