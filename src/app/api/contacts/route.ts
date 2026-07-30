@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getRemainingContacts } from '@/types/database';
+import { createNotification } from '@/lib/supabase/admin';
 
 // UUID v4 regex pour validation
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -159,8 +160,8 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id);
   }
 
-  // 12. Notifier le candidat
-  await supabase.from('notifications').insert({
+  // 12. Notifier le candidat (via admin — cross-user)
+  await createNotification({
     user_id: candidateId,
     type: 'message_received',
     title: 'Nouveau contact',

@@ -1,31 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, getTierFromPriceId, TIER_NAMES } from '@/lib/stripe/server';
-import { createClient } from '@supabase/supabase-js';
 import type { SubscriptionTier } from '@/types/database';
 import { sendEmail } from '@/lib/email';
 import { paymentConfirmationEmail } from '@/lib/email/templates/payment-confirmation';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 /**
  * Webhook Stripe — endpoint public, authentifié par signature webhook.
  *
  * IMPORTANT : Ce webhook utilise le service role Supabase (pas la clé anon)
  * car il doit modifier la table users sans passer par RLS.
- * On crée un client Supabase admin directement.
  */
-
-// Client Supabase admin (bypass RLS)
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY manquante — nécessaire pour le webhook Stripe');
-  }
-
-  return createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
 
 /**
  * Met à jour le tier et les infos Stripe d'un utilisateur.
@@ -250,10 +235,10 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error('Webhook processing error:', err);
-    // On retourne 200 quand même pour ne pas que Stripe re-essaie en boucle
-    // sur une erreur de notre côté (sauf si c'est une erreur de signature)
+    // Retourner 500 pour que Stripe re-essaie (important : un paiement validé
+    // mais non traité côté BDD = utilisateur qui paie sans recevoir son tier)
+    return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
 
-  // Toujours retourner 200 pour confirmer la réception
   return NextResponse.json({ received: true });
 }

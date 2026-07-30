@@ -4,6 +4,7 @@ import { APPLICATION_STATUS_CONFIG } from '@/types/database';
 import type { ApplicationStatus } from '@/types/database';
 import { sendEmail } from '@/lib/email';
 import { applicationStatusEmail } from '@/lib/email/templates/application-status';
+import { createNotification } from '@/lib/supabase/admin';
 
 const VALID_STATUSES: ApplicationStatus[] = ['pending', 'reviewing', 'accepted', 'rejected', 'completed'];
 
@@ -80,8 +81,8 @@ export async function PATCH(
 
   const statusConfig = APPLICATION_STATUS_CONFIG[newStatus];
 
-  // Créer une notification pour le candidat
-  await supabase.from('notifications').insert({
+  // Créer une notification pour le candidat (via admin — cross-user)
+  await createNotification({
     user_id: application.closer_id,
     type: 'status_change',
     title: `Candidature ${statusConfig.label.toLowerCase()}`,
@@ -127,7 +128,7 @@ export async function PATCH(
     const reviewLink = `/dashboard/reviews/${params.id}/new`;
 
     // Demande d'avis au candidat (pour noter le recruteur)
-    await supabase.from('notifications').insert({
+    await createNotification({
       user_id: application.closer_id,
       type: 'review_request',
       title: 'Laissez un avis',
@@ -137,7 +138,7 @@ export async function PATCH(
     });
 
     // Demande d'avis au recruteur (pour noter le candidat)
-    await supabase.from('notifications').insert({
+    await createNotification({
       user_id: offer.manager_id,
       type: 'review_request',
       title: 'Laissez un avis',

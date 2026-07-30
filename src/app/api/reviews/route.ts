@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getBadgeForScore } from '@/types/database';
+import { createNotification } from '@/lib/supabase/admin';
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -27,7 +28,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Champs requis manquants' }, { status: 400 });
   }
 
-  if (rating < 1 || rating > 5) {
+  // Validation UUID format
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(application_id) || !UUID_RE.test(reviewed_id)) {
+    return NextResponse.json({ error: 'IDs invalides' }, { status: 400 });
+  }
+
+  // Validation stricte du type et de la plage pour rating
+  if (typeof rating !== 'number' || !Number.isFinite(rating) || rating < 1 || rating > 5) {
     return NextResponse.json({ error: 'Note entre 1 et 5' }, { status: 400 });
   }
 
@@ -38,8 +46,10 @@ export async function POST(request: NextRequest) {
   // Valider les sous-notes (1-5 si fournies)
   const subRatings = [rating_reactivity, rating_quality, rating_communication, rating_results];
   for (const sr of subRatings) {
-    if (sr !== undefined && sr !== null && (sr < 1 || sr > 5)) {
-      return NextResponse.json({ error: 'Les sous-notes doivent être entre 1 et 5' }, { status: 400 });
+    if (sr !== undefined && sr !== null) {
+      if (typeof sr !== 'number' || !Number.isFinite(sr) || sr < 1 || sr > 5) {
+        return NextResponse.json({ error: 'Les sous-notes doivent être entre 1 et 5' }, { status: 400 });
+      }
     }
   }
 
@@ -147,7 +157,7 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .single();
 
-  await supabase.from('notifications').insert({
+  await createNotification({
     user_id: reviewed_id,
     type: 'review_received',
     title: 'Nouvel avis reçu',

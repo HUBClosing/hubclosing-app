@@ -74,7 +74,8 @@ export async function updateSession(request: NextRequest) {
   if (
     !user &&
     request.nextUrl.pathname.startsWith('/api') &&
-    !request.nextUrl.pathname.startsWith('/api/auth')
+    !request.nextUrl.pathname.startsWith('/api/auth') &&
+    !request.nextUrl.pathname.startsWith('/api/stripe/webhook')
   ) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }

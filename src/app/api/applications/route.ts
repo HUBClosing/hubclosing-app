@@ -4,6 +4,7 @@ import { getRemainingApplications, canUserDo, isOfferPremium } from '@/types/dat
 import type { User } from '@/types/database';
 import { sendEmail } from '@/lib/email';
 import { newApplicationEmail } from '@/lib/email/templates/new-application';
+import { createNotification } from '@/lib/supabase/admin';
 
 /**
  * POST /api/applications
@@ -49,6 +50,12 @@ export async function POST(request: NextRequest) {
 
   if (!offer_id) {
     return NextResponse.json({ error: 'offer_id requis' }, { status: 400 });
+  }
+
+  // Validation UUID format
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(offer_id)) {
+    return NextResponse.json({ error: 'offer_id invalide' }, { status: 400 });
   }
 
   // Validation longueur cover_letter (max 5000 caractères)
@@ -157,7 +164,7 @@ export async function POST(request: NextRequest) {
 
   // ── Notifier le recruteur (in-app + email) ──
   if (offer.manager_id) {
-    await supabase.from('notifications').insert({
+    await createNotification({
       user_id: offer.manager_id,
       type: 'new_application',
       title: 'Nouvelle candidature',
@@ -219,6 +226,12 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
+  // Validation UUID format
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_RE.test(application_id)) {
+    return NextResponse.json({ error: 'application_id invalide' }, { status: 400 });
+  }
+
   // Récupérer la candidature
   const { data: application } = await supabase
     .from('applications')
@@ -273,7 +286,7 @@ export async function PATCH(request: NextRequest) {
   // Notifier le recruteur
   const offer = application.offer as { id: string; title: string; manager_id: string } | null;
   if (offer?.manager_id) {
-    await supabase.from('notifications').insert({
+    await createNotification({
       user_id: offer.manager_id,
       type: 'status_change',
       title: 'Candidature retirée',

@@ -91,9 +91,13 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
 
         // Connexion → toujours vers le dashboard
         const redirectParam = searchParams.get('redirect') || '/dashboard';
-        const safeRedirect = redirectParam.startsWith('/') && !redirectParam.startsWith('//')
-          ? redirectParam
-          : '/dashboard';
+        const safeRedirect =
+          redirectParam.startsWith('/') &&
+          !redirectParam.startsWith('//') &&
+          !redirectParam.startsWith('/\\') &&
+          !redirectParam.includes(':')
+            ? redirectParam
+            : '/dashboard';
         router.push(safeRedirect);
         router.refresh();
       }

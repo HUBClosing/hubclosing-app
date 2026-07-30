@@ -172,7 +172,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                     }`}
                     onClick={() => {
                       if (!notif.is_read) markAsRead(notif.id);
-                      if (notif.link) {
+                      if (notif.link && notif.link.startsWith('/') && !notif.link.startsWith('//')) {
                         window.location.href = notif.link;
                         setIsOpen(false);
                       }

@@ -214,7 +214,9 @@ export default function NotificationsPage() {
                     className="flex items-start gap-3 p-4"
                     onClick={() => {
                       if (!notif.is_read) markAsRead(notif.id);
-                      if (notif.link) window.location.href = notif.link;
+                      if (notif.link && notif.link.startsWith('/') && !notif.link.startsWith('//')) {
+                        window.location.href = notif.link;
+                      }
                     }}
                   >
                     {/* Icône */}

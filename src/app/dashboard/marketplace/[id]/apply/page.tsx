@@ -192,17 +192,8 @@ export default function MarketplaceApplyPage() {
       return;
     }
 
-    // Notifier le recruteur
-    if (offer?.manager_id) {
-      await supabase.from('notifications').insert({
-        user_id: offer.manager_id,
-        type: 'questionnaire_filled',
-        title: 'Questionnaire complété',
-        body: `Un candidat a rempli le questionnaire pour "${offer.title}".`,
-        link: `/dashboard/offers/${offerId}/responses`,
-        metadata: { application_id: applicationId, offer_id: offerId },
-      });
-    }
+    // Note : la notification au recruteur est gérée côté serveur
+    // (API /api/applications crée déjà la notif "new_application")
 
     setStep('done');
     setSubmitting(false);
