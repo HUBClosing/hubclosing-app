@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useUnreadMessages } from '@/lib/hooks/useUnreadMessages';
 import type { User, ActiveRole, SubscriptionTier } from '@/types/database';
 import { clsx } from 'clsx';
 import {
@@ -140,6 +141,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
   const dual = isDualRole(user);
   const admin = isAdmin(user);
   const userTier = user.tier || 'free';
+  const unreadMessages = useUnreadMessages(user.id);
 
   const handleSwitchRole = async () => {
     const newRole: ActiveRole = activeRole === 'candidate' ? 'recruiter' : 'candidate';
@@ -244,6 +246,8 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
                 );
               }
 
+              const isMessages = link.href === '/dashboard/messages';
+
               return (
                 <a
                   key={link.href}
@@ -255,8 +259,20 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
                   )}
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  {link.label}
+                  <div className="relative shrink-0">
+                    <Icon className="h-5 w-5" />
+                    {isMessages && unreadMessages > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold text-white bg-red-500 rounded-full px-1">
+                        {unreadMessages > 99 ? '99+' : unreadMessages}
+                      </span>
+                    )}
+                  </div>
+                  <span className="flex-1">{link.label}</span>
+                  {isMessages && unreadMessages > 0 && (
+                    <span className="text-xs text-red-400 font-semibold">
+                      {unreadMessages}
+                    </span>
+                  )}
                 </a>
               );
             })}
