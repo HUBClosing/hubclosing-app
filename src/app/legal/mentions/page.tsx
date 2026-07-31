@@ -19,9 +19,6 @@ const label: React.CSSProperties = {
 /**
  * Mentions légales — Obligatoire pour tout site commercial en France
  * (Loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique)
- *
- * NOTE : Les informations ci-dessous sont des placeholders.
- * Céline doit les remplacer par ses vraies coordonnées d'entreprise.
  */
 export default function MentionsLegalesPage() {
   return (
@@ -35,25 +32,24 @@ export default function MentionsLegalesPage() {
         Mentions l&eacute;gales
       </h1>
       <p style={{ fontSize: '14px', color: '#7A7A72', marginBottom: '40px' }}>
-        Derni&egrave;re mise &agrave; jour : 20 juillet 2026
+        Derni&egrave;re mise &agrave; jour : 30 juillet 2026
       </p>
 
       <h2 style={sectionTitle}>1. &Eacute;diteur du site</h2>
       <div style={{ background: '#141F0E', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
         <p style={label}>Raison sociale</p>
-        <p style={{ ...paragraph, color: '#F5F5F0', marginBottom: '12px' }}>[NOM DE L&apos;ENTREPRISE] &mdash; [FORME JURIDIQUE]</p>
+        <p style={{ ...paragraph, color: '#F5F5F0', marginBottom: '12px' }}>Ecom France &mdash; Entrepreneur individuel (auto-entrepreneur)</p>
         <p style={label}>Si&egrave;ge social</p>
-        <p style={{ ...paragraph, marginBottom: '12px' }}>[ADRESSE COMPL&Egrave;TE]</p>
-        <p style={label}>SIRET / SIREN</p>
-        <p style={{ ...paragraph, marginBottom: '12px' }}>[NUM&Eacute;RO SIRET]</p>
-        <p style={label}>Directeur de la publication</p>
+        <p style={{ ...paragraph, marginBottom: '12px' }}>France</p>
+        <p style={label}>SIRET</p>
+        <p style={{ ...paragraph, marginBottom: '12px' }}>885 334 334 00020</p>
+        <p style={label}>Num&eacute;ro TVA</p>
+        <p style={{ ...paragraph, marginBottom: '12px' }}>Non assujetti &agrave; la TVA (article 293 B du CGI)</p>
+        <p style={label}>Directrice de la publication</p>
         <p style={{ ...paragraph, marginBottom: '12px' }}>C&eacute;line &mdash; clcb.pro@gmail.com</p>
         <p style={label}>Contact</p>
         <p style={{ ...paragraph, marginBottom: '0' }}>contact@hubclosing.fr</p>
       </div>
-      <p style={{ ...paragraph, fontSize: '13px', color: '#7A7A72', fontStyle: 'italic' }}>
-        &#x26A0; Remplacez les champs entre crochets par vos vraies informations d&apos;entreprise.
-      </p>
 
       <h2 style={sectionTitle}>2. H&eacute;bergement</h2>
       <p style={paragraph}>

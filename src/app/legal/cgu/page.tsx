@@ -25,7 +25,7 @@ export default function CGUPage() {
         Conditions G&eacute;n&eacute;rales d&apos;Utilisation
       </h1>
       <p style={{ fontSize: '14px', color: '#7A7A72', marginBottom: '40px' }}>
-        Derni&egrave;re mise &agrave; jour : 20 juillet 2026
+        Derni&egrave;re mise &agrave; jour : 30 juillet 2026
       </p>
 
       <h2 style={sectionTitle}>1. Objet</h2>

@@ -29,7 +29,7 @@ export default function PrivacyPage() {
         Politique de confidentialit&eacute;
       </h1>
       <p style={{ fontSize: '14px', color: '#7A7A72', marginBottom: '40px' }}>
-        Derni&egrave;re mise &agrave; jour : 20 juillet 2026
+        Derni&egrave;re mise &agrave; jour : 30 juillet 2026
       </p>
 
       <p style={paragraph}>
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
 
       <h2 style={sectionTitle}>1. Responsable du traitement</h2>
       <p style={paragraph}>
-        Le responsable du traitement des donn&eacute;es personnelles est [NOM DE L&apos;ENTREPRISE], dont le si&egrave;ge social est situ&eacute; &agrave; [ADRESSE]. Contact : contact@hubclosing.fr.
+        Le responsable du traitement des donn&eacute;es personnelles est Ecom France (entrepreneur individuel), SIRET 885 334 334 00020, domicili&eacute;e en France. Contact : contact@hubclosing.fr.
       </p>
 
       <h2 style={sectionTitle}>2. Donn&eacute;es collect&eacute;es</h2>
