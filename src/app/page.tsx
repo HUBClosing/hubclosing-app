@@ -645,6 +645,26 @@ img{max-width:100%;height:auto;}
 
   useEffect(() => {
     if (loading) return;
+    const menuBtn = document.getElementById('menuBtn');
+    const navLinks = document.getElementById('navLinks');
+    if (menuBtn && navLinks) {
+      const toggleMenu = () => navLinks.classList.toggle('open');
+      menuBtn.addEventListener('click', toggleMenu);
+
+      // Close mobile menu when a link is clicked
+      navLinks.querySelectorAll('a').forEach((a) => {
+        a.addEventListener('click', () => navLinks.classList.remove('open'));
+      });
+
+      return () => {
+        menuBtn.removeEventListener('click', toggleMenu);
+      };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading) return;
     const handleAnchorClick = (e: Event) => {
       const link = e.target as HTMLAnchorElement;
       const href = link.getAttribute('href');
