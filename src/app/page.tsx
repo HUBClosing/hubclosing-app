@@ -318,6 +318,8 @@ img{max-width:100%;height:auto;}
   .nav-links{display:none;position:fixed;top:56px;left:0;right:0;background:rgba(10,15,8,0.97);backdrop-filter:blur(24px);flex-direction:column;padding:24px;gap:16px;border-bottom:1px solid var(--card-b);transform:none !important;position:fixed !important;left:0 !important;}
   .nav-links.open{display:flex;}
   .nav-menu-btn{display:block;}
+  .nav-cta-ghost{display:none;}
+  .nav-cta{padding:8px 16px;font-size:12px;border-radius:8px;}
   .hero{padding:100px 20px 60px;}
   .hero h1{letter-spacing:-2px;font-size:clamp(28px,5vw,48px);}
   .hero-logo svg{height:56px;}
