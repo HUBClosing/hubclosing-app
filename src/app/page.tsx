@@ -51,6 +51,8 @@ img{max-width:100%;height:auto;}
 .nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(232,145,58,0.35);}
 .nav-cta:hover::before{opacity:1;}
 .nav-cta span{position:relative;z-index:1;}
+.nav-cta-ghost{padding:10px 22px;border-radius:10px;font-weight:700;font-size:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--cream-d);transition:all 0.3s;}
+.nav-cta-ghost:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);transform:translateY(-1px);}
 .nav-menu-btn{display:none;background:none;border:none;color:var(--cream);font-size:24px;cursor:pointer;}
 
 /* ===== HERO ===== */
@@ -74,9 +76,8 @@ img{max-width:100%;height:auto;}
 .hero h1{font-size:clamp(36px,6vw,76px);font-weight:800;letter-spacing:-3px;line-height:0.95;margin-bottom:12px;max-width:820px;opacity:0;animation:fadeInUp 0.8s 2.2s cubic-bezier(0.16,1,0.3,1) forwards;}
 .hero h1 .white{color:var(--cream);}
 .hero h1 .accent{background:linear-gradient(135deg,var(--amber-g),var(--amber),var(--amber-d));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hero-oppo{font-size:clamp(18px,2.5vw,24px);font-weight:600;letter-spacing:1px;background:linear-gradient(90deg,var(--amber),var(--amber-g));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:24px;opacity:0;animation:fadeInUp 0.8s 2.35s cubic-bezier(0.16,1,0.3,1) forwards;}
-.hero-desc{font-size:clamp(15px,1.8vw,18px);color:var(--gray);max-width:540px;line-height:1.7;margin-bottom:40px;opacity:0;animation:fadeInUp 0.8s 2.5s cubic-bezier(0.16,1,0.3,1) forwards;}
-.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeInUp 0.8s 2.65s cubic-bezier(0.16,1,0.3,1) forwards;}
+.hero-desc{font-size:clamp(15px,1.8vw,18px);color:var(--gray);max-width:540px;line-height:1.7;margin-bottom:40px;opacity:0;animation:fadeInUp 0.8s 2.35s cubic-bezier(0.16,1,0.3,1) forwards;}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeInUp 0.8s 2.5s cubic-bezier(0.16,1,0.3,1) forwards;}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 32px;border-radius:12px;font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;transition:all 0.35s cubic-bezier(0.16,1,0.3,1);letter-spacing:0.3px;position:relative;overflow:hidden;}
@@ -88,39 +89,11 @@ img{max-width:100%;height:auto;}
 .btn-ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--cream-d);}
 .btn-ghost:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);transform:translateY(-3px);}
 
-.hero-stats{display:flex;gap:48px;margin-top:72px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeInUp 0.8s 2.8s cubic-bezier(0.16,1,0.3,1) forwards;}
+.hero-stats{display:flex;gap:48px;margin-top:72px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeInUp 0.8s 2.65s cubic-bezier(0.16,1,0.3,1) forwards;}
 .hero-stat{text-align:center;position:relative;}
 .hero-stat:not(:last-child)::after{content:'';position:absolute;right:-24px;top:50%;transform:translateY(-50%);width:1px;height:30px;background:rgba(255,255,255,0.06);}
 .hero-stat-num{font-size:36px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--amber-g),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .hero-stat-label{font-size:13px;color:var(--gray);margin-top:4px;}
-
-/* ===== APP PREVIEW ===== */
-.app-preview-section{padding:40px 24px 100px;position:relative;overflow:hidden;}
-.app-preview-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;height:200px;background:linear-gradient(to bottom,var(--bg),transparent);pointer-events:none;z-index:1;}
-.app-preview-wrap{max-width:1000px;margin:0 auto;position:relative;}
-.app-preview-label{text-align:center;margin-bottom:28px;}
-.app-preview-label span{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-weight:600;padding:6px 16px;border:1px solid rgba(232,145,58,0.2);border-radius:20px;background:rgba(232,145,58,0.04);}
-.app-preview{border-radius:20px;border:1px solid rgba(255,255,255,0.06);background:var(--card);overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.4),0 0 80px rgba(232,145,58,0.05);position:relative;}
-.app-preview-bar{display:flex;align-items:center;gap:8px;padding:14px 20px;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.04);}
-.app-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.08);}
-.app-dot:first-child{background:#FF5F56;}
-.app-dot:nth-child(2){background:#FFBD2E;}
-.app-dot:nth-child(3){background:#27C93F;}
-.app-preview-url{flex:1;text-align:center;font-size:12px;color:var(--gray-s);font-weight:500;letter-spacing:0.5px;}
-.app-preview-content{padding:40px;display:grid;grid-template-columns:220px 1fr;gap:24px;min-height:340px;}
-.app-sidebar-mock{display:flex;flex-direction:column;gap:12px;}
-.app-sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:13px;color:var(--gray-l);transition:all 0.3s;}
-.app-sidebar-item.active{background:rgba(232,145,58,0.1);color:var(--amber-l);}
-.app-sidebar-icon{width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:11px;}
-.app-sidebar-item.active .app-sidebar-icon{background:rgba(232,145,58,0.2);}
-.app-main-mock{display:flex;flex-direction:column;gap:16px;}
-.app-card-mock{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:18px;display:flex;align-items:center;gap:14px;transition:all 0.3s;}
-.app-card-mock:hover{background:rgba(255,255,255,0.04);border-color:rgba(232,145,58,0.15);transform:translateX(4px);}
-.app-card-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#FFF;flex-shrink:0;}
-.app-card-info{flex:1;}
-.app-card-title{font-size:14px;font-weight:600;color:var(--cream);margin-bottom:2px;}
-.app-card-sub{font-size:12px;color:var(--gray);}
-.app-card-badge{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;}
 
 /* ===== BAND OVERLAY SECTIONS ===== */
 .band{position:relative;z-index:2;border-radius:32px 32px 0 0;margin-top:-32px;overflow:hidden;}
@@ -165,6 +138,8 @@ img{max-width:100%;height:auto;}
 .nav.nav-white .nav-links a:hover{color:#1A1A18;}
 .nav.nav-white .nav-menu-btn{color:#1A1A18;}
 .nav.nav-white .nav-cta{background:linear-gradient(135deg,var(--amber-d),#C06A20);color:#FFF;}
+.nav.nav-white .nav-cta-ghost{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.1);color:#1A1A18;}
+.nav.nav-white .nav-cta-ghost:hover{background:rgba(0,0,0,0.08);border-color:rgba(0,0,0,0.15);}
 
 /* ===== SECTIONS ===== */
 .section{padding:120px 24px;max-width:1100px;margin:0 auto;}
@@ -229,8 +204,7 @@ img{max-width:100%;height:auto;}
 .testimonial-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:14px;}
 .badge-closer{background:rgba(232,145,58,0.12);color:#D4782E;}
 .badge-setter{background:rgba(43,94,158,0.12);color:#2B5E9E;}
-.badge-hos{background:rgba(139,92,246,0.12);color:#7C3AED;}
-.badge-manager{background:rgba(16,185,129,0.12);color:#059669;}
+.badge-recruteur{background:rgba(139,92,246,0.12);color:#7C3AED;}
 .testimonial-author{display:flex;align-items:center;gap:12px;}
 .testimonial-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#FFF;}
 .testimonial-name{font-size:14px;font-weight:600;color:var(--cream);}
@@ -252,15 +226,6 @@ img{max-width:100%;height:auto;}
 .cta-section h2{font-size:clamp(28px,4vw,52px);font-weight:800;letter-spacing:-2px;margin-bottom:16px;}
 .cta-section p{font-size:17px;color:var(--gray);max-width:480px;margin:0 auto 40px;line-height:1.7;}
 
-/* ===== FORM ===== */
-.form-inline{display:flex;gap:10px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center;}
-.form-input{padding:15px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:var(--card);color:var(--cream);font-family:inherit;font-size:15px;flex:1;min-width:200px;outline:none;transition:all 0.3s;}
-.form-input:focus{border-color:var(--amber);box-shadow:0 0 20px rgba(232,145,58,0.1);}
-.form-input::placeholder{color:var(--gray-s);}
-.form-select{padding:15px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:var(--card);color:var(--cream);font-family:inherit;font-size:15px;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A7A72' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px;transition:all 0.3s;}
-.form-select:focus{border-color:var(--amber);box-shadow:0 0 20px rgba(232,145,58,0.1);}
-.form-success{display:none;padding:20px;border-radius:12px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15);text-align:center;color:var(--success);font-weight:600;max-width:520px;margin:20px auto 0;}
-
 /* ===== FOOTER ===== */
 .footer{border-top:1px solid var(--card-b);padding:60px 24px 40px;margin-top:0;}
 .footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;}
@@ -275,6 +240,64 @@ img{max-width:100%;height:auto;}
 /* ===== SCROLL PROGRESS BAR ===== */
 .scroll-progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--amber),var(--amber-g));z-index:200;transition:width 0.1s linear;width:0;}
 
+/* ===== POUR QUI PAIN POINTS ===== */
+.pain-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.pain-card{background:#FFFFFF;border:1px solid rgba(0,0,0,0.06);border-radius:18px;padding:36px 28px;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);}
+.pain-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.08);}
+.pain-icon{font-size:28px;margin-bottom:14px;}
+.pain-title{font-size:18px;font-weight:700;color:#1A1A18;margin-bottom:10px;line-height:1.3;}
+.pain-desc{font-size:14px;color:#5A5A52;line-height:1.6;margin-bottom:16px;}
+.pain-label{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:10px;}
+.pain-check{font-size:13px;color:#5A5A52;line-height:2;padding-left:2px;}
+.pain-check-icon{color:var(--success);margin-right:6px;font-weight:700;}
+
+/* ===== FEATURES 3-COL ===== */
+.features-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+
+/* ===== OPTIONNEL BADGE ===== */
+.opt-badge{display:inline-block;font-size:10px;font-weight:600;background:rgba(251,190,94,0.12);color:var(--amber-g);padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;}
+
+/* ===== DASHBOARD PREVIEW ===== */
+.dash-preview{border-radius:20px;border:1px solid rgba(255,255,255,0.06);background:var(--card);overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.4),0 0 80px rgba(232,145,58,0.05);}
+.dash-topbar{display:flex;align-items:center;gap:8px;padding:14px 20px;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.04);}
+.dash-toggle{display:flex;gap:8px;margin-bottom:20px;}
+.dash-toggle-btn{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:default;}
+.dash-toggle-active{background:rgba(232,145,58,0.12);color:var(--amber-l);}
+.dash-toggle-inactive{background:rgba(255,255,255,0.03);color:var(--gray);}
+.dash-body{display:flex;min-height:340px;}
+.dash-sidebar{width:180px;padding:16px;border-right:1px solid rgba(255,255,255,0.04);}
+.dash-sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:13px;color:var(--gray-l);margin-bottom:4px;transition:all 0.3s;}
+.dash-sidebar-item.active{background:rgba(232,145,58,0.1);color:var(--amber-l);}
+.dash-sidebar-icon{font-size:16px;width:20px;text-align:center;}
+.dash-main{flex:1;padding:20px;}
+.dash-welcome{font-size:16px;font-weight:600;margin-bottom:16px;}
+.dash-welcome span{font-size:12px;font-weight:400;color:var(--gray);margin-left:6px;}
+.dash-stats{display:flex;gap:12px;margin-bottom:20px;}
+.dash-stat-card{flex:1;border-radius:12px;padding:14px;text-align:center;}
+.dash-stat-num{font-size:24px;font-weight:800;}
+.dash-stat-label{font-size:11px;opacity:0.6;margin-top:2px;}
+.dash-offers-title{font-size:13px;font-weight:600;color:var(--gray-l);margin-bottom:10px;}
+.dash-offer{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;transition:all 0.3s;}
+.dash-offer:hover{background:rgba(255,255,255,0.04);border-color:rgba(232,145,58,0.15);transform:translateX(4px);}
+.dash-offer-title{font-size:14px;font-weight:600;color:var(--cream);}
+.dash-offer-sub{font-size:12px;color:var(--gray);margin-top:2px;}
+.dash-offer-badge{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;}
+
+/* ===== COMMUNITY REF ===== */
+.community-ref-box{background:rgba(232,145,58,0.06);border:1px solid rgba(232,145,58,0.12);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:16px;}
+.band-light .community-ref-box{background:rgba(232,145,58,0.06);border-color:rgba(232,145,58,0.12);}
+
+/* ===== APP PREVIEW ===== */
+.app-preview-section{padding:40px 24px 100px;position:relative;overflow:hidden;}
+.app-preview-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;height:200px;background:linear-gradient(to bottom,var(--bg),transparent);pointer-events:none;z-index:1;}
+.app-preview-wrap{max-width:1000px;margin:0 auto;position:relative;}
+.app-preview-label{text-align:center;margin-bottom:28px;}
+.app-preview-label span{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-weight:600;padding:6px 16px;border:1px solid rgba(232,145,58,0.2);border-radius:20px;background:rgba(232,145,58,0.04);}
+.app-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.08);}
+.app-dot:first-child{background:#FF5F56;}
+.app-dot:nth-child(2){background:#FFBD2E;}
+.app-dot:nth-child(3){background:#27C93F;}
+
 /* ===== RESPONSIVE ===== */
 @media(max-width:900px){
   .steps-grid{grid-template-columns:1fr;}
@@ -283,9 +306,11 @@ img{max-width:100%;height:auto;}
   .footer-inner{grid-template-columns:1fr 1fr;}
   .hero-stats{gap:28px;}
   .hero-stat:not(:last-child)::after{display:none;}
-  .app-preview-content{grid-template-columns:1fr;min-height:auto;}
-  .app-sidebar-mock{flex-direction:row;flex-wrap:wrap;gap:6px;}
-  .app-sidebar-item{padding:8px 12px;font-size:12px;}
+  .pain-grid{grid-template-columns:1fr;}
+  .features-grid-3{grid-template-columns:1fr 1fr;}
+  .dash-body{flex-direction:column;}
+  .dash-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;flex-wrap:wrap;gap:4px;padding:10px;}
+  .dash-sidebar-item{padding:8px 12px;font-size:12px;}
 }
 @media(max-width:700px){
   .nav{padding:12px 20px;justify-content:space-between !important;}
@@ -295,17 +320,16 @@ img{max-width:100%;height:auto;}
   .nav-menu-btn{display:block;}
   .hero{padding:100px 20px 60px;}
   .hero h1{letter-spacing:-2px;font-size:clamp(28px,5vw,48px);}
-  .hero-oppo{font-size:clamp(16px,2vw,20px);}
   .hero-logo svg{height:56px;}
   .section,.section-alt{padding:80px 20px;}
   .cta-section{padding:80px 20px;}
   .footer-inner{grid-template-columns:1fr;}
   .footer-bottom{flex-direction:column;gap:8px;text-align:center;}
-  .form-inline{flex-direction:column;}
-  .form-input,.form-select{width:100%;min-width:auto;}
   .steps-grid::before{display:none;}
   .band{border-radius:24px 24px 0 0;margin-top:-24px;}
   .splash-logo svg{height:80px !important;}
+  .features-grid-3{grid-template-columns:1fr;}
+  .dash-stats{flex-direction:column;}
 }
   `;
 
@@ -471,6 +495,7 @@ img{max-width:100%;height:auto;}
       countersAnimated = true;
       nums.forEach((el) => {
         const target = parseInt((el as HTMLElement).getAttribute('data-count') || '0', 10);
+        const suffix = (el as HTMLElement).getAttribute('data-suffix') || '+';
         const duration = 1800;
         const start = performance.now();
 
@@ -481,10 +506,8 @@ img{max-width:100%;height:auto;}
 
           if (target >= 2000) {
             (el as HTMLElement).textContent = current.toLocaleString('fr-FR') + '+';
-          } else if (target === 100) {
-            (el as HTMLElement).textContent = current + '%';
           } else {
-            (el as HTMLElement).textContent = current + '+';
+            (el as HTMLElement).textContent = current + suffix;
           }
 
           if (progress < 1) requestAnimationFrame(update);
@@ -584,61 +607,6 @@ img{max-width:100%;height:auto;}
       document.querySelectorAll('.faq-question').forEach((q) => {
         q.removeEventListener('click', handleFaqClick);
       });
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
-
-  useEffect(() => {
-    if (loading) return;
-    const form = document.getElementById('waitlistForm') as HTMLFormElement;
-    if (!form) return;
-
-    const handleSubmit = (e: Event) => {
-      e.preventDefault();
-      const emailInput = document.getElementById('emailInput') as HTMLInputElement;
-      const roleSelect = document.getElementById('roleSelect') as HTMLSelectElement;
-      const formSuccess = document.getElementById('formSuccess');
-
-      if (!emailInput || !roleSelect) return;
-
-      const email = emailInput.value.trim();
-      const role = roleSelect.value;
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        emailInput.setCustomValidity('Veuillez entrer un email valide');
-        emailInput.reportValidity();
-        return;
-      }
-
-      const allowedRoles = ['closer', 'manager', 'autre'];
-      if (!allowedRoles.includes(role)) return;
-
-      const lastSubmit = parseInt(sessionStorage.getItem('hc_last_submit') || '0', 10);
-      if (Date.now() - lastSubmit < 30000) {
-        alert('Merci de patienter avant de soumettre à nouveau.');
-        return;
-      }
-
-      sessionStorage.setItem('hc_last_submit', String(Date.now()));
-
-      try {
-        const entries = JSON.parse(localStorage.getItem('hubclosing_waitlist') || '[]');
-        if (entries.length > 500) entries.splice(0, entries.length - 200);
-        entries.push({ email, role, date: new Date().toISOString() });
-        localStorage.setItem('hubclosing_waitlist', JSON.stringify(entries));
-      } catch (err) {
-        console.error('Storage error:', err);
-      }
-
-      form.style.display = 'none';
-      if (formSuccess) formSuccess.style.display = 'block';
-    };
-
-    form.addEventListener('submit', handleSubmit);
-
-    return () => {
-      form.removeEventListener('submit', handleSubmit);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
@@ -793,13 +761,13 @@ img{max-width:100%;height:auto;}
           </svg>
         </Link>
         <div className="nav-links" id="navLinks">
+          <a href="#features">Fonctionnalités</a>
           <a href="#comment">Comment ça marche</a>
-          <Link href="/closers">Closers</Link>
-          <Link href="/managers">Managers</Link>
           <a href="#faq">FAQ</a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link href="/auth/login" className="nav-cta"><span>Connexion</span></Link>
+          <Link href="/auth/login" className="nav-cta-ghost">Connexion</Link>
+          <Link href="/auth/register" className="nav-cta"><span>S&apos;inscrire</span></Link>
           <button className="nav-menu-btn" id="menuBtn" aria-label="Menu">☰</button>
         </div>
       </nav>
@@ -811,83 +779,186 @@ img{max-width:100%;height:auto;}
 
         <div className="hero-pill">
           <span className="hero-pill-dot" />
-          <span>Marketplace pour closers & managers</span>
+          <span>La 1ère plateforme dédiée au closing</span>
         </div>
         <h1>
-          <span className="white">Connectez, closez</span> —<br />
-          <span className="accent">une seule plateforme</span>
+          <span className="white">Vous galérez à trouver des top closers ?</span><br />
+          <span className="accent">Vous cherchez votre prochaine mission ?</span>
         </h1>
-        <div className="hero-oppo">Opportunités</div>
         <p className="hero-desc">
-          La première marketplace qui met en relation les closers avec les écosystèmes d'infoproduit. Accédez à des opportunités qualifiées, trouvez les meilleurs profils.
+          HUBClosing connecte les candidats (closers et setters) avec les recruteurs qui ont besoin d&apos;eux. Marketplace, outils de suivi, coaching — tout en un.
         </p>
         <div className="hero-btns">
-          <Link href="/auth/login" className="btn btn-primary"><span>S'inscrire gratuitement</span></Link>
-          <a href="#comment" className="btn btn-ghost">Découvrir</a>
+          <Link href="/auth/register" className="btn btn-primary"><span>Je suis candidat</span></Link>
+          <Link href="/auth/register" className="btn btn-ghost">Je suis recruteur</Link>
         </div>
         <div className="hero-stats">
-          <div className="hero-stat"><div className="hero-stat-num" data-count="2000">0</div><div className="hero-stat-label">Membres dans la communauté</div></div>
-          <div className="hero-stat"><div className="hero-stat-num" data-count="150">0</div><div className="hero-stat-label">Opportunités à venir</div></div>
-          <div className="hero-stat"><div className="hero-stat-num" data-count="100">0</div><div className="hero-stat-label">Dédié à l'infoproduit</div></div>
+          <div className="hero-stat"><div className="hero-stat-num" data-count="2500" data-suffix="+">0</div><div className="hero-stat-label">Professionnels réunis</div></div>
+          <div className="hero-stat"><div className="hero-stat-num" data-count="150" data-suffix="+">0</div><div className="hero-stat-label">Offres publiées</div></div>
+          <div className="hero-stat"><div className="hero-stat-num" data-count="98" data-suffix="%">0</div><div className="hero-stat-label">Satisfaction</div></div>
         </div>
       </section>
 
-      {/* APP PREVIEW */}
+      {/* POUR QUI ? */}
+      <div className="band band-light" data-nav-theme="white">
+        <section className="section-alt" id="pourqui" style={{ background: 'transparent' }}>
+          <div className="section-inner">
+            <div className="slabel reveal">Pour qui ?</div>
+            <div className="stitle reveal">Identifiez-vous <span className="accent">en un instant</span></div>
+            <div className="sdesc reveal">Que vous soyez candidat ou recruteur, HUBClosing résout vos problèmes concrets.</div>
+            <div className="pain-grid">
+              <div className="pain-card reveal reveal-delay-1">
+                <div className="pain-icon">🎯</div>
+                <div className="pain-title">Vous êtes candidat et vous ne trouvez pas de mission ?</div>
+                <div className="pain-desc">Marre de chercher des offres sur 10 groupes différents ? De ne pas savoir si votre candidature a été vue ? De ne pas avoir de retour ?</div>
+                <div className="pain-label">HUBClosing vous donne :</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Des offres qualifiées au même endroit</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Un profil visible par les recruteurs</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Un suivi de vos performances</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Une réputation qui vous suit</div>
+              </div>
+              <div className="pain-card reveal reveal-delay-2">
+                <div className="pain-icon">📋</div>
+                <div className="pain-title">Vous êtes recruteur et vous ne trouvez pas de top profils ?</div>
+                <div className="pain-desc">Vous perdez du temps à filtrer des candidats non qualifiés ? Impossible de vérifier leur track record ? Vos closers partent au bout de 2 semaines ?</div>
+                <div className="pain-label">HUBClosing vous donne :</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Un questionnaire qui cible vos besoins précis</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Des candidats avec réputation vérifiée</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Un dashboard de suivi en temps réel</div>
+                <div className="pain-check"><span className="pain-check-icon">✓</span> Les meilleures data pour trouver vos pépites</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* PLATFORM PREVIEW */}
       <div className="app-preview-section">
         <div className="app-preview-wrap reveal scale-in">
           <div className="app-preview-label"><span>Aperçu de la plateforme</span></div>
-          <div className="app-preview">
-            <div className="app-preview-bar">
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div className="stitle" style={{ color: 'var(--cream)' }}>Un aperçu de votre futur <span className="accent">dashboard</span></div>
+          </div>
+          <div className="dash-preview">
+            <div className="dash-topbar">
               <div className="app-dot" />
               <div className="app-dot" />
               <div className="app-dot" />
-              <div className="app-preview-url">app.hubclosing.fr/marketplace</div>
+              <div style={{ flex: 1, textAlign: 'center', fontSize: '12px', color: 'var(--gray-s)', fontWeight: 500, letterSpacing: '0.5px' }}>hubclosing.fr/dashboard</div>
             </div>
-            <div className="app-preview-content">
-              <div className="app-sidebar-mock">
-                <div className="app-sidebar-item"><div className="app-sidebar-icon">☰</div>Dashboard</div>
-                <div className="app-sidebar-item active"><div className="app-sidebar-icon">🔍</div>Marketplace</div>
-                <div className="app-sidebar-item"><div className="app-sidebar-icon">💬</div>Messages</div>
-                <div className="app-sidebar-item"><div className="app-sidebar-icon">👤</div>Profil</div>
-                <div className="app-sidebar-item"><div className="app-sidebar-icon">⚙</div>Paramètres</div>
+            <div style={{ padding: '20px 20px 0' }}>
+              <div className="dash-toggle">
+                <div className="dash-toggle-btn dash-toggle-active">Vue candidat</div>
+                <div className="dash-toggle-btn dash-toggle-inactive">Vue recruteur</div>
               </div>
-              <div className="app-main-mock">
-                <div className="app-card-mock">
-                  <div className="app-card-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),var(--amber-d))' }}>M</div>
-                  <div className="app-card-info">
-                    <div className="app-card-title">Closer Coaching Business</div>
-                    <div className="app-card-sub">MindSet Academy • 15-20% commission • Paris</div>
+            </div>
+            <div className="dash-body">
+              <div className="dash-sidebar">
+                <div className="dash-sidebar-item active"><span className="dash-sidebar-icon">📊</span>Dashboard</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">💼</span>Offres</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">📈</span>Tracking</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">💬</span>Messages</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">👤</span>Profil</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">🎓</span>Coaching</div>
+              </div>
+              <div className="dash-main">
+                <div className="dash-welcome">Bonjour Maxime <span>— Closer Elite</span></div>
+                <div className="dash-stats">
+                  <div className="dash-stat-card" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.12)' }}>
+                    <div className="dash-stat-num" style={{ color: 'var(--success)' }}>12</div>
+                    <div className="dash-stat-label" style={{ color: 'var(--success)' }}>Calls ce mois</div>
                   </div>
-                  <div className="app-card-badge" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}>Nouveau</div>
+                  <div className="dash-stat-card" style={{ background: 'rgba(232,145,58,0.08)', border: '1px solid rgba(232,145,58,0.12)' }}>
+                    <div className="dash-stat-num" style={{ color: 'var(--amber-l)' }}>67%</div>
+                    <div className="dash-stat-label" style={{ color: 'var(--amber-l)' }}>Taux de closing</div>
+                  </div>
+                  <div className="dash-stat-card" style={{ background: 'rgba(251,190,94,0.08)', border: '1px solid rgba(251,190,94,0.12)' }}>
+                    <div className="dash-stat-num" style={{ color: 'var(--amber-g)' }}>3</div>
+                    <div className="dash-stat-label" style={{ color: 'var(--amber-g)' }}>Médailles</div>
+                  </div>
                 </div>
-                <div className="app-card-mock">
-                  <div className="app-card-avatar" style={{ background: 'linear-gradient(135deg,#2B5E9E,#1A3F6F)' }}>S</div>
-                  <div className="app-card-info">
-                    <div className="app-card-title">Setter E-commerce</div>
-                    <div className="app-card-sub">ScaleUp Pro • 8-12% commission • Remote</div>
+                <div className="dash-offers-title">Offres recommandées</div>
+                <div className="dash-offer">
+                  <div>
+                    <div className="dash-offer-title">Closer Coaching Business</div>
+                    <div className="dash-offer-sub">MindSet Academy — 15-20% commission — Paris</div>
                   </div>
-                  <div className="app-card-badge" style={{ background: 'rgba(232,145,58,0.1)', color: 'var(--amber-l)' }}>Premium</div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}>Nouveau</div>
                 </div>
-                <div className="app-card-mock">
-                  <div className="app-card-avatar" style={{ background: 'linear-gradient(135deg,#8B5CF6,#6D28D9)' }}>L</div>
-                  <div className="app-card-info">
-                    <div className="app-card-title">Closer Formation Santé</div>
-                    <div className="app-card-sub">VitaLife • 20-25% commission • Remote</div>
+                <div className="dash-offer">
+                  <div>
+                    <div className="dash-offer-title">Setter E-commerce Premium</div>
+                    <div className="dash-offer-sub">ScaleUp Pro — 8-12% commission — Remote</div>
                   </div>
-                  <div className="app-card-badge" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}>Nouveau</div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>Urgent</div>
                 </div>
-                <div className="app-card-mock">
-                  <div className="app-card-avatar" style={{ background: 'linear-gradient(135deg,var(--success),#16A34A)' }}>K</div>
-                  <div className="app-card-info">
-                    <div className="app-card-title">HOS Crypto / Finance</div>
-                    <div className="app-card-sub">CryptoMastery • Salaire + bonus • Dubai</div>
+                <div className="dash-offer">
+                  <div>
+                    <div className="dash-offer-title">Closer Formation Santé</div>
+                    <div className="dash-offer-sub">VitaLife — 20-25% commission — Remote</div>
                   </div>
-                  <div className="app-card-badge" style={{ background: 'rgba(139,92,246,0.1)', color: '#A78BFA' }}>VIP</div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(99,102,241,0.1)', color: '#818CF8' }}>Remote</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* FEATURES */}
+      <div className="band band-dark" data-nav-theme="dark">
+        <section className="section" id="features">
+          <div className="slabel reveal">Fonctionnalités</div>
+          <div className="stitle reveal">Tout ce dont vous avez besoin, <span className="accent">au même endroit</span></div>
+          <div className="sdesc reveal">Plus qu&apos;une marketplace — un écosystème complet pour réussir.</div>
+          <div className="features-grid-3">
+            <div className="feature-card reveal reveal-delay-1">
+              <div className="feature-icon feature-icon-amber">🏢</div>
+              <h3>Marketplace</h3>
+              <p>Publiez et postulez aux offres. Matching candidats × recruteurs.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-2">
+              <div className="feature-icon feature-icon-amber">🎯</div>
+              <h3>Tracking calls</h3>
+              <p>Suivez vos appels, taux de closing et performances en temps réel.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-3">
+              <div className="feature-icon feature-icon-amber">🏅</div>
+              <h3>Médailles <span className="opt-badge">Optionnel</span></h3>
+              <p>Activez les badges de performance si vous le souhaitez. Visibles sur votre profil.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-1">
+              <div className="feature-icon feature-icon-amber">🎓</div>
+              <h3>Coaching</h3>
+              <p>Réservez des sessions avec des coachs experts en closing.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-2">
+              <div className="feature-icon feature-icon-amber">📄</div>
+              <h3>CVthèque</h3>
+              <p>Créez votre profil candidat. Les recruteurs vous trouvent directement.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-3">
+              <div className="feature-icon feature-icon-amber">💬</div>
+              <h3>Messagerie</h3>
+              <p>Échangez directement avec les recruteurs ou candidats.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-1">
+              <div className="feature-icon feature-icon-amber">⭐</div>
+              <h3>Avis et notation</h3>
+              <p>Évaluez et soyez évalué après chaque collaboration.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-2">
+              <div className="feature-icon feature-icon-amber">📋</div>
+              <h3>Questionnaire recruteur</h3>
+              <p>Recueillez les meilleures data pour trouver vos pépites.</p>
+            </div>
+            <div className="feature-card reveal reveal-delay-3">
+              <div className="feature-icon feature-icon-amber">📊</div>
+              <h3>Dashboard analytics</h3>
+              <p>Tableaux de bord complets pour candidats et recruteurs.</p>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* COMMENT CA MARCHE */}
@@ -895,48 +966,25 @@ img{max-width:100%;height:auto;}
         <section className="section-alt" id="comment" style={{ background: 'transparent' }}>
           <div className="section-inner">
             <div className="slabel reveal">Comment ça marche</div>
-            <div className="stitle reveal">Trois étapes pour <span className="accent">transformer votre carrière</span></div>
-            <div className="sdesc reveal">Que vous soyez closer ou manager, HUBClosing simplifie la mise en relation en 3 étapes.</div>
+            <div className="stitle reveal">Opérationnel en <span className="accent">3 étapes</span></div>
+            <div className="sdesc reveal">Candidat ou recruteur, démarrez en moins de 5 minutes.</div>
             <div className="steps-grid">
               <div className="step-card reveal reveal-delay-1">
                 <div className="step-num">1</div>
-                <h3>Créez votre profil</h3>
-                <p>Inscrivez-vous gratuitement et complétez votre profil en 5 minutes. Niches, expérience, résultats, disponibilité.</p>
+                <h3>Créez votre compte gratuit</h3>
+                <p>Inscription en 30 secondes. Accédez immédiatement aux offres.</p>
               </div>
               <div className="step-card reveal reveal-delay-2">
                 <div className="step-num">2</div>
-                <h3>Découvrez les opportunités</h3>
-                <p>Parcourez les offres filtrées par niche, commission et type de vente. Ou laissez notre matching vous suggérer les meilleures.</p>
+                <h3>Complétez votre profil</h3>
+                <p>Renseignez votre expérience et vos spécialités pour un meilleur matching.</p>
               </div>
               <div className="step-card reveal reveal-delay-3">
                 <div className="step-num">3</div>
-                <h3>Closez & évoluez</h3>
-                <p>Candidatez, échangez avec les managers, et décrochez votre prochaine mission. Évoluez au sein de la communauté.</p>
+                <h3>Trouvez votre match</h3>
+                <p>Postulez aux offres ou recevez des candidatures qualifiées.</p>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
-
-      {/* POUR QUI ? */}
-      <div className="band band-dark" data-nav-theme="dark">
-        <section className="section" id="pourqui">
-          <div className="slabel reveal">Pour qui ?</div>
-          <div className="stitle reveal">Une plateforme pour <span className="accent">chaque profil</span></div>
-          <div className="sdesc reveal">Que vous soyez closer, setter, manager ou HOS, HUBClosing a été conçu pour vous.</div>
-          <div className="features-grid">
-            <Link href="/closers" className="feature-card reveal reveal-delay-1" style={{ cursor: 'pointer' }}>
-              <div className="feature-icon feature-icon-amber">🏆</div>
-              <h3>Closers & Setters</h3>
-              <p>Accédez à des opportunités qualifiées, un matching intelligent, des formations exclusives et une communauté d'A-Players pour booster votre carrière.</p>
-              <div style={{ marginTop: '16px', fontSize: '13px', fontWeight: '700', color: 'var(--amber-l)' }}>Découvrir →</div>
-            </Link>
-            <Link href="/managers" className="feature-card reveal reveal-delay-2" style={{ cursor: 'pointer' }}>
-              <div className="feature-icon feature-icon-blue">📋</div>
-              <h3>Managers & HOS</h3>
-              <p>Recrutez les meilleurs closers du marché grâce à des profils qualifiés, un système de candidatures ciblées et des analytics de recrutement.</p>
-              <div style={{ marginTop: '16px', fontSize: '13px', fontWeight: '700', color: 'var(--amber-l)' }}>Découvrir →</div>
-            </Link>
           </div>
         </section>
       </div>
@@ -947,10 +995,10 @@ img{max-width:100%;height:auto;}
           <div className="section-inner">
             <div className="slabel reveal">Témoignages</div>
             <div className="stitle reveal">Ils nous font <span className="accent">déjà confiance</span></div>
-            <div className="sdesc reveal">Plus de 2 000 membres dans notre communauté WhatsApp. Voici leurs retours.</div>
+            <div className="sdesc reveal">Plus de 2 500 professionnels font confiance à HUBClosing.</div>
           </div>
 
-          {/* Rangée 1 — défilement gauche → droite */}
+          {/* Rangée 1 */}
           <div className="testimonials-marquee-wrap" style={{ marginBottom: '20px' }}>
             <div className="testimonials-marquee">
               {[...Array(2)].map((_, dup) => (
@@ -964,8 +1012,8 @@ img{max-width:100%;height:auto;}
                     </div>
                   </div>
                   <div className="testimonial-card">
-                    <div className="testimonial-badge badge-hos">HOS</div>
-                    <div className="testimonial-text">{`"En tant que HOS, recruter un bon closer c'est le nerf de la guerre. Avoir une base de profils qualifiés, c'est exactement ce qu'il nous manquait."`}</div>
+                    <div className="testimonial-badge badge-recruteur">Recruteur</div>
+                    <div className="testimonial-text">{`"En tant que recruteur, trouver un bon closer c'est le nerf de la guerre. Avoir une base de profils qualifiés, c'est exactement ce qu'il nous manquait."`}</div>
                     <div className="testimonial-author">
                       <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#7C3AED,#5B21B6)' }}>S</div>
                       <div><div className="testimonial-name">Sophie L.</div><div className="testimonial-role">Head of Sales — E-commerce</div></div>
@@ -980,11 +1028,11 @@ img{max-width:100%;height:auto;}
                     </div>
                   </div>
                   <div className="testimonial-card">
-                    <div className="testimonial-badge badge-manager">Manager</div>
+                    <div className="testimonial-badge badge-recruteur">Recruteur</div>
                     <div className="testimonial-text">{`"J'ai posté une offre le lundi, j'avais 12 candidatures qualifiées le mercredi. Le gain de temps est énorme par rapport aux recrutements classiques."`}</div>
                     <div className="testimonial-author">
                       <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#059669,#047857)' }}>T</div>
-                      <div><div className="testimonial-name">Thomas V.</div><div className="testimonial-role">Manager — Formation trading</div></div>
+                      <div><div className="testimonial-name">Thomas V.</div><div className="testimonial-role">Recruteur — Formation trading</div></div>
                     </div>
                   </div>
                   <div className="testimonial-card">
@@ -996,11 +1044,11 @@ img{max-width:100%;height:auto;}
                     </div>
                   </div>
                   <div className="testimonial-card">
-                    <div className="testimonial-badge badge-hos">HOS</div>
+                    <div className="testimonial-badge badge-recruteur">Recruteur</div>
                     <div className="testimonial-text">{`"On a structuré toute notre équipe sales grâce à HUBClosing. 4 closers recrutés en un mois, tous encore en poste 6 mois plus tard. La qualité est là."`}</div>
                     <div className="testimonial-author">
                       <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#7C3AED,#6D28D9)' }}>N</div>
-                      <div><div className="testimonial-name">Nicolas P.</div><div className="testimonial-role">HOS — Agence marketing</div></div>
+                      <div><div className="testimonial-name">Nicolas P.</div><div className="testimonial-role">Recruteur — Agence marketing</div></div>
                     </div>
                   </div>
                 </div>
@@ -1008,7 +1056,7 @@ img{max-width:100%;height:auto;}
             </div>
           </div>
 
-          {/* Rangée 2 — défilement droite → gauche */}
+          {/* Rangée 2 */}
           <div className="testimonials-marquee-wrap">
             <div className="testimonials-marquee testimonials-marquee-row2">
               {[...Array(2)].map((_, dup) => (
@@ -1030,19 +1078,19 @@ img{max-width:100%;height:auto;}
                     </div>
                   </div>
                   <div className="testimonial-card">
-                    <div className="testimonial-badge badge-manager">Manager</div>
+                    <div className="testimonial-badge badge-recruteur">Recruteur</div>
                     <div className="testimonial-text">{`"Fini le temps où je devais poster dans 15 groupes Telegram pour trouver un closer. Ici tout est centralisé et pro. C'est le LinkedIn du closing."`}</div>
                     <div className="testimonial-author">
                       <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#059669,#10B981)' }}>E</div>
-                      <div><div className="testimonial-name">Emma G.</div><div className="testimonial-role">Manager — SaaS B2B</div></div>
+                      <div><div className="testimonial-name">Emma G.</div><div className="testimonial-role">Recruteur — SaaS B2B</div></div>
                     </div>
                   </div>
                   <div className="testimonial-card">
-                    <div className="testimonial-badge badge-hos">HOS</div>
+                    <div className="testimonial-badge badge-recruteur">Recruteur</div>
                     <div className="testimonial-text">{`"Le dashboard analytics est top. Je suis mes KPIs de recrutement, le taux de conversion des candidatures. Ça professionnalise tout le process."`}</div>
                     <div className="testimonial-author">
                       <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,#7C3AED,#5B21B6)' }}>R</div>
-                      <div><div className="testimonial-name">Romain A.</div><div className="testimonial-role">HOS — Programme high-ticket</div></div>
+                      <div><div className="testimonial-name">Romain A.</div><div className="testimonial-role">Recruteur — Programme high-ticket</div></div>
                     </div>
                   </div>
                   <div className="testimonial-card">
@@ -1066,6 +1114,24 @@ img{max-width:100%;height:auto;}
             </div>
           </div>
 
+          <div style={{ maxWidth: '1100px', margin: '32px auto 0', padding: '0 24px' }}>
+            <div className="reveal" style={{
+              background: 'rgba(232,145,58,0.06)',
+              border: '1px solid rgba(232,145,58,0.12)',
+              borderRadius: '14px',
+              padding: '18px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              <span style={{ fontSize: '28px' }}>👥</span>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: '700', color: '#1A1A18' }}>+2 500 professionnels du closing</div>
+                <div style={{ fontSize: '13px', color: '#5A5A52' }}>issus du groupe WhatsApp Opportunités, désormais regroupés sur HUBClosing.</div>
+              </div>
+            </div>
+          </div>
+
         </section>
       </div>
 
@@ -1078,45 +1144,45 @@ img{max-width:100%;height:auto;}
           <div className="faq-list">
             <div className="faq-item reveal reveal-delay-1">
               <div className="faq-question">
-                <span>HUBClosing, c'est quoi exactement ?</span>
+                <span>HUBClosing, c&apos;est quoi exactement ?</span>
                 <div className="faq-arrow">+</div>
               </div>
-              <div className="faq-answer">HUBClosing est la première marketplace dédiée au closing et à la vente dans l'univers de l'infoproduit. Nous connectons les closers et setters freelance avec les managers et HOS (Head of Sales) qui recherchent des talents pour vendre leurs formations, coachings et programmes en ligne.</div>
+              <div className="faq-answer">HUBClosing est la première plateforme dédiée au closing. Nous connectons les candidats (closers et setters) avec les recruteurs qui recherchent des talents pour vendre leurs formations, coachings et programmes.</div>
             </div>
             <div className="faq-item reveal reveal-delay-2">
               <div className="faq-question">
-                <span>C'est gratuit ?</span>
+                <span>C&apos;est gratuit ?</span>
                 <div className="faq-arrow">+</div>
               </div>
-              <div className="faq-answer">L'inscription et la création de profil sont 100% gratuites. Vous pouvez parcourir les opportunités, postuler et échanger avec les managers sans frais. Des fonctionnalités premium seront disponibles pour ceux qui veulent booster leur visibilité.</div>
+              <div className="faq-answer">L&apos;inscription est 100% gratuite. Créez votre profil, parcourez les offres et postulez sans frais. Des fonctionnalités premium sont disponibles pour booster votre visibilité.</div>
             </div>
             <div className="faq-item reveal reveal-delay-3">
               <div className="faq-question">
-                <span>Je suis closer / setter, comment ça marche ?</span>
+                <span>Je suis débutant, c&apos;est pour moi ?</span>
                 <div className="faq-arrow">+</div>
               </div>
-              <div className="faq-answer">Créez votre profil en indiquant vos niches, votre expérience et vos résultats. Parcourez ensuite les offres de la marketplace, filtrées par commission, niche et type de vente. Postulez en un clic et échangez directement avec les managers via la messagerie intégrée.</div>
+              <div className="faq-answer">Absolument. HUBClosing accueille tous les niveaux. Le système de médailles est optionnel et le coaching vous aide à progresser à votre rythme.</div>
             </div>
             <div className="faq-item reveal reveal-delay-4">
               <div className="faq-question">
-                <span>Je suis manager / HOS, comment recruter ?</span>
+                <span>Comment fonctionne le système de réputation ?</span>
                 <div className="faq-arrow">+</div>
               </div>
-              <div className="faq-answer">Publiez vos offres avec les détails de la mission (niche, commission, conditions). Recevez des candidatures de closers qualifiés, consultez leurs profils détaillés et statistiques, puis échangez avec eux. Tout est centralisé sur votre dashboard.</div>
+              <div className="faq-answer">Après chaque collaboration, candidats et recruteurs s&apos;évaluent mutuellement. Votre score de réputation est visible sur votre profil et vous aide à décrocher de meilleures opportunités.</div>
             </div>
             <div className="faq-item reveal">
               <div className="faq-question">
-                <span>Quelle est la différence avec les groupes Facebook ?</span>
+                <span>Je suis recruteur, comment publier une offre ?</span>
                 <div className="faq-arrow">+</div>
               </div>
-              <div className="faq-answer">Contrairement aux groupes Facebook où les offres se perdent dans le fil d'actualité, HUBClosing offre une plateforme structurée avec des profils vérifiés, un système de filtres, une messagerie dédiée et un dashboard de suivi. Plus de temps perdu à chercher : tout est organisé et transparent.</div>
+              <div className="faq-answer">Inscrivez-vous, complétez le questionnaire recruteur qui nous aide à comprendre vos besoins précis, puis publiez votre offre en quelques clics. Vous recevrez des candidatures qualifiées directement.</div>
             </div>
             <div className="faq-item reveal">
               <div className="faq-question">
-                <span>Comment rejoindre la communauté ?</span>
+                <span>Mes données sont-elles sécurisées ?</span>
                 <div className="faq-arrow">+</div>
               </div>
-              <div className="faq-answer">Inscrivez-vous gratuitement sur la plateforme et rejoignez notre communauté WhatsApp de plus de 2 000 membres. Vous aurez accès à des partages d'opportunités, des conseils entre closers, et des événements exclusifs.</div>
+              <div className="faq-answer">Oui. Vos données sont hébergées en Europe, chiffrées et ne sont jamais partagées avec des tiers. Nous respectons le RGPD.</div>
             </div>
           </div>
         </section>
@@ -1126,16 +1192,15 @@ img{max-width:100%;height:auto;}
       <div className="band band-dark" data-nav-theme="dark">
         <section className="cta-section" id="rejoindre">
           <div className="slabel reveal">REJOIGNEZ-NOUS</div>
-          <h2 className="reveal"><span style={{ color: 'var(--cream)' }}>Prêt à rejoindre une communauté </span><span className="accent" style={{ background: 'linear-gradient(135deg,var(--amber-g),var(--amber),var(--amber-d))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>d'opportunités</span><span style={{ color: 'var(--cream)' }}> ?</span></h2>
+          <h2 className="reveal"><span style={{ color: 'var(--cream)' }}>Prêt à trouver votre prochain </span><span className="accent" style={{ background: 'linear-gradient(135deg,var(--amber-g),var(--amber),var(--amber-d))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>match</span><span style={{ color: 'var(--cream)' }}> ?</span></h2>
           {isLoggedIn ? (
             <Link href="/dashboard" className="btn btn-primary reveal" style={{ marginTop: '32px' }}>
               <span>Accéder au Dashboard</span>
             </Link>
           ) : (
             <>
-              <p className="reveal" style={{ maxWidth: '620px', margin: '0 auto 32px', lineHeight: '1.8' }}>
-                <strong style={{ color: 'var(--amber-l)' }}>Closers & Setters</strong> — trouvez des missions qualifiées, filtrez par niche et commission, et gagnez du temps sur votre recherche d'opportunités.<br />
-                <strong style={{ color: 'var(--amber-l)' }}>Managers & HOS</strong> — accédez à un vivier de closers vérifiés, publiez vos offres et recrutez les meilleurs profils en quelques clics.
+              <p className="reveal" style={{ maxWidth: '520px', margin: '0 auto 32px', lineHeight: '1.8' }}>
+                Inscription gratuite — accédez aux offres en quelques clics.
               </p>
               <div className="reveal" style={{ marginTop: '24px' }}>
                 <Link href="/auth/register" className="btn btn-primary" style={{ padding: '18px 40px', fontSize: '16px' }}>
@@ -1184,12 +1249,12 @@ img{max-width:100%;height:auto;}
                 <text x="73" y="82" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="600" fontSize="12" fill="url(#fOppoG)" letterSpacing="0.8">Opportunités</text>
               </svg>
             </div>
-            <p className="footer-desc">La première marketplace qui connecte les closers aux écosystèmes d'infoproduit. Connectez. Closez. Évoluez.</p>
+            <p className="footer-desc">La première plateforme qui connecte les candidats avec les recruteurs dans l&apos;univers du closing.</p>
           </div>
           <div className="footer-col">
             <h4>Plateforme</h4>
             <Link href="/closers">Pour les closers</Link>
-            <Link href="/managers">Pour les managers</Link>
+            <Link href="/managers">Pour les recruteurs</Link>
             <a href="#faq">FAQ</a>
             <Link href="/auth/login">Connexion</Link>
           </div>
