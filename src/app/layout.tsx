@@ -7,12 +7,12 @@ const inter = Inter({ subsets: ['latin'] });
 const SITE_URL = 'https://hubclosing.fr';
 const SITE_NAME = 'HUBClosing';
 const SITE_DESCRIPTION =
-  'La 1re marketplace qui connecte closers, setters et managers d\'infoproduits. Trouvez des missions qualifiées ou recrutez les meilleurs talents sales.';
+  'La 1ère plateforme dédiée au closing. Candidats (closers, setters) trouvez des missions qualifiées. Recruteurs (HOS, managers, infopreneurs) trouvez vos pépites.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — La marketplace des closers & managers`,
+    default: `${SITE_NAME} — La 1ère plateforme dédiée au closing`,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     locale: 'fr_FR',
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — La marketplace des closers & managers`,
+    title: `${SITE_NAME} — La 1ère plateforme dédiée au closing`,
     description: SITE_DESCRIPTION,
     images: [
       {
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${SITE_NAME} — Marketplace Closers & Managers`,
+    title: `${SITE_NAME} — La 1ère plateforme dédiée au closing`,
     description: SITE_DESCRIPTION,
     images: ['/og-image.png'],
   },
