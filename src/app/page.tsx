@@ -317,9 +317,10 @@ img{max-width:100%;height:auto;}
   .nav-logo{position:static !important;left:auto !important;}
   .nav-links{display:none;position:fixed;top:56px;left:0;right:0;background:rgba(10,15,8,0.97);backdrop-filter:blur(24px);flex-direction:column;padding:24px;gap:16px;border-bottom:1px solid var(--card-b);transform:none !important;position:fixed !important;left:0 !important;}
   .nav-links.open{display:flex;}
-  .nav-menu-btn{display:block;}
-  .nav-cta-ghost{display:none;}
-  .nav-cta{padding:8px 16px;font-size:12px;border-radius:8px;}
+  .nav-menu-btn{display:block;font-size:20px;padding:4px 6px;line-height:1;}
+  .nav-cta-ghost{padding:7px 14px;font-size:11px;border-radius:8px;}
+  .nav-cta{padding:7px 14px;font-size:11px;border-radius:8px;}
+  .nav-logo svg{height:30px !important;}
   .hero{padding:100px 20px 60px;}
   .hero h1{letter-spacing:-2px;font-size:clamp(28px,5vw,48px);}
   .hero-logo svg{height:56px;}
@@ -790,7 +791,7 @@ img{max-width:100%;height:auto;}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Link href="/auth/login" className="nav-cta-ghost">Connexion</Link>
           <Link href="/auth/register" className="nav-cta"><span>S&apos;inscrire</span></Link>
-          <button className="nav-menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+          <button className="nav-menu-btn" id="menuBtn" aria-label="Menu">⋮</button>
         </div>
       </nav>
 
