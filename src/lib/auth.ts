@@ -1,6 +1,33 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { User, RoleType } from '@/types/database';
+
+const IMPERSONATE_COOKIE = 'hubclosing_impersonate';
+
+/**
+ * Vérifie si l'admin impersone un utilisateur.
+ * Retourne { realUser, impersonatedUser } ou null.
+ */
+async function checkImpersonation(realUser: User): Promise<User | null> {
+  // Seuls les admins peuvent impersoner
+  if (realUser.role !== 'admin' && realUser.role_type !== 'admin') return null;
+
+  const cookieStore = await cookies();
+  const impersonateId = cookieStore.get(IMPERSONATE_COOKIE)?.value;
+  if (!impersonateId || impersonateId === realUser.id) return null;
+
+  // Récupérer le profil cible via service role (bypass RLS)
+  const adminClient = getSupabaseAdmin();
+  const { data: targetUser } = await adminClient
+    .from('users')
+    .select('*')
+    .eq('id', impersonateId)
+    .single();
+
+  return targetUser || null;
+}
 
 export async function getUser(): Promise<User | null> {
   const supabase = await createClient();
@@ -42,7 +69,57 @@ export async function getUser(): Promise<User | null> {
     return createdUser;
   }
 
+  // Vérifier l'impersonation admin
+  const impersonated = await checkImpersonation(user);
+  if (impersonated) return impersonated;
+
   return user;
+}
+
+/**
+ * Retourne le vrai user admin (pas l'impersoné) — pour les checks admin.
+ */
+export async function getRealUser(): Promise<User | null> {
+  const supabase = await createClient();
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  if (authError || !authUser) return null;
+
+  const { data: user } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', authUser.id)
+    .maybeSingle();
+
+  return user;
+}
+
+/**
+ * Retourne les infos d'impersonation pour le banner.
+ */
+export async function getImpersonationInfo(): Promise<{ isImpersonating: boolean; realUser?: User; targetUser?: User }> {
+  const realUser = await getRealUser();
+  if (!realUser) return { isImpersonating: false };
+
+  if (realUser.role !== 'admin' && realUser.role_type !== 'admin') {
+    return { isImpersonating: false };
+  }
+
+  const cookieStore = await cookies();
+  const impersonateId = cookieStore.get(IMPERSONATE_COOKIE)?.value;
+  if (!impersonateId || impersonateId === realUser.id) {
+    return { isImpersonating: false };
+  }
+
+  const adminClient = getSupabaseAdmin();
+  const { data: targetUser } = await adminClient
+    .from('users')
+    .select('*')
+    .eq('id', impersonateId)
+    .single();
+
+  if (!targetUser) return { isImpersonating: false };
+
+  return { isImpersonating: true, realUser, targetUser };
 }
 
 export async function requireUser(): Promise<User> {
@@ -82,7 +159,11 @@ export async function requireRole(role: 'closer' | 'manager' | 'admin'): Promise
 }
 
 export async function requireAdmin(): Promise<User> {
-  const user = await requireUser();
+  // Pour les pages admin, toujours vérifier le VRAI user
+  const user = await getRealUser();
+  if (!user) {
+    redirect('/auth/login');
+  }
   if (user.role !== 'admin' && user.role_type !== 'admin') {
     redirect('/dashboard');
   }

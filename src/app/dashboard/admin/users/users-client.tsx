@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { User } from '@/types/database';
 import { Card, Badge, Avatar } from '@/components/ui';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
-import { Search, MoreVertical, Ban, CheckCircle, Shield, Loader2 } from 'lucide-react';
+import { Search, MoreVertical, Ban, CheckCircle, Shield, Loader2, Eye } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { createBrowserClient } from '@supabase/ssr';
@@ -46,6 +46,29 @@ export function UsersClient({ users }: UsersClientProps) {
       setActionError(`Erreur : ${error.message}`);
     } else {
       router.refresh();
+    }
+    setLoading(null);
+    setMenuOpen(null);
+  };
+
+  const impersonate = async (userId: string) => {
+    setLoading(userId);
+    setActionError(null);
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setActionError(data.error || 'Erreur');
+      } else {
+        router.push('/dashboard');
+        router.refresh();
+      }
+    } catch {
+      setActionError('Erreur réseau');
     }
     setLoading(null);
     setMenuOpen(null);
@@ -166,6 +189,13 @@ export function UsersClient({ users }: UsersClientProps) {
                           <Shield className="w-4 h-4 text-gray-400" /> Retirer Admin
                         </button>
                       )}
+                      <div className="border-t border-gray-100 my-1" />
+                      <button
+                        onClick={() => impersonate(user.id)}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        <Eye className="w-4 h-4 text-indigo-500" /> Voir en tant que
+                      </button>
                       <div className="border-t border-gray-100 my-1" />
                       <button onClick={() => setMenuOpen(null)} className="w-full px-4 py-2 text-sm text-gray-400 hover:bg-gray-50">Fermer</button>
                     </div>

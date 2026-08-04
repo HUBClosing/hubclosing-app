@@ -14,7 +14,7 @@ export function DashboardLayoutClient({ user, children }: DashboardLayoutClientP
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex flex-1 bg-gray-50 overflow-hidden">
       <Sidebar
         user={user}
         isOpen={sidebarOpen}
