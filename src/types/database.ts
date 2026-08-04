@@ -542,6 +542,85 @@ export interface EventRegistration {
   event?: Event;
 }
 
+// --- Call Stats & Coaching ---
+
+export type CallEventType = 'challenge' | 'webinaire' | 've';
+
+export interface CallStat {
+  id: string;
+  user_id: string;
+  event_type: CallEventType;
+  event_name: string;
+  event_date: string;
+  total_calls: number;
+  ns_count: number;
+  cancelled_count: number;
+  total_revenue: number;
+  effective_calls: number;  // Computed: total - ns - cancelled
+  cash_per_call: number;    // Computed: revenue / effective_calls
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Métriques agrégées pour un candidat */
+export interface CallStatsAggregated {
+  total_events: number;
+  total_calls: number;
+  total_effective_calls: number;
+  total_revenue: number;
+  average_cash_per_call: number;
+  best_cash_per_call: number;
+  medal: MedalLevel;
+}
+
+/** Médaille basée sur le cash par call moyen */
+export type MedalLevel = 'none' | 'bronze' | 'silver' | 'gold' | 'diamond';
+
+export const MEDAL_CONFIG: Record<MedalLevel, {
+  label: string;
+  icon: string;
+  minCashPerCall: number;
+  color: string;
+  bgColor: string;
+  description: string;
+}> = {
+  none:    { label: 'Débutant',   icon: '🎯', minCashPerCall: 0,    color: 'text-gray-500',   bgColor: 'bg-gray-100',   description: 'Continue à tracker tes calls !' },
+  bronze:  { label: 'Bronze',     icon: '🥉', minCashPerCall: 300,  color: 'text-amber-700',  bgColor: 'bg-amber-100',  description: 'Tu es sur la bonne voie' },
+  silver:  { label: 'Silver',     icon: '🥈', minCashPerCall: 600,  color: 'text-gray-500',   bgColor: 'bg-gray-200',   description: 'Bon closer, continue !' },
+  gold:    { label: 'Gold',       icon: '🥇', minCashPerCall: 1000, color: 'text-yellow-600', bgColor: 'bg-yellow-100', description: 'Top closer — +1000€/call !' },
+  diamond: { label: 'Diamond',    icon: '💎', minCashPerCall: 2000, color: 'text-purple-600', bgColor: 'bg-purple-100', description: 'Élite — Machine à closer' },
+};
+
+/** Calcule la médaille à partir du cash per call moyen */
+export function getMedalForCashPerCall(cashPerCall: number): MedalLevel {
+  if (cashPerCall >= 2000) return 'diamond';
+  if (cashPerCall >= 1000) return 'gold';
+  if (cashPerCall >= 600) return 'silver';
+  if (cashPerCall >= 300) return 'bronze';
+  return 'none';
+}
+
+export type CoachingBookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+
+export interface CoachingBooking {
+  id: string;
+  user_id: string;
+  status: CoachingBookingStatus;
+  current_cash_per_call: number | null;
+  main_challenge: string | null;
+  experience_months: number | null;
+  niche: string | null;
+  goals: string | null;
+  availability: string | null;
+  price: number;
+  stripe_payment_id: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+}
+
 // --- Helpers ---
 
 /** Vérifie si un utilisateur peut effectuer une action selon son tier */

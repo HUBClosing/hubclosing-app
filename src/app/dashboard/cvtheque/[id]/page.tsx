@@ -11,8 +11,8 @@ import {
 import { ContactButton } from './contact-button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import type { BadgeLevel, ExperienceLevel, Skill, PortfolioEntry, PortfolioVideo, Review } from '@/types/database';
-import { BADGE_THRESHOLDS, getRemainingContacts, TIER_LIMITS } from '@/types/database';
+import type { BadgeLevel, ExperienceLevel, Skill, PortfolioEntry, PortfolioVideo, Review, CallStat } from '@/types/database';
+import { BADGE_THRESHOLDS, getRemainingContacts, TIER_LIMITS, getMedalForCashPerCall, MEDAL_CONFIG } from '@/types/database';
 
 const BADGE_ICONS: Record<BadgeLevel, typeof Shield> = {
   bronze: Shield,
@@ -85,8 +85,8 @@ export default async function CandidateProfilePage({ params }: { params: Promise
 
   const candidate = profile.user;
 
-  // Fetch portfolio entries + videos + reviews
-  const [{ data: entries }, { data: videos }, { data: reviews }] = await Promise.all([
+  // Fetch portfolio entries + videos + reviews + call stats
+  const [{ data: entries }, { data: videos }, { data: reviews }, { data: callStats }] = await Promise.all([
     supabase
       .from('portfolio_entries')
       .select('*')
@@ -106,6 +106,10 @@ export default async function CandidateProfilePage({ params }: { params: Promise
       .eq('is_public', true)
       .order('created_at', { ascending: false })
       .limit(10),
+    supabase
+      .from('call_stats')
+      .select('*')
+      .eq('user_id', id),
   ]);
 
   const portfolioEntries: PortfolioEntry[] = entries || [];
@@ -121,6 +125,14 @@ export default async function CandidateProfilePage({ params }: { params: Promise
   const avgConversion = portfolioEntries.length > 0
     ? portfolioEntries.reduce((sum, e) => sum + (e.conversion_rate_gross || 0), 0) / portfolioEntries.length
     : 0;
+
+  // Call stats medal
+  const csStats: CallStat[] = callStats || [];
+  const csTotalEffective = csStats.reduce((sum, s) => sum + (s.effective_calls || (s.total_calls - s.ns_count - s.cancelled_count)), 0);
+  const csTotalRevenue = csStats.reduce((sum, s) => sum + Number(s.total_revenue), 0);
+  const csAvgCashPerCall = csTotalEffective > 0 ? csTotalRevenue / csTotalEffective : 0;
+  const callStatsMedal = getMedalForCashPerCall(csAvgCashPerCall);
+  const callStatsMedalConfig = MEDAL_CONFIG[callStatsMedal];
 
   const allNiches = Array.from(new Set([...(profile.preferred_niches || []), ...(candidate.niches || [])]));
 
@@ -154,6 +166,12 @@ export default async function CandidateProfilePage({ params }: { params: Promise
                 {profile.is_featured && (
                   <span className="text-brand-amber" title="Profil mis en avant">
                     <Star className="h-5 w-5 fill-current" />
+                  </span>
+                )}
+                {/* Call Stats Medal */}
+                {csStats.length > 0 && callStatsMedal !== 'none' && (
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium ${callStatsMedalConfig.bgColor} ${callStatsMedalConfig.color}`}>
+                    {callStatsMedalConfig.icon} {Math.round(csAvgCashPerCall).toLocaleString('fr-FR')}€/call
                   </span>
                 )}
                 {/* Badge */}
