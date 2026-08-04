@@ -73,7 +73,7 @@ img{max-width:100%;height:auto;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
 .hero-pill span{font-size:14px;font-weight:500;color:var(--amber-l);}
 
-.hero h1{font-size:clamp(36px,6vw,76px);font-weight:800;letter-spacing:-3px;line-height:0.95;margin-bottom:12px;max-width:820px;opacity:0;animation:fadeInUp 0.8s 2.2s cubic-bezier(0.16,1,0.3,1) forwards;}
+.hero h1{font-size:clamp(28px,4.5vw,56px);font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:12px;max-width:820px;opacity:0;animation:fadeInUp 0.8s 2.2s cubic-bezier(0.16,1,0.3,1) forwards;}
 .hero h1 .white{color:var(--cream);}
 .hero h1 .accent{background:linear-gradient(135deg,var(--amber-g),var(--amber),var(--amber-d));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .hero-desc{font-size:clamp(15px,1.8vw,18px);color:var(--gray);max-width:540px;line-height:1.7;margin-bottom:40px;opacity:0;animation:fadeInUp 0.8s 2.35s cubic-bezier(0.16,1,0.3,1) forwards;}
@@ -92,7 +92,7 @@ img{max-width:100%;height:auto;}
 .hero-stats{display:flex;gap:48px;margin-top:72px;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeInUp 0.8s 2.65s cubic-bezier(0.16,1,0.3,1) forwards;}
 .hero-stat{text-align:center;position:relative;}
 .hero-stat:not(:last-child)::after{content:'';position:absolute;right:-24px;top:50%;transform:translateY(-50%);width:1px;height:30px;background:rgba(255,255,255,0.06);}
-.hero-stat-num{font-size:36px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--amber-g),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-stat-num{font-size:30px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--amber-g),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .hero-stat-label{font-size:13px;color:var(--gray);margin-top:4px;}
 
 /* ===== BAND OVERLAY SECTIONS ===== */
@@ -1293,7 +1293,7 @@ img{max-width:100%;height:auto;}
         </div>
         <div className="footer-bottom">
           <span>&copy; 2026 HUBClosing Opportunités. Tous droits réservés.</span>
-          <span>Fait avec ambition</span>
+
         </div>
       </footer>
     </>
