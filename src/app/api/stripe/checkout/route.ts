@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     // 6. Créer la session Stripe Checkout
     const sessionParams: Record<string, unknown> = {
       mode: 'subscription',
-      payment_method_types: ['card'],
+      payment_method_types: ['sepa_debit', 'card'],
       line_items: [
         {
           price: priceId,
