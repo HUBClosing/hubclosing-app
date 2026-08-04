@@ -805,7 +805,7 @@ img{max-width:100%;height:auto;}
           <span>La 1ère plateforme dédiée au closing</span>
         </div>
         <h1>
-          <span className="white">Vous galérez à trouver des top closers ?</span><br />
+          <span className="white">Vous avez du mal à trouver des closers performants ?</span><br />
           <span className="accent">Vous cherchez votre prochaine mission ?</span>
         </h1>
         <p className="hero-desc">
