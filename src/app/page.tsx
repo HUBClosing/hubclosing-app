@@ -1273,8 +1273,8 @@ img{max-width:100%;height:auto;}
           </div>
           <div className="footer-col">
             <h4>Plateforme</h4>
-            <Link href="/closers">Pour les closers</Link>
-            <Link href="/managers">Pour les recruteurs</Link>
+            <Link href="/closers">Candidats (closers, setters)</Link>
+            <Link href="/managers">Recruteurs (HOS, managers, infopreneurs)</Link>
             <a href="#faq">FAQ</a>
             <Link href="/auth/login">Connexion</Link>
           </div>
