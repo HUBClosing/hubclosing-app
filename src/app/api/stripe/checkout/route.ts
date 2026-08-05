@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
     // 6. Créer la session Stripe Checkout
     const sessionParams: Record<string, unknown> = {
       mode: 'subscription',
-      payment_method_types: ['sepa_debit', 'card'],
+      // Pas de payment_method_types → Stripe utilise les méthodes activées
+      // dans le Dashboard (carte, SEPA, etc.) automatiquement.
+      // Pour ajouter SEPA : Dashboard → Paramètres → Moyens de paiement → activer "Prélèvement SEPA"
       line_items: [
         {
           price: priceId,
