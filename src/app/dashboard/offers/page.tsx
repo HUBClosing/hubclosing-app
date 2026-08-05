@@ -26,16 +26,19 @@ export default async function OffersPage() {
 
   const { data: offers } = await supabase
     .from('offers')
-    .select('*')
+    .select('*, applications(count)')
     .eq('manager_id', user.id)
     .order('created_at', { ascending: false });
 
-  const allOffers = (offers || []) as Offer[];
+  const allOffers = (offers || []).map((o: any) => ({
+    ...o,
+    _appCount: o.applications?.[0]?.count ?? 0,
+  }));
   const activeOffers = allOffers.filter(o => o.status === 'active');
   const maxOffers = getMaxActiveOffers(user.tier);
   const canPost = activeOffers.length < maxOffers;
-  const totalViews = allOffers.reduce((sum, o) => sum + (o.views_count || 0), 0);
-  const totalApplications = allOffers.reduce((sum, o) => sum + (o.application_count || 0), 0);
+  const totalViews = allOffers.reduce((sum: number, o: any) => sum + (o.views_count || 0), 0);
+  const totalApplications = allOffers.reduce((sum: number, o: any) => sum + o._appCount, 0);
 
   return (
     <div className="space-y-6">
@@ -144,7 +147,7 @@ export default async function OffersPage() {
                           <Eye className="h-3 w-3" /> {offer.views_count || 0} vues
                         </span>
                         <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" /> {offer.application_count || 0} candidature{(offer.application_count || 0) !== 1 ? 's' : ''}
+                          <Users className="h-3 w-3" /> {offer._appCount} candidature{offer._appCount !== 1 ? 's' : ''}
                         </span>
                         {offer.niche && (
                           <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{offer.niche}</span>
@@ -152,7 +155,7 @@ export default async function OffersPage() {
                       </div>
                     </div>
                     <a
-                      href={`/dashboard/offers/${offer.id}`}
+                      href={`/dashboard/offers/${offer.id}/candidates`}
                       className="shrink-0 text-sm font-medium text-brand-dark bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors"
                     >
                       Gérer
