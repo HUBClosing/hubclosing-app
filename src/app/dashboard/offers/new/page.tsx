@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent, Button, Input, Textarea, Select } from '@/components/ui';
+import { Card, CardContent, Button, Input, Textarea } from '@/components/ui';
 import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle } from 'lucide-react';
 import type { Skill, OfferType, Questionnaire } from '@/types/database';
 
@@ -20,13 +20,6 @@ const SKILLS: { value: Skill; label: string }[] = [
   { value: 'hos', label: 'Head of Sales' },
   { value: 'coaching', label: 'Coaching' },
   { value: 'training', label: 'Formation' },
-];
-
-const EXPERIENCE_LEVELS = [
-  { value: 'junior', label: 'Junior (0-1 an)' },
-  { value: 'intermediaire', label: 'Intermédiaire (1-3 ans)' },
-  { value: 'senior', label: 'Senior (3-5 ans)' },
-  { value: 'expert', label: 'Expert (5+ ans)' },
 ];
 
 const LANGUAGES = [
@@ -234,11 +227,24 @@ export default function NewOfferPage() {
     const infoproductName = (formData.get('infoproduct_name') as string)?.trim() || null;
     const instagramUrl = (formData.get('instagram_url') as string)?.trim() || null;
     const linkedinUrl = (formData.get('linkedin_url') as string)?.trim() || null;
-    const experienceRequired = (formData.get('required_experience') as string) || null;
+    const videoUrl = (formData.get('video_url') as string)?.trim() || null;
+    const replayUrl = (formData.get('replay_url') as string)?.trim() || null;
     const maxApplicants = formData.get('max_applicants') ? parseInt(formData.get('max_applicants') as string) : null;
 
     if (!title || !description) {
       setError('Le titre et la description sont obligatoires.');
+      setLoading(false);
+      return;
+    }
+
+    if (!videoUrl) {
+      setError('Le lien vidéo de présentation est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!replayUrl) {
+      setError('Le lien replay d\'un call est obligatoire.');
       setLoading(false);
       return;
     }
@@ -273,7 +279,8 @@ export default function NewOfferPage() {
       product_price_range: priceRange,
       niche,
       location: [instagramUrl, linkedinUrl].filter(Boolean).join(' | ') || null,
-      required_experience: experienceRequired,
+      video_url: videoUrl,
+      replay_url: replayUrl,
       required_skills: selectedSkills,
       required_languages: selectedLanguages,
       questionnaire_id: selectedQuestionnaire || null,
@@ -318,13 +325,16 @@ export default function NewOfferPage() {
               required
             />
 
-            <Textarea
-              name="description"
-              label="Description détaillée"
-              placeholder="Décrivez l'offre, le produit à vendre, les conditions de travail, les attentes..."
-              rows={6}
-              required
-            />
+            <div className="space-y-1">
+              <Textarea
+                name="description"
+                label="Description détaillée"
+                placeholder="Décrivez l'offre, le produit à vendre, les conditions de travail, les attentes..."
+                rows={6}
+                required
+              />
+              <p className="text-xs text-gray-400">Mettez un max d&apos;infos pour rendre votre offre attractive</p>
+            </div>
 
             {/* Type de contrat — boutons radio visuels */}
             <div className="space-y-1">
@@ -377,14 +387,34 @@ export default function NewOfferPage() {
                 label="Lien Instagram"
                 type="url"
                 placeholder="https://instagram.com/..."
+                required
               />
               <Input
                 name="linkedin_url"
                 label="Lien LinkedIn"
                 type="url"
                 placeholder="https://linkedin.com/in/..."
+                required
               />
             </div>
+
+            <Input
+              name="video_url"
+              label="Lien vidéo de présentation"
+              type="url"
+              placeholder="https://youtube.com/... ou https://loom.com/..."
+              helperText="Vidéo de présentation de votre offre pour donner envie aux candidats"
+              required
+            />
+
+            <Input
+              name="replay_url"
+              label="Replay d'un call effectué"
+              type="url"
+              placeholder="https://fathom.video/... ou https://drive.google.com/..."
+              helperText="Lien Fathom, Google Drive ou autre — montrez un vrai call pour rassurer les candidats"
+              required
+            />
           </CardContent>
         </Card>
 
@@ -396,17 +426,15 @@ export default function NewOfferPage() {
               Rémunération et produits
             </h2>
 
-            {offerType === 'recurring' && (
-              <Input
-                name="fixed_salary"
-                label="Salaire fixe mensuel (€)"
-                type="number"
-                step="100"
-                min="0"
-                placeholder="Ex : 2000"
-                helperText="Optionnel — rémunération fixe en plus de la commission"
-              />
-            )}
+            <Input
+              name="fixed_salary"
+              label="Salaire fixe mensuel (€)"
+              type="number"
+              step="100"
+              min="0"
+              placeholder="Ex : 2000"
+              helperText="Optionnel — rémunération fixe en plus de la commission"
+            />
 
             {/* Produits multiples avec commission individuelle */}
             <div className="space-y-2">
@@ -533,14 +561,6 @@ export default function NewOfferPage() {
               </div>
             </div>
 
-            <Select
-              name="required_experience"
-              label="Niveau d'expérience requis"
-              placeholder="Sélectionner..."
-              options={EXPERIENCE_LEVELS}
-              required
-            />
-
             {/* Languages multi-select */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
@@ -603,7 +623,7 @@ export default function NewOfferPage() {
             {/* Questionnaire lié */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">
-                Questionnaire de qualification
+                Questionnaire de qualification <span className="text-xs font-normal text-gray-400">(optionnel)</span>
               </label>
               <select
                 value={selectedQuestionnaire}
@@ -616,7 +636,7 @@ export default function NewOfferPage() {
                 ))}
               </select>
               <p className="text-xs text-gray-400">
-                Le candidat devra remplir ce questionnaire après avoir postulé.{' '}
+                À réaliser si vous avez des questions à poser à votre candidat pour effectuer votre sélection plus fine.{' '}
                 <a href="/dashboard/questionnaires" className="text-brand-amber hover:underline">
                   Créer un questionnaire
                 </a>
