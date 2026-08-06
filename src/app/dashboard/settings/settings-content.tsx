@@ -529,7 +529,7 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1">Nom de l&apos;entreprise</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Nom de l&apos;agence</label>
                   <input
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}

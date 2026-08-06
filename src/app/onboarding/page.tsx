@@ -100,6 +100,7 @@ export default function OnboardingPage() {
   const isDetailsValid = () => {
     if (isCandidate && selectedSkills.length === 0) return false;
     if (isCandidate && !yearsExperience) return false;
+    if (isRecruiter && !companyName.trim()) return false;
     if (isRecruiter && !industry) return false;
     return true;
   };
@@ -373,14 +374,17 @@ export default function OnboardingPage() {
               {isRecruiter && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nom de société</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nom de l&apos;agence <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input
                         type="text"
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Optionnel"
+                        placeholder="Ex : Mon Agence Closing"
+                        required
                         className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
                       />
                     </div>

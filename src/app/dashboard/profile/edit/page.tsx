@@ -197,7 +197,7 @@ export default function EditProfilePage() {
             {user.role === 'manager' && profile && (
               <>
                 <h3 className="font-semibold text-brand-dark border-b pb-2 pt-2">Profil Manager</h3>
-                <Input name="company_name" label="Nom de l'entreprise" defaultValue={profile.company_name || ''} />
+                <Input name="company_name" label="Nom de l'agence" defaultValue={profile.company_name || ''} />
                 <Textarea name="bio" label="Bio" defaultValue={profile.bio || ''} rows={3} />
                 <Input name="industry" label="Secteur d'activité" defaultValue={profile.industry || ''} />
                 <Input name="website_url" label="Site web" type="url" defaultValue={profile.website_url || ''} />
