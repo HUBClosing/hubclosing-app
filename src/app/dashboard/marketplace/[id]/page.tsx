@@ -237,7 +237,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
           </div>
 
           {/* CTA */}
-          {(user.role_type === 'candidate' || user.role_type === 'both') && user.active_role === 'candidate' && offer.status === 'active' && (
+          {(user.role_type === 'candidate' || user.role_type === 'both') && user.active_role === 'candidate' && (
             <div className="pt-4 border-t">
               {existingApp ? (
                 <div className="text-center space-y-1">
@@ -251,10 +251,19 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
                     {APPLICATION_STATUS_CONFIG[existingApp.status as keyof typeof APPLICATION_STATUS_CONFIG]?.description}
                   </p>
                 </div>
-              ) : (
+              ) : canApply ? (
                 <a href={`/dashboard/marketplace/${offer.id}/apply`} className="block">
                   <Button className="w-full">Postuler à cette offre</Button>
                 </a>
+              ) : (
+                <div className="text-center space-y-2">
+                  <Button className="w-full opacity-50 cursor-not-allowed" disabled>
+                    {isExpired ? 'Offre expirée' : offer.status === 'paused' ? 'Offre en pause' : 'Offre fermée'}
+                  </Button>
+                  <p className="text-xs text-gray-400">
+                    {isExpired ? 'La date limite de candidature est dépassée.' : 'Cette offre n\'accepte plus de candidatures pour le moment.'}
+                  </p>
+                </div>
               )}
             </div>
           )}

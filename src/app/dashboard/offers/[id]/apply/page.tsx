@@ -51,6 +51,19 @@ export default function ApplyPage() {
         setLoading(false);
         return;
       }
+
+      if (offerData.status !== 'active') {
+        setError(offerData.status === 'paused' ? 'Cette offre est actuellement en pause.' : 'Cette offre est fermée et n\'accepte plus de candidatures.');
+        setLoading(false);
+        return;
+      }
+
+      if (offerData.application_deadline && new Date(offerData.application_deadline) < new Date()) {
+        setError('La date limite de candidature est dépassée.');
+        setLoading(false);
+        return;
+      }
+
       setOffer(offerData as Offer);
 
       // Vérifier si le candidat a déjà postulé

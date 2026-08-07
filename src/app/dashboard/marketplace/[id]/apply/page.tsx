@@ -50,6 +50,21 @@ export default function MarketplaceApplyPage() {
         setLoading(false);
         return;
       }
+
+      // Bloquer si l'offre n'est plus active
+      if (offerData.status !== 'active') {
+        setError(offerData.status === 'paused' ? 'Cette offre est actuellement en pause.' : 'Cette offre est fermée et n\'accepte plus de candidatures.');
+        setLoading(false);
+        return;
+      }
+
+      // Bloquer si la deadline est dépassée
+      if (offerData.application_deadline && new Date(offerData.application_deadline) < new Date()) {
+        setError('La date limite de candidature est dépassée.');
+        setLoading(false);
+        return;
+      }
+
       setOffer(offerData as Offer);
 
       // Vérifier si le candidat a déjà postulé
