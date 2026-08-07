@@ -237,6 +237,18 @@ export default function NewOfferPage() {
       return;
     }
 
+    if (!niche) {
+      setError('La niche / secteur est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!infoproductName) {
+      setError('Le nom de l\'infoproduit est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
     if (!videoUrl) {
       setError('Le lien vidéo de présentation est obligatoire.');
       setLoading(false);
@@ -384,17 +396,15 @@ export default function NewOfferPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 name="instagram_url"
-                label="Lien Instagram"
+                label="Lien Instagram (optionnel)"
                 type="url"
                 placeholder="https://instagram.com/..."
-                required
               />
               <Input
                 name="linkedin_url"
-                label="Lien LinkedIn"
+                label="Lien LinkedIn (optionnel)"
                 type="url"
                 placeholder="https://linkedin.com/in/..."
-                required
               />
             </div>
 
