@@ -261,9 +261,13 @@ img{max-width:100%;height:auto;}
 .dash-preview{border-radius:20px;border:1px solid rgba(255,255,255,0.06);background:var(--card);overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.4),0 0 80px rgba(232,145,58,0.05);}
 .dash-topbar{display:flex;align-items:center;gap:8px;padding:14px 20px;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.04);}
 .dash-toggle{display:flex;gap:8px;margin-bottom:20px;}
-.dash-toggle-btn{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:default;}
+.dash-toggle-btn{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;}
 .dash-toggle-active{background:rgba(232,145,58,0.12);color:var(--amber-l);}
 .dash-toggle-inactive{background:rgba(255,255,255,0.03);color:var(--gray);}
+.dash-toggle-inactive:hover{background:rgba(255,255,255,0.06);color:var(--gray-l);}
+.dash-view{display:none;min-height:340px;animation:fadeIn 0.4s ease;}
+.dash-view.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .dash-body{display:flex;min-height:340px;}
 .dash-sidebar{width:180px;padding:16px;border-right:1px solid rgba(255,255,255,0.04);}
 .dash-sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:13px;color:var(--gray-l);margin-bottom:4px;transition:all 0.3s;}
@@ -308,7 +312,7 @@ img{max-width:100%;height:auto;}
   .hero-stat:not(:last-child)::after{display:none;}
   .pain-grid{grid-template-columns:1fr;}
   .features-grid-3{grid-template-columns:1fr 1fr;}
-  .dash-body{flex-direction:column;}
+  .dash-body,.dash-view.active{flex-direction:column;}
   .dash-sidebar{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;flex-wrap:wrap;gap:4px;padding:10px;}
   .dash-sidebar-item{padding:8px 12px;font-size:12px;}
 }
@@ -606,9 +610,32 @@ img{max-width:100%;height:auto;}
       q.addEventListener('click', handleFaqClick);
     });
 
+    // Dashboard preview tabs
+    const handleTabClick = (e: Event) => {
+      const btn = (e.target as HTMLElement).closest('[data-tab]') as HTMLElement | null;
+      if (!btn) return;
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('#dash-toggle .dash-toggle-btn').forEach((b) => {
+        b.classList.remove('dash-toggle-active');
+        b.classList.add('dash-toggle-inactive');
+      });
+      btn.classList.remove('dash-toggle-inactive');
+      btn.classList.add('dash-toggle-active');
+      document.querySelectorAll('.dash-view').forEach((v) => v.classList.remove('active'));
+      const target = document.getElementById(`dash-${tab}`);
+      if (target) target.classList.add('active');
+    };
+
+    document.querySelectorAll('#dash-toggle .dash-toggle-btn').forEach((b) => {
+      b.addEventListener('click', handleTabClick);
+    });
+
     return () => {
       document.querySelectorAll('.faq-question').forEach((q) => {
         q.removeEventListener('click', handleFaqClick);
+      });
+      document.querySelectorAll('#dash-toggle .dash-toggle-btn').forEach((b) => {
+        b.removeEventListener('click', handleTabClick);
       });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -870,12 +897,14 @@ img{max-width:100%;height:auto;}
               <div style={{ flex: 1, textAlign: 'center', fontSize: '12px', color: 'var(--gray-s)', fontWeight: 500, letterSpacing: '0.5px' }}>hubclosing.fr/dashboard</div>
             </div>
             <div style={{ padding: '20px 20px 0' }}>
-              <div className="dash-toggle">
-                <div className="dash-toggle-btn dash-toggle-active">Vue candidat</div>
-                <div className="dash-toggle-btn dash-toggle-inactive">Vue recruteur</div>
+              <div className="dash-toggle" id="dash-toggle">
+                <div className="dash-toggle-btn dash-toggle-active" data-tab="candidat">Vue candidat</div>
+                <div className="dash-toggle-btn dash-toggle-inactive" data-tab="recruteur">Vue recruteur</div>
               </div>
             </div>
-            <div className="dash-body">
+
+            {/* ── Vue Candidat ── */}
+            <div className="dash-view active" id="dash-candidat">
               <div className="dash-sidebar">
                 <div className="dash-sidebar-item active"><span className="dash-sidebar-icon">📊</span>Dashboard</div>
                 <div className="dash-sidebar-item"><span className="dash-sidebar-icon">💼</span>Offres</div>
@@ -885,7 +914,7 @@ img{max-width:100%;height:auto;}
                 <div className="dash-sidebar-item"><span className="dash-sidebar-icon">🎓</span>Coaching</div>
               </div>
               <div className="dash-main">
-                <div className="dash-welcome">Bonjour Maxime <span>— Closer Elite</span></div>
+                <div className="dash-welcome">Bonjour Lucas <span>— Closer Elite</span></div>
                 <div className="dash-stats">
                   <div className="dash-stat-card" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.12)' }}>
                     <div className="dash-stat-num" style={{ color: 'var(--success)' }}>12</div>
@@ -921,6 +950,57 @@ img{max-width:100%;height:auto;}
                     <div className="dash-offer-sub">VitaLife — 20-25% commission — Remote</div>
                   </div>
                   <div className="dash-offer-badge" style={{ background: 'rgba(99,102,241,0.1)', color: '#818CF8' }}>Remote</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Vue Recruteur ── */}
+            <div className="dash-view" id="dash-recruteur">
+              <div className="dash-sidebar">
+                <div className="dash-sidebar-item active"><span className="dash-sidebar-icon">📊</span>Dashboard</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">📝</span>Mes offres</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">👥</span>Candidatures</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">📂</span>CVthèque</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">💬</span>Messages</div>
+                <div className="dash-sidebar-item"><span className="dash-sidebar-icon">⭐</span>Réputation</div>
+              </div>
+              <div className="dash-main">
+                <div className="dash-welcome">Bonjour Sarah <span>— Recruteur Pro</span></div>
+                <div className="dash-stats">
+                  <div className="dash-stat-card" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.12)' }}>
+                    <div className="dash-stat-num" style={{ color: '#818CF8' }}>3</div>
+                    <div className="dash-stat-label" style={{ color: '#818CF8' }}>Offres actives</div>
+                  </div>
+                  <div className="dash-stat-card" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.12)' }}>
+                    <div className="dash-stat-num" style={{ color: 'var(--success)' }}>18</div>
+                    <div className="dash-stat-label" style={{ color: 'var(--success)' }}>Candidatures reçues</div>
+                  </div>
+                  <div className="dash-stat-card" style={{ background: 'rgba(232,145,58,0.08)', border: '1px solid rgba(232,145,58,0.12)' }}>
+                    <div className="dash-stat-num" style={{ color: 'var(--amber-l)' }}>4.8</div>
+                    <div className="dash-stat-label" style={{ color: 'var(--amber-l)' }}>Score réputation</div>
+                  </div>
+                </div>
+                <div className="dash-offers-title">Dernières candidatures</div>
+                <div className="dash-offer">
+                  <div>
+                    <div className="dash-offer-title">Lucas M. — Closer</div>
+                    <div className="dash-offer-sub">A postulé à &quot;Closer Coaching Business&quot; — il y a 2h</div>
+                  </div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}>Nouveau</div>
+                </div>
+                <div className="dash-offer">
+                  <div>
+                    <div className="dash-offer-title">Emma R. — Setter</div>
+                    <div className="dash-offer-sub">A postulé à &quot;Setter E-commerce Premium&quot; — il y a 5h</div>
+                  </div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(232,145,58,0.1)', color: 'var(--amber-l)' }}>En attente</div>
+                </div>
+                <div className="dash-offer">
+                  <div>
+                    <div className="dash-offer-title">Thomas K. — Closer</div>
+                    <div className="dash-offer-sub">A postulé à &quot;Closer Formation Santé&quot; — hier</div>
+                  </div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(99,102,241,0.1)', color: '#818CF8' }}>Vu</div>
                 </div>
               </div>
             </div>
@@ -1031,7 +1111,7 @@ img{max-width:100%;height:auto;}
                     <div className="testimonial-text">{`"Avant je passais des heures à chercher des offres sur les groupes Facebook. Maintenant j'ai tout au même endroit, avec des infos claires sur les commissions."`}</div>
                     <div className="testimonial-author">
                       <div className="testimonial-avatar" style={{ background: 'linear-gradient(135deg,var(--amber),var(--amber-d))' }}>M</div>
-                      <div><div className="testimonial-name">Maxime R.</div><div className="testimonial-role">Closer — Niche coaching</div></div>
+                      <div><div className="testimonial-name">Julien R.</div><div className="testimonial-role">Closer — Niche coaching</div></div>
                     </div>
                   </div>
                   <div className="testimonial-card">
