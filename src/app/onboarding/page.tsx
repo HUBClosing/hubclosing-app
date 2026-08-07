@@ -44,8 +44,9 @@ const niches = [
 ];
 
 const industries = [
-  'Formateur en ligne', 'Coach / Mentor', 'Consultant',
-  'Créateur de contenu', 'Agence', 'SaaS / Outil digital', 'Autre',
+  'Immobilier', 'Crypto', 'Bourse', 'Développement personnel',
+  'Copywriting', 'Santé', 'Perte de poids', 'Sport',
+  'Intelligence artificielle', 'Esthétique', 'Business', 'Autre',
 ];
 
 export default function OnboardingPage() {
@@ -64,6 +65,7 @@ export default function OnboardingPage() {
   // Recruteur details
   const [companyName, setCompanyName] = useState('');
   const [industry, setIndustry] = useState('');
+  const [customIndustry, setCustomIndustry] = useState('');
 
   // Contact (step 3)
   const [lastName, setLastName] = useState('');
@@ -95,13 +97,14 @@ export default function OnboardingPage() {
 
   const availableSkills: Skill[] = isCandidate
     ? ['closing', 'setting', 'management', 'hos', 'coaching', 'training']
-    : ['management', 'hos', 'coaching', 'training'];
+    : ['closing', 'setting', 'management', 'hos'];
 
   const isDetailsValid = () => {
     if (isCandidate && selectedSkills.length === 0) return false;
     if (isCandidate && !yearsExperience) return false;
     if (isRecruiter && !companyName.trim()) return false;
     if (isRecruiter && !industry) return false;
+    if (isRecruiter && industry === 'Autre' && !customIndustry.trim()) return false;
     return true;
   };
 
@@ -143,7 +146,7 @@ export default function OnboardingPage() {
           phone: phone.trim(),
           years_experience: years || null,
           niches: selectedNiches.length > 0 ? selectedNiches : null,
-          infopreneur_type: industry || null,
+          infopreneur_type: (industry === 'Autre' ? customIndustry.trim() : industry) || null,
           skills: selectedSkills,
           is_onboarded: true,
         })
@@ -160,7 +163,7 @@ export default function OnboardingPage() {
         profileData.availability = true;
       }
       if (isRecruiter) {
-        profileData.industry = industry;
+        profileData.industry = industry === 'Autre' ? customIndustry.trim() : industry;
         profileData.company_name = companyName || null;
       }
 
@@ -177,7 +180,7 @@ export default function OnboardingPage() {
       if (isRecruiter) {
         await supabase.from('manager_profiles').upsert({
           user_id: authUser.id,
-          industry: industry,
+          industry: industry === 'Autre' ? customIndustry.trim() : industry,
           company_name: companyName || null,
         }, { onConflict: 'user_id' });
       }
@@ -396,7 +399,7 @@ export default function OnboardingPage() {
                     </label>
                     <select
                       value={industry}
-                      onChange={(e) => setIndustry(e.target.value)}
+                      onChange={(e) => { setIndustry(e.target.value); if (e.target.value !== 'Autre') setCustomIndustry(''); }}
                       className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber bg-white"
                     >
                       <option value="">Sélectionnez...</option>
@@ -404,6 +407,15 @@ export default function OnboardingPage() {
                         <option key={ind} value={ind}>{ind}</option>
                       ))}
                     </select>
+                    {industry === 'Autre' && (
+                      <input
+                        type="text"
+                        value={customIndustry}
+                        onChange={(e) => setCustomIndustry(e.target.value)}
+                        placeholder="Précisez votre secteur..."
+                        className="w-full mt-2 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                      />
+                    )}
                   </div>
 
                   {!isCandidate && (
