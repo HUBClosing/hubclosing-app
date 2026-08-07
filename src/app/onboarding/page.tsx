@@ -66,6 +66,7 @@ export default function OnboardingPage() {
   const [companyName, setCompanyName] = useState('');
   const [industry, setIndustry] = useState('');
   const [customIndustry, setCustomIndustry] = useState('');
+  const [notAgency, setNotAgency] = useState(false);
 
   // Contact (step 3)
   const [lastName, setLastName] = useState('');
@@ -102,7 +103,7 @@ export default function OnboardingPage() {
   const isDetailsValid = () => {
     if (isCandidate && selectedSkills.length === 0) return false;
     if (isCandidate && !yearsExperience) return false;
-    if (isRecruiter && !companyName.trim()) return false;
+    if (isRecruiter && !notAgency && !companyName.trim()) return false;
     if (isRecruiter && !industry) return false;
     if (isRecruiter && industry === 'Autre' && !customIndustry.trim()) return false;
     return true;
@@ -378,19 +379,30 @@ export default function OnboardingPage() {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nom de l&apos;agence <span className="text-red-500">*</span>
+                      Nom de l&apos;agence {!notAgency && <span className="text-red-500">*</span>}
                     </label>
-                    <div className="relative">
-                      <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    {!notAgency && (
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="Ex : Mon Agence Closing"
+                          required
+                          className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                        />
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 mt-2 cursor-pointer">
                       <input
-                        type="text"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Ex : Mon Agence Closing"
-                        required
-                        className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                        type="checkbox"
+                        checked={notAgency}
+                        onChange={(e) => { setNotAgency(e.target.checked); if (e.target.checked) setCompanyName(''); }}
+                        className="h-4 w-4 rounded border-gray-300 text-brand-amber focus:ring-brand-amber/20"
                       />
-                    </div>
+                      <span className="text-sm text-gray-600">Je ne suis pas une agence</span>
+                    </label>
                   </div>
 
                   <div>
