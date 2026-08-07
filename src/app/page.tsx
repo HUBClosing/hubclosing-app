@@ -588,7 +588,7 @@ img{max-width:100%;height:auto;}
     if (loading) return;
     const handleFaqClick = (e: Event) => {
       const question = e.target as HTMLElement;
-      const item = question.parentElement;
+      const item = question.closest('.faq-item');
       if (!item) return;
 
       const wasOpen = item.classList.contains('open');
