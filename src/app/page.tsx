@@ -914,7 +914,7 @@ img{max-width:100%;height:auto;}
                 <div className="dash-sidebar-item"><span className="dash-sidebar-icon">🎓</span>Coaching</div>
               </div>
               <div className="dash-main">
-                <div className="dash-welcome">Bonjour Lucas <span>— Closer Elite</span></div>
+                <div className="dash-welcome">Bonjour Julien <span>— Closer Elite</span></div>
                 <div className="dash-stats">
                   <div className="dash-stat-card" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.12)' }}>
                     <div className="dash-stat-num" style={{ color: 'var(--success)' }}>12</div>
@@ -983,7 +983,7 @@ img{max-width:100%;height:auto;}
                 <div className="dash-offers-title">Dernières candidatures</div>
                 <div className="dash-offer">
                   <div>
-                    <div className="dash-offer-title">Lucas M. — Closer</div>
+                    <div className="dash-offer-title">Julien M. — Closer</div>
                     <div className="dash-offer-sub">A postulé à &quot;Closer Coaching Business&quot; — il y a 2h</div>
                   </div>
                   <div className="dash-offer-badge" style={{ background: 'rgba(34,197,94,0.1)', color: 'var(--success)' }}>Nouveau</div>
