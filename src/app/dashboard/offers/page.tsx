@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Card, CardContent } from '@/components/ui';
 import {
   Briefcase, Plus, Eye, Users, Clock, Pause, CheckCircle, XCircle,
+  Pencil, ExternalLink,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -154,12 +155,26 @@ export default async function OffersPage() {
                         )}
                       </div>
                     </div>
-                    <a
-                      href={`/dashboard/offers/${offer.id}/candidates`}
-                      className="shrink-0 text-sm font-medium text-brand-dark bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      Gérer
-                    </a>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={`/dashboard/offers/${offer.id}/candidates`}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-dark bg-gray-50 hover:bg-gray-100 border border-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Users className="h-3.5 w-3.5" /> Gérer
+                      </a>
+                      <a
+                        href={`/dashboard/offers/${offer.id}/edit`}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" /> Modifier
+                      </a>
+                      <a
+                        href={`/dashboard/marketplace/${offer.id}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-white hover:bg-gray-50 border border-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" /> Voir
+                      </a>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
