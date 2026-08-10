@@ -17,9 +17,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { current_cash_per_call, main_challenge, experience_months, niche, goals, availability } = body;
 
-    // Validation minimale
+    // Validation
     if (!main_challenge?.trim()) {
       return NextResponse.json({ error: 'Décris ton principal challenge' }, { status: 400 });
+    }
+    // Protection contre les payloads trop larges
+    const MAX_FIELD = 2000;
+    if (main_challenge.length > MAX_FIELD || (goals && goals.length > MAX_FIELD) || (availability && availability.length > MAX_FIELD) || (niche && niche.length > 200)) {
+      return NextResponse.json({ error: 'Un ou plusieurs champs dépassent la taille autorisée' }, { status: 400 });
+    }
+    if (current_cash_per_call !== undefined && current_cash_per_call !== null && (typeof current_cash_per_call !== 'number' || !Number.isFinite(current_cash_per_call) || current_cash_per_call < 0 || current_cash_per_call > 100000)) {
+      return NextResponse.json({ error: 'Valeur cash/call invalide' }, { status: 400 });
+    }
+    if (experience_months !== undefined && experience_months !== null && (typeof experience_months !== 'number' || !Number.isFinite(experience_months) || experience_months < 0 || experience_months > 600)) {
+      return NextResponse.json({ error: 'Expérience invalide' }, { status: 400 });
     }
 
     const { data: booking, error } = await supabase

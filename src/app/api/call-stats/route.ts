@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
 
-    const userId = request.nextUrl.searchParams.get('userId') || authUser.id;
+    // Sécurité : seul l'utilisateur connecté peut voir ses propres stats
+    // (un admin pourrait passer un userId s'il le fallait, mais on bloque par défaut)
+    const requestedUserId = request.nextUrl.searchParams.get('userId');
+    const userId = requestedUserId && requestedUserId === authUser.id ? requestedUserId : authUser.id;
 
     const { data: stats, error } = await supabase
       .from('call_stats')
@@ -77,8 +80,20 @@ export async function POST(request: NextRequest) {
     if (!event_date) {
       return NextResponse.json({ error: 'Date de l\'event requise' }, { status: 400 });
     }
-    if (typeof total_calls !== 'number' || total_calls < 0) {
-      return NextResponse.json({ error: 'Nombre de calls invalide' }, { status: 400 });
+    if (typeof total_calls !== 'number' || !Number.isFinite(total_calls) || total_calls < 0 || total_calls > 10000) {
+      return NextResponse.json({ error: 'Nombre de calls invalide (0-10000)' }, { status: 400 });
+    }
+    if (ns_count !== undefined && (typeof ns_count !== 'number' || !Number.isFinite(ns_count) || ns_count < 0 || ns_count > 10000)) {
+      return NextResponse.json({ error: 'Nombre de NS invalide' }, { status: 400 });
+    }
+    if (cancelled_count !== undefined && (typeof cancelled_count !== 'number' || !Number.isFinite(cancelled_count) || cancelled_count < 0 || cancelled_count > 10000)) {
+      return NextResponse.json({ error: 'Nombre d\'annulés invalide' }, { status: 400 });
+    }
+    if (total_revenue !== undefined && (typeof total_revenue !== 'number' || !Number.isFinite(total_revenue) || total_revenue < 0 || total_revenue > 10000000)) {
+      return NextResponse.json({ error: 'Revenu invalide' }, { status: 400 });
+    }
+    if (notes && typeof notes === 'string' && notes.length > 2000) {
+      return NextResponse.json({ error: 'Notes trop longues (2000 car. max)' }, { status: 400 });
     }
 
     const { data, error } = await supabase

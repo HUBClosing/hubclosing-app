@@ -139,7 +139,10 @@ export async function POST(request: NextRequest) {
     const score = Math.round(avgRating * 20);
     const badgeLevel = getBadgeForScore(score);
 
-    await supabase
+    // Utiliser le client admin pour mettre à jour le profil d'un autre utilisateur (bypass RLS)
+    const { getSupabaseAdmin: getAdmin } = await import('@/lib/supabase/admin');
+    const adminSupa = getAdmin();
+    await adminSupa
       .from('profiles')
       .update({
         score,

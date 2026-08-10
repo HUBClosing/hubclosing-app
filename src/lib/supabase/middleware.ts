@@ -52,6 +52,8 @@ export async function updateSession(request: NextRequest) {
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
     // Permissions Policy — désactiver les features inutilisées
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Strict Transport Security — forcer HTTPS
+    response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     return response;
   }
 

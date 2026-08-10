@@ -48,6 +48,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
 
+    // Bloquer l'impersonation d'autres admins
+    if (targetUser.role === 'admin' || targetUser.role_type === 'admin') {
+      return NextResponse.json({ error: 'Impossible d\'impersoner un autre admin' }, { status: 403 });
+    }
+
     // Set le cookie d'impersonation
     const cookieStore = await cookies();
     cookieStore.set(COOKIE_NAME, userId, {
@@ -79,6 +84,24 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE() {
   try {
+    // Vérifier que le caller est authentifié et admin
+    const supabase = await createClient();
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
+
+    const adminClient = getSupabaseAdmin();
+    const { data: adminProfile } = await adminClient
+      .from('users')
+      .select('role, role_type')
+      .eq('id', authUser.id)
+      .single();
+
+    if (!adminProfile || (adminProfile.role !== 'admin' && adminProfile.role_type !== 'admin')) {
+      return NextResponse.json({ error: 'Accès refusé — admin uniquement' }, { status: 403 });
+    }
+
     const cookieStore = await cookies();
     cookieStore.set(COOKIE_NAME, '', {
       httpOnly: true,
