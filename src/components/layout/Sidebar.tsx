@@ -101,6 +101,7 @@ const recruiterLinks: NavLink[] = [
 const adminLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/admin', label: 'Vue d\'ensemble', icon: BarChart3 },
+  { href: '/dashboard/admin/crm', label: 'CRM Recrutement', icon: TrendingUp },
   { href: '/dashboard/admin/users', label: 'Utilisateurs', icon: Users },
   { href: '/dashboard/admin/offers', label: 'Offres', icon: Briefcase },
   { href: '/dashboard/admin/notifications', label: 'Notifications', icon: Bell },

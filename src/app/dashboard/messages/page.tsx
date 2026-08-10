@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Avatar, EmptyState, Button } from '@/components/ui';
-import { MessageSquare, Send, Loader2, Check, CheckCheck, Video } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Check, CheckCheck, Video, ShieldCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -46,6 +46,7 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [validatedPartners, setValidatedPartners] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const typingChannelRef = useRef<RealtimeChannel | null>(null);
@@ -95,6 +96,26 @@ export default function MessagesPage() {
         counts[conv.id] = count || 0;
       }
       setUnreadCounts(counts);
+
+      // Vérifier quels partenaires de conversation ont un profil validé
+      // (candidature avec validated_at non null liée au recruteur actuel)
+      const partnerIds = unique.map(c => c.participant_1 === user.id ? c.participant_2 : c.participant_1);
+      if (partnerIds.length > 0) {
+        const { data: validatedApps } = await supabase
+          .from('applications')
+          .select('closer_id, offer_id, validated_at, offers!inner(manager_id)')
+          .not('validated_at', 'is', null)
+          .in('closer_id', partnerIds);
+
+        const validatedSet = new Set<string>();
+        (validatedApps || []).forEach((a: any) => {
+          // Vérifie que c'est bien une offre du recruteur actuel
+          if (a.offers?.manager_id === user.id) {
+            validatedSet.add(a.closer_id);
+          }
+        });
+        setValidatedPartners(validatedSet);
+      }
 
       setLoading(false);
 
@@ -328,9 +349,14 @@ export default function MessagesPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <p className={`font-medium text-brand-dark truncate ${unread > 0 ? 'font-bold' : ''}`}>
-                            {other?.full_name || 'Utilisateur'}
-                          </p>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <p className={`font-medium text-brand-dark truncate ${unread > 0 ? 'font-bold' : ''}`}>
+                              {other?.full_name || 'Utilisateur'}
+                            </p>
+                            {other && validatedPartners.has(other.id) && (
+                              <ShieldCheck className="h-4 w-4 text-green-500 shrink-0" />
+                            )}
+                          </div>
                         </div>
                         {conv.last_message_at && (
                           <p className="text-xs text-gray-500">
@@ -359,7 +385,14 @@ export default function MessagesPage() {
                         <>
                           <Avatar src={other?.avatar_url} fallback={other?.full_name || '?'} size="sm" />
                           <div>
-                            <p className="font-semibold text-brand-dark">{other?.full_name || 'Utilisateur'}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold text-brand-dark">{other?.full_name || 'Utilisateur'}</p>
+                              {other && validatedPartners.has(other.id) && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                  <ShieldCheck className="h-3 w-3" /> Validé
+                                </span>
+                              )}
+                            </div>
                             {typingUser && (
                               <p className="text-xs text-brand-green animate-pulse">
                                 {typingUser} est en train d&apos;&eacute;crire...

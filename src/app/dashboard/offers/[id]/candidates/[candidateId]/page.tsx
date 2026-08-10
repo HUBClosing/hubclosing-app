@@ -52,6 +52,7 @@ export default function CandidateProfilePage() {
   const [myTier, setMyTier] = useState<string>('free');
   const [validationCount, setValidationCount] = useState(0);
   const [validationError, setValidationError] = useState('');
+  const [hasConversation, setHasConversation] = useState(false);
 
   // Limites de validations par plan par mois
   const VALIDATION_LIMITS: Record<string, number> = {
@@ -131,7 +132,24 @@ export default function CandidateProfilePage() {
       setValidationCount(valCount || 0);
     }
 
-    // 7. Questionnaire + réponses
+    // 7. Vérifier si une conversation existe avec ce candidat
+    if (authUser && appData.closer_id) {
+      const { data: conv1 } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('participant_1', authUser.id)
+        .eq('participant_2', appData.closer_id)
+        .limit(1);
+      const { data: conv2 } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('participant_1', appData.closer_id)
+        .eq('participant_2', authUser.id)
+        .limit(1);
+      setHasConversation(Boolean((conv1 && conv1.length > 0) || (conv2 && conv2.length > 0)));
+    }
+
+    // 8. Questionnaire + réponses
     if (offerData?.questionnaire_id) {
       const { data: qData } = await supabase
         .from('questionnaire_questions')
@@ -185,6 +203,13 @@ export default function CandidateProfilePage() {
     if (!application || application.validated_at) return;
     setValidating(true);
     setValidationError('');
+
+    // Vérifier qu'une conversation existe AVANT de valider
+    if (!hasConversation) {
+      setValidationError('Vous devez d\'abord contacter ce candidat via le chat avant de pouvoir valider son profil.');
+      setValidating(false);
+      return;
+    }
 
     const limit = VALIDATION_LIMITS[myTier] || 0;
     if (validationCount >= limit) {
@@ -376,9 +401,17 @@ export default function CandidateProfilePage() {
               </div>
             ) : (
               <div className="space-y-2">
+                {!hasConversation && (
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200 mb-2">
+                    <MessageSquare className="h-5 w-5 text-amber-600 shrink-0" />
+                    <p className="text-sm text-amber-800">
+                      Vous devez d&apos;abord contacter ce candidat via le chat avant de valider son profil.
+                    </p>
+                  </div>
+                )}
                 <button
                   onClick={validateProfile}
-                  disabled={validating || !canValidate}
+                  disabled={validating || !canValidate || !hasConversation}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-amber text-white rounded-lg hover:bg-brand-amber/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {validating ? (
