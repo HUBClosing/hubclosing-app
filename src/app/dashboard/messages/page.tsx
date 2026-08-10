@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Avatar, EmptyState, Button } from '@/components/ui';
-import { MessageSquare, Send, Loader2, Check, CheckCheck } from 'lucide-react';
+import { MessageSquare, Send, Loader2, Check, CheckCheck, Video } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -350,24 +350,36 @@ export default function MessagesPage() {
             {selectedConv ? (
               <>
                 {/* Header conversation */}
-                <div className="p-4 border-b border-gray-200 flex items-center gap-3">
-                  {(() => {
-                    const conv = conversations.find((c) => c.id === selectedConv);
-                    const other = conv ? getOtherUser(conv) : null;
-                    return (
-                      <>
-                        <Avatar src={other?.avatar_url} fallback={other?.full_name || '?'} size="sm" />
-                        <div>
-                          <p className="font-semibold text-brand-dark">{other?.full_name || 'Utilisateur'}</p>
-                          {typingUser && (
-                            <p className="text-xs text-brand-green animate-pulse">
-                              {typingUser} est en train d&apos;&eacute;crire...
-                            </p>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()}
+                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const conv = conversations.find((c) => c.id === selectedConv);
+                      const other = conv ? getOtherUser(conv) : null;
+                      return (
+                        <>
+                          <Avatar src={other?.avatar_url} fallback={other?.full_name || '?'} size="sm" />
+                          <div>
+                            <p className="font-semibold text-brand-dark">{other?.full_name || 'Utilisateur'}</p>
+                            {typingUser && (
+                              <p className="text-xs text-brand-green animate-pulse">
+                                {typingUser} est en train d&apos;&eacute;crire...
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const roomId = `hubclosing-${selectedConv?.slice(0, 12)}`;
+                      window.open(`https://meet.jit.si/${roomId}`, '_blank');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-brand-green bg-brand-green/10 rounded-lg hover:bg-brand-green/20 transition-colors"
+                    title="Démarrer un appel vidéo"
+                  >
+                    <Video className="h-4 w-4" /> Visio
+                  </button>
                 </div>
 
                 {/* Messages */}

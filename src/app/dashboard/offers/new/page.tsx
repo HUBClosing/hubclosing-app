@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, Button, Input, Textarea } from '@/components/ui';
-import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle, ClipboardList, Trash2, GripVertical, CheckSquare, AlignLeft } from 'lucide-react';
 import type { Skill, OfferType, Questionnaire } from '@/types/database';
 
 const OFFER_TYPES: { value: OfferType; label: string; desc: string }[] = [
@@ -34,7 +34,16 @@ interface ProductLine {
   id: string;
   name: string;
   price: string;
-  commission: string; // Taux de commission propre au produit (%)
+  commission: string;
+}
+
+interface InlineQuestion {
+  id: string;
+  type: 'mcq' | 'free_text';
+  text: string;
+  options: string[];       // For MCQ: the choices
+  correctAnswers: number[]; // For MCQ: indices of correct answers
+  isRequired: boolean;
 }
 
 function DeadlineCountdown({ deadline }: { deadline: string }) {
@@ -119,21 +128,60 @@ export default function NewOfferPage() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [offerType, setOfferType] = useState<OfferType>('challenge');
   const [deadline, setDeadline] = useState('');
-  const [selectedQuestionnaire, setSelectedQuestionnaire] = useState<string>('');
-  const [questionnaires, setQuestionnaires] = useState<Questionnaire[]>([]);
+  const [enableQuestionnaire, setEnableQuestionnaire] = useState(false);
+  const [questionnaireTitle, setQuestionnaireTitle] = useState('');
+  const [inlineQuestions, setInlineQuestions] = useState<InlineQuestion[]>([]);
 
-  // Charger les questionnaires du recruteur
-  useEffect(() => {
-    async function loadQuestionnaires() {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('questionnaires')
-        .select('id, title')
-        .order('created_at', { ascending: false });
-      setQuestionnaires((data || []) as Questionnaire[]);
-    }
-    loadQuestionnaires();
-  }, []);
+  const addQuestion = (type: 'mcq' | 'free_text') => {
+    setInlineQuestions(prev => [...prev, {
+      id: Date.now().toString(),
+      type,
+      text: '',
+      options: type === 'mcq' ? ['', ''] : [],
+      correctAnswers: [],
+      isRequired: true,
+    }]);
+  };
+
+  const updateQuestion = (id: string, updates: Partial<InlineQuestion>) => {
+    setInlineQuestions(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
+  };
+
+  const removeQuestion = (id: string) => {
+    setInlineQuestions(prev => prev.filter(q => q.id !== id));
+  };
+
+  const addOption = (qId: string) => {
+    setInlineQuestions(prev => prev.map(q => q.id === qId ? { ...q, options: [...q.options, ''] } : q));
+  };
+
+  const updateOption = (qId: string, idx: number, value: string) => {
+    setInlineQuestions(prev => prev.map(q => {
+      if (q.id !== qId) return q;
+      const opts = [...q.options];
+      opts[idx] = value;
+      return { ...q, options: opts };
+    }));
+  };
+
+  const removeOption = (qId: string, idx: number) => {
+    setInlineQuestions(prev => prev.map(q => {
+      if (q.id !== qId) return q;
+      const opts = q.options.filter((_, i) => i !== idx);
+      const correct = q.correctAnswers.filter(i => i !== idx).map(i => i > idx ? i - 1 : i);
+      return { ...q, options: opts, correctAnswers: correct };
+    }));
+  };
+
+  const toggleCorrectAnswer = (qId: string, idx: number) => {
+    setInlineQuestions(prev => prev.map(q => {
+      if (q.id !== qId) return q;
+      const correct = q.correctAnswers.includes(idx)
+        ? q.correctAnswers.filter(i => i !== idx)
+        : [...q.correctAnswers, idx];
+      return { ...q, correctAnswers: correct };
+    }));
+  };
 
   // Produits multiples avec commission individuelle
   const [products, setProducts] = useState<ProductLine[]>([
@@ -229,6 +277,7 @@ export default function NewOfferPage() {
     const linkedinUrl = (formData.get('linkedin_url') as string)?.trim() || null;
     const videoUrl = (formData.get('video_url') as string)?.trim() || null;
     const replayUrl = (formData.get('replay_url') as string)?.trim() || null;
+    const hosVideoUrl = (formData.get('hos_video_url') as string)?.trim() || null;
     const maxApplicants = formData.get('max_applicants') ? parseInt(formData.get('max_applicants') as string) : null;
 
     if (!title || !description) {
@@ -249,17 +298,6 @@ export default function NewOfferPage() {
       return;
     }
 
-    if (!videoUrl) {
-      setError('Le lien vidéo de présentation est obligatoire.');
-      setLoading(false);
-      return;
-    }
-
-    if (!replayUrl) {
-      setError('Le lien replay d\'un call est obligatoire.');
-      setLoading(false);
-      return;
-    }
 
     if (selectedSkills.length === 0) {
       setError('Sélectionnez au moins une compétence recherchée.');
@@ -280,6 +318,42 @@ export default function NewOfferPage() {
       return;
     }
 
+    // Créer le questionnaire inline si activé
+    let questionnaireId: string | null = null;
+    if (enableQuestionnaire && inlineQuestions.length > 0) {
+      const qTitle = questionnaireTitle.trim() || `Questionnaire — ${title}`;
+      const { data: qData, error: qError } = await supabase.from('questionnaires').insert({
+        title: qTitle,
+        created_by: user.id,
+      }).select('id').single();
+
+      if (qError) {
+        setError('Erreur création questionnaire : ' + qError.message);
+        setLoading(false);
+        return;
+      }
+
+      questionnaireId = qData.id;
+
+      // Insérer les questions
+      const questionsToInsert = inlineQuestions.map((q, idx) => ({
+        questionnaire_id: questionnaireId,
+        question_text: q.text,
+        question_type: q.type === 'mcq' ? 'mcq' : 'free_text',
+        options: q.type === 'mcq' ? q.options.filter(o => o.trim()) : null,
+        correct_answers: q.type === 'mcq' && q.correctAnswers.length > 0 ? q.correctAnswers.map(i => q.options[i]) : null,
+        is_required: q.isRequired,
+        sort_order: idx,
+      }));
+
+      const { error: questionsError } = await supabase.from('questionnaire_questions').insert(questionsToInsert);
+      if (questionsError) {
+        setError('Erreur création questions : ' + questionsError.message);
+        setLoading(false);
+        return;
+      }
+    }
+
     const { error: insertError } = await supabase.from('offers').insert({
       manager_id: user.id,
       title,
@@ -293,9 +367,10 @@ export default function NewOfferPage() {
       location: [instagramUrl, linkedinUrl].filter(Boolean).join(' | ') || null,
       video_url: videoUrl,
       replay_url: replayUrl,
+      hos_video_url: hosVideoUrl,
       required_skills: selectedSkills,
       required_languages: selectedLanguages,
-      questionnaire_id: selectedQuestionnaire || null,
+      questionnaire_id: questionnaireId,
       application_deadline: deadline || null,
       max_applicants: maxApplicants,
       status: 'active',
@@ -410,21 +485,29 @@ export default function NewOfferPage() {
 
             <Input
               name="video_url"
-              label="Lien vidéo de présentation"
+              label="Lien vidéo de présentation (optionnel)"
               type="url"
               placeholder="https://youtube.com/... ou https://loom.com/..."
               helperText="Vidéo de présentation de votre offre pour donner envie aux candidats"
-              required
             />
 
             <Input
               name="replay_url"
-              label="Replay d'un call effectué"
+              label="Exemple de call (optionnel)"
               type="url"
               placeholder="https://fathom.video/... ou https://drive.google.com/..."
               helperText="Lien Fathom, Google Drive ou autre — montrez un vrai call pour rassurer les candidats"
-              required
             />
+
+            <div className="space-y-1">
+              <Input
+                name="hos_video_url"
+                label="Vidéo de présentation HOS / Infopreneur (optionnel)"
+                type="url"
+                placeholder="https://youtube.com/... ou https://loom.com/..."
+              />
+              <p className="text-xs text-brand-amber">💡 Fortement suggéré — une vidéo du HOS ou de l&apos;infopreneur attire beaucoup plus de candidats qualifiés</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -630,27 +713,152 @@ export default function NewOfferPage() {
             {/* Décompte temps réel */}
             {deadline && <DeadlineCountdown deadline={deadline} />}
 
-            {/* Questionnaire lié */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Questionnaire de qualification <span className="text-xs font-normal text-gray-400">(optionnel)</span>
-              </label>
-              <select
-                value={selectedQuestionnaire}
-                onChange={(e) => setSelectedQuestionnaire(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-brand-green focus:ring-brand-green/20"
-              >
-                <option value="">Aucun questionnaire</option>
-                {questionnaires.map(q => (
-                  <option key={q.id} value={q.id}>{q.title}</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400">
-                À réaliser si vous avez des questions à poser à votre candidat pour effectuer votre sélection plus fine.{' '}
-                <a href="/dashboard/questionnaires" className="text-brand-amber hover:underline">
-                  Créer un questionnaire
-                </a>
-              </p>
+            {/* Questionnaire intégré */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enableQuestionnaire}
+                    onChange={(e) => setEnableQuestionnaire(e.target.checked)}
+                    className="rounded border-gray-300 text-brand-amber focus:ring-brand-amber"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Ajouter un questionnaire de qualification
+                  </span>
+                </label>
+              </div>
+
+              {enableQuestionnaire && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ClipboardList className="h-5 w-5 text-brand-amber" />
+                    <p className="text-sm font-semibold text-brand-dark">Questionnaire — testez les connaissances des candidats</p>
+                  </div>
+
+                  <Input
+                    label="Titre du questionnaire"
+                    placeholder="Ex : Test de connaissances en immobilier"
+                    value={questionnaireTitle}
+                    onChange={(e) => setQuestionnaireTitle(e.target.value)}
+                  />
+
+                  {/* Liste des questions */}
+                  {inlineQuestions.map((q, qIdx) => (
+                    <div key={q.id} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {q.type === 'mcq' ? (
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                              <CheckSquare className="h-3 w-3" /> QCM
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
+                              <AlignLeft className="h-3 w-3" /> Réponse libre
+                            </span>
+                          )}
+                          <span className="text-xs text-gray-400">Question {qIdx + 1}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={q.isRequired}
+                              onChange={(e) => updateQuestion(q.id, { isRequired: e.target.checked })}
+                              className="rounded border-gray-300 text-brand-amber focus:ring-brand-amber h-3.5 w-3.5"
+                            />
+                            Obligatoire
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => removeQuestion(q.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <input
+                        type="text"
+                        placeholder="Votre question..."
+                        value={q.text}
+                        onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
+                        className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                      />
+
+                      {/* Options QCM */}
+                      {q.type === 'mcq' && (
+                        <div className="space-y-2 pl-2">
+                          <p className="text-xs text-gray-400">Cochez la ou les bonnes réponses :</p>
+                          {q.options.map((opt, optIdx) => (
+                            <div key={optIdx} className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleCorrectAnswer(q.id, optIdx)}
+                                className={`shrink-0 h-5 w-5 rounded border flex items-center justify-center transition-colors ${
+                                  q.correctAnswers.includes(optIdx)
+                                    ? 'bg-green-500 border-green-500 text-white'
+                                    : 'border-gray-300 hover:border-green-400'
+                                }`}
+                              >
+                                {q.correctAnswers.includes(optIdx) && <CheckSquare className="h-3 w-3" />}
+                              </button>
+                              <input
+                                type="text"
+                                placeholder={`Option ${optIdx + 1}`}
+                                value={opt}
+                                onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
+                                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                              />
+                              {q.options.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeOption(q.id, optIdx)}
+                                  className="text-gray-300 hover:text-red-500 transition-colors"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => addOption(q.id)}
+                            className="text-xs text-brand-dark hover:text-brand-amber font-medium flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" /> Ajouter une option
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Boutons ajout question */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addQuestion('mcq')}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 border border-blue-200 transition-colors"
+                    >
+                      <CheckSquare className="h-4 w-4" /> Ajouter un QCM
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addQuestion('free_text')}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 border border-purple-200 transition-colors"
+                    >
+                      <AlignLeft className="h-4 w-4" /> Ajouter une question libre
+                    </button>
+                  </div>
+
+                  {inlineQuestions.length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-2">
+                      Ajoutez des questions pour tester les connaissances des candidats dans votre thématique
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">

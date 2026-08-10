@@ -8,6 +8,7 @@ import {
   ArrowLeft, User, Mail, Phone, Briefcase, Star, TrendingUp,
   Award, Globe, Linkedin, Calendar, MessageSquare, ClipboardList,
   CheckCircle, XCircle, Clock, Eye, Search, Loader2,
+  ShieldCheck, Lock, Video,
 } from 'lucide-react';
 import type {
   Application, User as UserType, Profile, PortfolioEntry,
@@ -40,6 +41,7 @@ export default function CandidateProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [application, setApplication] = useState<Application | null>(null);
   const [candidate, setCandidate] = useState<UserType | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -47,6 +49,19 @@ export default function CandidateProfilePage() {
   const [questions, setQuestions] = useState<QuestionnaireQuestion[]>([]);
   const [responses, setResponses] = useState<Record<string, QuestionnaireResponse>>({});
   const [offerTitle, setOfferTitle] = useState('');
+  const [myTier, setMyTier] = useState<string>('free');
+  const [validationCount, setValidationCount] = useState(0);
+  const [validationError, setValidationError] = useState('');
+
+  // Limites de validations par plan par mois
+  const VALIDATION_LIMITS: Record<string, number> = {
+    free: 0,
+    starter: 5,
+    pro: 15,
+    elite: 30,
+    business: 50,
+    agency: 9999,
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -94,7 +109,29 @@ export default function CandidateProfilePage() {
       .limit(5);
     setPortfolio((portfolioData || []) as PortfolioEntry[]);
 
-    // 6. Questionnaire + réponses
+    // 6. Mon tier + nombre de validations ce mois
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser) {
+      const { data: meData } = await supabase
+        .from('users')
+        .select('tier')
+        .eq('id', authUser.id)
+        .single();
+      setMyTier(meData?.tier || 'free');
+
+      // Compter les validations ce mois-ci
+      const now = new Date();
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count: valCount } = await supabase
+        .from('applications')
+        .select('id', { count: 'exact', head: true })
+        .not('validated_at', 'is', null)
+        .gte('validated_at', firstOfMonth)
+        .in('offer_id', [offerId]); // Only count for recruiter's offers
+      setValidationCount(valCount || 0);
+    }
+
+    // 7. Questionnaire + réponses
     if (offerData?.questionnaire_id) {
       const { data: qData } = await supabase
         .from('questionnaire_questions')
@@ -142,6 +179,66 @@ export default function CandidateProfilePage() {
 
     setStatusLoading(false);
   };
+
+  // Valider un profil pour débloquer les coordonnées
+  const validateProfile = async () => {
+    if (!application || application.validated_at) return;
+    setValidating(true);
+    setValidationError('');
+
+    const limit = VALIDATION_LIMITS[myTier] || 0;
+    if (validationCount >= limit) {
+      setValidationError(`Vous avez atteint votre limite de ${limit} validation${limit > 1 ? 's' : ''} ce mois-ci. Passez au plan supérieur pour en débloquer davantage.`);
+      setValidating(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('applications')
+      .update({ validated_at: new Date().toISOString() })
+      .eq('id', candidateId);
+
+    if (error) {
+      setValidationError(error.message);
+    } else {
+      setApplication(prev => prev ? { ...prev, validated_at: new Date().toISOString() } : prev);
+      setValidationCount(prev => prev + 1);
+    }
+    setValidating(false);
+  };
+
+  // Démarrer une conversation avec le candidat
+  const startConversation = async () => {
+    if (!candidate) return;
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return;
+
+    // Chercher une conversation existante
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`and(participant_1.eq.${authUser.id},participant_2.eq.${candidate.id}),and(participant_1.eq.${candidate.id},participant_2.eq.${authUser.id})`)
+      .limit(1)
+      .single();
+
+    if (existing) {
+      router.push('/dashboard/messages');
+      return;
+    }
+
+    // Créer une nouvelle conversation
+    const { error } = await supabase.from('conversations').insert({
+      participant_1: authUser.id,
+      participant_2: candidate.id,
+    });
+
+    if (!error) {
+      router.push('/dashboard/messages');
+    }
+  };
+
+  const isValidated = !!application?.validated_at;
+  const canValidate = validationCount < (VALIDATION_LIMITS[myTier] || 0);
 
   if (loading) {
     return <div className="text-center py-12 text-gray-400">Chargement du profil...</div>;
@@ -198,12 +295,20 @@ export default function CandidateProfilePage() {
               </div>
 
               <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Mail className="h-3.5 w-3.5" /> {candidate.email}
-                </span>
-                {candidate.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5" /> {candidate.phone}
+                {isValidated ? (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <Mail className="h-3.5 w-3.5" /> {candidate.email}
+                    </span>
+                    {candidate.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3.5 w-3.5" /> {candidate.phone}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="flex items-center gap-1 text-gray-400">
+                    <Lock className="h-3.5 w-3.5" /> Coordonnées masquées — validez le profil pour les voir
                   </span>
                 )}
                 {candidate.years_experience && (
@@ -255,6 +360,49 @@ export default function CandidateProfilePage() {
                 );
               })}
             </div>
+          </div>
+
+          {/* Validation profil — déblocage coordonnées */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            {isValidated ? (
+              <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
+                <ShieldCheck className="h-5 w-5 text-green-600 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">Profil validé</p>
+                  <p className="text-xs text-green-600">
+                    Coordonnées débloquées le {new Date(application.validated_at!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button
+                  onClick={validateProfile}
+                  disabled={validating || !canValidate}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-amber text-white rounded-lg hover:bg-brand-amber/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {validating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-4 w-4" />
+                  )}
+                  Valider le profil — débloquer email & téléphone
+                </button>
+                <p className="text-xs text-gray-400 text-center">
+                  {validationCount}/{VALIDATION_LIMITS[myTier] || 0} validations utilisées ce mois · Plan {myTier}
+                </p>
+                {!canValidate && (
+                  <div className="text-center">
+                    <a href="/dashboard/subscription" className="text-xs text-brand-amber hover:underline">
+                      Passer au plan supérieur pour plus de validations
+                    </a>
+                  </div>
+                )}
+                {validationError && (
+                  <p className="text-xs text-red-600 text-center">{validationError}</p>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -432,8 +580,19 @@ export default function CandidateProfilePage() {
 
       {/* Actions rapides */}
       <div className="flex gap-3">
-        <Button onClick={() => router.push('/dashboard/messages')} variant="secondary" size="sm" className="flex-1">
-          <MessageSquare className="h-4 w-4 mr-2" /> Envoyer un message
+        <Button onClick={startConversation} variant="secondary" size="sm" className="flex-1">
+          <MessageSquare className="h-4 w-4 mr-2" /> Contacter via le chat
+        </Button>
+        <Button
+          onClick={() => {
+            const roomId = `hubclosing-${offerId.slice(0, 8)}-${candidateId.slice(0, 8)}`;
+            window.open(`https://meet.jit.si/${roomId}`, '_blank');
+          }}
+          variant="secondary"
+          size="sm"
+          className="flex-1"
+        >
+          <Video className="h-4 w-4 mr-2" /> Appel vidéo
         </Button>
         <Button onClick={() => router.back()} variant="secondary" size="sm">
           Retour

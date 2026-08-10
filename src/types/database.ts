@@ -258,6 +258,7 @@ export interface Application {
   closer_id: string;
   status: ApplicationStatus;
   cover_letter: string | null;
+  validated_at: string | null;
   created_at: string;
   updated_at: string;
   offer?: Offer;

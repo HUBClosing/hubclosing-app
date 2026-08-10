@@ -8,6 +8,7 @@ import {
   ArrowLeft, Users, User, Search, ChevronRight,
   ClipboardList, Loader2, FileText, ChevronDown,
   ArrowUpDown, ArrowUp, ArrowDown, ExternalLink,
+  MessageSquare, ShieldCheck,
 } from 'lucide-react';
 import type { Offer, ApplicationStatus } from '@/types/database';
 import { APPLICATION_STATUS_CONFIG } from '@/types/database';
@@ -39,6 +40,7 @@ interface CandidateRow {
   created_at: string;
   skills: string[];
   has_questionnaire_response: boolean;
+  validated_at: string | null;
 }
 
 type SortField = 'name' | 'created_at' | 'status';
@@ -106,6 +108,7 @@ export default function CandidatesOverviewPage() {
         created_at: app.created_at as string,
         skills: closer?.skills || [],
         has_questionnaire_response: responseAppIds.has(app.id as string),
+        validated_at: app.validated_at as string | null,
       };
     });
 
@@ -309,6 +312,9 @@ export default function CandidatesOverviewPage() {
                       Date <SortIcon field="created_at" />
                     </button>
                   </th>
+                  <th className="text-left font-medium text-gray-500 px-4 py-3 whitespace-nowrap hidden lg:table-cell">
+                    Profil
+                  </th>
                   <th className="text-right font-medium text-gray-500 px-4 py-3 whitespace-nowrap">
                     Actions
                   </th>
@@ -319,7 +325,7 @@ export default function CandidatesOverviewPage() {
               <tbody>
                 {sortedAndFiltered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-8 text-gray-400">
+                    <td colSpan={7} className="text-center py-8 text-gray-400">
                       Aucun résultat pour cette recherche.
                     </td>
                   </tr>
@@ -350,7 +356,9 @@ export default function CandidatesOverviewPage() {
                               <p className="font-medium text-brand-dark truncate group-hover/link:text-brand-green transition-colors">
                                 {c.name}
                               </p>
-                              <p className="text-xs text-gray-400 truncate">{c.email}</p>
+                              <p className="text-xs text-gray-400 truncate">
+                                {c.validated_at ? c.email : '••••••@••••••'}
+                              </p>
                             </div>
                           </a>
                         </td>
@@ -439,14 +447,27 @@ export default function CandidatesOverviewPage() {
                           </span>
                         </td>
 
+                        {/* Validation profil */}
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          {c.validated_at ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                              <ShieldCheck className="h-3.5 w-3.5" /> Validé
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-400">Non validé</span>
+                          )}
+                        </td>
+
                         {/* Actions */}
                         <td className="px-4 py-3 text-right">
-                          <a
-                            href={`/dashboard/offers/${offerId}/candidates/${c.id}`}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-green hover:text-brand-green/80 transition-colors"
-                          >
-                            Voir <ChevronRight className="h-3.5 w-3.5" />
-                          </a>
+                          <div className="flex items-center gap-2 justify-end">
+                            <a
+                              href={`/dashboard/offers/${offerId}/candidates/${c.id}`}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-brand-green hover:text-brand-green/80 transition-colors"
+                            >
+                              Voir <ChevronRight className="h-3.5 w-3.5" />
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     );
