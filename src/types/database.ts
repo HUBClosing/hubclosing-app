@@ -90,8 +90,8 @@ export const TIER_LIMITS = {
     has_direct_contact: true,
   },
   // --- Recruteurs ---
-  business: { active_offers: 5, contacts_per_month: 30, has_boost: 1, has_matching: false, has_analytics: false, team_members: 1 },
-  agency: { active_offers: Infinity, contacts_per_month: Infinity, has_boost: Infinity, has_matching: true, has_analytics: true, team_members: Infinity },
+  business: { active_offers: 5, contacts_per_month: 30, has_boost: 1, has_matching: false, has_analytics: false, team_members: 1, has_masterclass: true, has_replays: true, has_upskill: false },
+  agency: { active_offers: Infinity, contacts_per_month: Infinity, has_boost: Infinity, has_matching: true, has_analytics: true, team_members: Infinity, has_masterclass: true, has_replays: true, has_upskill: true },
 } as const;
 
 export const TIER_PRICES = {

@@ -149,7 +149,8 @@ export function EventsContent({ user }: EventsContentProps) {
             const isRegistered = registrations.has(event.id);
             const requiredFeature = EVENT_REQUIRED_FEATURE[event.event_type] || null;
             const isAdmin = user.role_type === 'admin';
-            const hasAccess = isAdmin || !requiredFeature || canUserDo(user, requiredFeature);
+            const isRecruiter = user.active_role === 'recruiter' || user.role_type === 'recruiter' || user.role === 'manager';
+            const hasAccess = isAdmin || isRecruiter || !requiredFeature || canUserDo(user, requiredFeature);
             const requiredTierLabel = requiredFeature ? FEATURE_TIER_LABEL[requiredFeature] : null;
 
             return (
