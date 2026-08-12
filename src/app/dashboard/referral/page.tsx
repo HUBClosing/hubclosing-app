@@ -24,7 +24,7 @@ export default async function ReferralPage() {
   const monthlyCommission = activeReferrals.reduce((sum, r) => {
     const filleulTier = r.referred?.tier || 'free';
     const price = TIER_PRICES[filleulTier as keyof typeof TIER_PRICES] || 0;
-    return sum + (price * 0.20); // 20% récurrent
+    return sum + (price * 0.10); // 10% récurrent
   }, 0);
 
   const totalEarned = referrals?.reduce((sum, r) => sum + (r.total_earned || 0), 0) || 0;
@@ -34,7 +34,7 @@ export default async function ReferralPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-brand-dark">Programme de parrainage</h1>
-        <p className="text-gray-500 mt-1">Parrainez, gagnez 20% de commission récurrente à vie</p>
+        <p className="text-gray-500 mt-1">Parrainez, gagnez 10% de commission récurrente à vie</p>
       </div>
 
       {/* Stats cards */}
@@ -126,7 +126,7 @@ export default async function ReferralPage() {
               { step: '1', title: 'Partagez', desc: 'Envoyez votre code à un closer ou recruteur de votre réseau' },
               { step: '2', title: 'Il s\'inscrit', desc: 'Votre filleul crée son compte avec votre code' },
               { step: '3', title: 'Il s\'abonne', desc: 'Quand il passe en plan payant, votre commission démarre' },
-              { step: '4', title: 'Vous gagnez', desc: '20% de son abonnement, chaque mois, tant qu\'il reste actif' },
+              { step: '4', title: 'Vous gagnez', desc: '10% de son abonnement, chaque mois, tant qu\'il reste actif' },
             ].map((item) => (
               <div key={item.step} className="text-center">
                 <div className="h-10 w-10 rounded-full bg-brand-amber/10 text-brand-amber font-bold text-lg flex items-center justify-center mx-auto mb-2">
@@ -158,10 +158,10 @@ export default async function ReferralPage() {
             <h3 className="text-sm font-medium text-gray-700 mb-3">Commissions par plan</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-sm">
               {[
-                { plan: 'Starter', price: 9, com: 1.80 },
-                { plan: 'Pro', price: 19, com: 3.80 },
-                { plan: 'Élite', price: 39, com: 7.80 },
-                { plan: 'Business', price: 49, com: 9.80 },
+                { plan: 'Starter', price: 9, com: 0.90 },
+                { plan: 'Pro', price: 19, com: 1.90 },
+                { plan: 'Élite', price: 39, com: 3.90 },
+                { plan: 'Business', price: 49, com: 4.90 },
               ].map((item) => (
                 <div key={item.plan} className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs text-gray-500">{item.plan} ({item.price}€/mois)</p>
@@ -189,7 +189,7 @@ export default async function ReferralPage() {
                 const filleul = ref.referred;
                 const isActive = ref.status === 'active' && filleul?.is_active !== false;
                 const tierPrice = TIER_PRICES[(filleul?.tier || 'free') as keyof typeof TIER_PRICES] || 0;
-                const commission = tierPrice * 0.20;
+                const commission = tierPrice * 0.10;
 
                 return (
                   <div key={ref.id} className="flex items-center justify-between py-3">

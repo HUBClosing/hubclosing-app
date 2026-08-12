@@ -97,7 +97,7 @@ export default async function AccountingPage() {
   const monthlyReferralCommission = activeReferrals.reduce((sum, r) => {
     const filleulTier = r.referred?.tier || 'free';
     const price = TIER_PRICES[filleulTier as keyof typeof TIER_PRICES] || 0;
-    return sum + (price * 0.20);
+    return sum + (price * 0.10);
   }, 0);
 
   const totalReferralEarned = (referralsResult.data || []).reduce((sum, r) => sum + (r.total_earned || 0), 0);
