@@ -8,7 +8,7 @@ import {
   ArrowLeft, User, Mail, Phone, Briefcase, Star, TrendingUp,
   Award, Globe, Linkedin, Calendar, MessageSquare, ClipboardList,
   CheckCircle, XCircle, Clock, Eye, Search, Loader2,
-  ShieldCheck, Lock, Video,
+  ShieldCheck, Video,
 } from 'lucide-react';
 import type {
   Application, User as UserType, Profile, PortfolioEntry,
@@ -50,10 +50,6 @@ export default function CandidateProfilePage() {
   const [questions, setQuestions] = useState<QuestionnaireQuestion[]>([]);
   const [responses, setResponses] = useState<Record<string, QuestionnaireResponse>>({});
   const [offerTitle, setOfferTitle] = useState('');
-  const [myTier, setMyTier] = useState<string>('free');
-  const [deblocagesRemaining, setDeblocagesRemaining] = useState(0);
-  const [validationError, setValidationError] = useState('');
-  const [hasConversation, setHasConversation] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -101,36 +97,7 @@ export default function CandidateProfilePage() {
       .limit(5);
     setPortfolio((portfolioData || []) as PortfolioEntry[]);
 
-    // 6. Mon tier + crédits de déblocage restants
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser) {
-      const { data: meData } = await supabase
-        .from('users')
-        .select('tier, recruiter_deblocages_remaining')
-        .eq('id', authUser.id)
-        .single();
-      setMyTier(meData?.tier || 'free');
-      setDeblocagesRemaining(meData?.recruiter_deblocages_remaining || 0);
-    }
-
-    // 7. Vérifier si une conversation existe avec ce candidat
-    if (authUser && appData.closer_id) {
-      const { data: conv1 } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('participant_1', authUser.id)
-        .eq('participant_2', appData.closer_id)
-        .limit(1);
-      const { data: conv2 } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('participant_1', appData.closer_id)
-        .eq('participant_2', authUser.id)
-        .limit(1);
-      setHasConversation(Boolean((conv1 && conv1.length > 0) || (conv2 && conv2.length > 0)));
-    }
-
-    // 8. Questionnaire + réponses
+    // 6. Questionnaire + réponses
     if (offerData?.questionnaire_id) {
       const { data: qData } = await supabase
         .from('questionnaire_questions')
@@ -179,47 +146,18 @@ export default function CandidateProfilePage() {
     setStatusLoading(false);
   };
 
-  // Valider un profil pour débloquer les coordonnées
+  // Valider un profil (suivi CRM — plus d'anonymisation)
   const validateProfile = async () => {
     if (!application || application.validated_at) return;
     setValidating(true);
-    setValidationError('');
-
-    // Vérifier qu'une conversation existe AVANT de valider
-    if (!hasConversation) {
-      setValidationError('Vous devez d\'abord contacter ce candidat via le chat avant de pouvoir valider son profil.');
-      setValidating(false);
-      return;
-    }
-
-    // Vérifier les crédits de déblocage (agency = illimité)
-    if (myTier !== 'agency' && deblocagesRemaining <= 0) {
-      setValidationError('Vous n\'avez plus de déblocage disponible. Achetez des déblocages supplémentaires depuis votre page abonnement.');
-      setValidating(false);
-      return;
-    }
 
     const { error } = await supabase
       .from('applications')
       .update({ validated_at: new Date().toISOString() })
       .eq('id', candidateId);
 
-    if (error) {
-      setValidationError(error.message);
-    } else {
+    if (!error) {
       setApplication(prev => prev ? { ...prev, validated_at: new Date().toISOString() } : prev);
-
-      // Décrémenter le crédit de déblocage (sauf agency)
-      if (myTier !== 'agency') {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (authUser) {
-          const newRemaining = Math.max(0, deblocagesRemaining - 1);
-          await supabase.from('users').update({
-            recruiter_deblocages_remaining: newRemaining,
-          }).eq('id', authUser.id);
-          setDeblocagesRemaining(newRemaining);
-        }
-      }
     }
     setValidating(false);
   };
@@ -255,7 +193,6 @@ export default function CandidateProfilePage() {
   };
 
   const isValidated = !!application?.validated_at;
-  const canValidate = myTier === 'agency' || deblocagesRemaining > 0;
 
   if (loading) {
     return <div className="text-center py-12 text-gray-400">Chargement du profil...</div>;
@@ -312,20 +249,12 @@ export default function CandidateProfilePage() {
               </div>
 
               <div className="flex flex-wrap gap-3 mt-2 text-sm text-gray-500">
-                {isValidated ? (
-                  <>
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3.5 w-3.5" /> {candidate.email}
-                    </span>
-                    {candidate.phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3.5 w-3.5" /> {candidate.phone}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="flex items-center gap-1 text-gray-400">
-                    <Lock className="h-3.5 w-3.5" /> Coordonnées masquées — validez le profil pour les voir
+                <span className="flex items-center gap-1">
+                  <Mail className="h-3.5 w-3.5" /> {candidate.email}
+                </span>
+                {candidate.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5" /> {candidate.phone}
                   </span>
                 )}
                 {candidate.years_experience && (
@@ -379,7 +308,7 @@ export default function CandidateProfilePage() {
             </div>
           </div>
 
-          {/* Validation profil — déblocage coordonnées */}
+          {/* Validation profil (suivi CRM) */}
           <div className="mt-4 pt-4 border-t border-gray-100">
             {isValidated ? (
               <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
@@ -387,46 +316,23 @@ export default function CandidateProfilePage() {
                 <div>
                   <p className="text-sm font-medium text-green-800">Profil validé</p>
                   <p className="text-xs text-green-600">
-                    Coordonnées débloquées le {new Date(application.validated_at!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    Validé le {new Date(application.validated_at!).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                {!hasConversation && (
-                  <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200 mb-2">
-                    <MessageSquare className="h-5 w-5 text-amber-600 shrink-0" />
-                    <p className="text-sm text-amber-800">
-                      Vous devez d&apos;abord contacter ce candidat via le chat avant de valider son profil.
-                    </p>
-                  </div>
+              <button
+                onClick={validateProfile}
+                disabled={validating}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-amber text-white rounded-lg hover:bg-brand-amber/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {validating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
                 )}
-                <button
-                  onClick={validateProfile}
-                  disabled={validating || !canValidate || !hasConversation}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-amber text-white rounded-lg hover:bg-brand-amber/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {validating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShieldCheck className="h-4 w-4" />
-                  )}
-                  Valider le profil — débloquer email & téléphone
-                </button>
-                <p className="text-xs text-gray-400 text-center">
-                  {myTier === 'agency' ? '∞' : deblocagesRemaining} déblocage{deblocagesRemaining > 1 ? 's' : ''} restant{deblocagesRemaining > 1 ? 's' : ''} · Plan {myTier}
-                </p>
-                {!canValidate && (
-                  <div className="text-center">
-                    <a href="/dashboard/subscription" className="text-xs text-brand-amber hover:underline">
-                      Passer au plan supérieur pour plus de validations
-                    </a>
-                  </div>
-                )}
-                {validationError && (
-                  <p className="text-xs text-red-600 text-center">{validationError}</p>
-                )}
-              </div>
+                Valider ce profil
+              </button>
             )}
           </div>
         </CardContent>

@@ -357,7 +357,7 @@ export default function CandidatesOverviewPage() {
                                 {c.name}
                               </p>
                               <p className="text-xs text-gray-400 truncate">
-                                {c.validated_at ? c.email : '••••••@••••••'}
+                                {c.email}
                               </p>
                             </div>
                           </a>
