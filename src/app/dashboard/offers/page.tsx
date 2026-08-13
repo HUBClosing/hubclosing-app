@@ -11,8 +11,10 @@ import type { Offer, SubscriptionTier } from '@/types/database';
 
 function getMaxActiveOffers(tier: SubscriptionTier): number {
   if (tier === 'agency') return Infinity;
-  if (tier === 'business') return 5;
-  return 1;
+  if (tier === 'campagne') return 5;
+  if (tier === 'equipe') return 3;
+  if (tier === 'solo') return 1;
+  return 1; // free
 }
 
 const statusConfig: Record<string, { label: string; color: string; Icon: typeof CheckCircle }> = {

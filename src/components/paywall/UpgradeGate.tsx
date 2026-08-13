@@ -10,8 +10,10 @@ const TIER_LABELS: Record<SubscriptionTier, string> = {
   starter: 'Starter',
   pro: 'Pro',
   elite: 'Elite',
-  business: 'Business',
-  agency: 'Agency',
+  solo: 'Solo',
+  equipe: 'Équipe',
+  campagne: 'Campagne',
+  agency: 'Agence',
 };
 
 const FEATURE_LABELS: Record<string, string> = {

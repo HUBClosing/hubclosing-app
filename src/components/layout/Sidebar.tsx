@@ -49,7 +49,7 @@ interface NavLink {
 // Ordre des tiers pour comparaison
 const TIER_ORDER: Record<string, number> = {
   free: 0, starter: 1, pro: 2, elite: 3,
-  business: 1, agency: 2,
+  solo: 1, equipe: 2, campagne: 3, agency: 4,
 };
 
 function hasTierAccess(userTier: string, requiredTier?: string): boolean {
@@ -60,7 +60,7 @@ function hasTierAccess(userTier: string, requiredTier?: string): boolean {
 function getTierLabel(tier: string): string {
   const labels: Record<string, string> = {
     starter: 'Starter', pro: 'Pro', elite: 'Élite',
-    business: 'Business', agency: 'Agence',
+    solo: 'Solo', equipe: 'Équipe', campagne: 'Campagne', agency: 'Agence',
   };
   return labels[tier] || tier;
 }
@@ -88,7 +88,7 @@ const recruiterLinks: NavLink[] = [
   { href: '/dashboard/recruitment', label: 'Dashboard recrutement', icon: BarChart3 },
   { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
-  { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'business' },
+  { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'solo' },
   { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },

@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { stripe, STRIPE_PRICE_IDS, TIER_NAMES } from '@/lib/stripe/server';
+import { ONE_TIME_TIERS, SUBSCRIPTION_TIERS } from '@/types/database';
 
 /**
  * POST /api/stripe/checkout
  * Body: { tier: string }
  *
- * Crée une Stripe Checkout Session pour s'abonner à un tier payant.
+ * Crée une Stripe Checkout Session.
+ * - Packs recruteur Solo/Équipe/Campagne + add-ons → mode: 'payment' (one-time)
+ * - Abonnements candidat + Agence recruteur → mode: 'subscription'
  * - Si l'utilisateur a déjà un stripe_customer_id, on le réutilise
- * - Sinon, Stripe crée automatiquement un nouveau customer
  * - Les metadata contiennent user_id + tier pour le webhook
  */
 export async function POST(request: NextRequest) {
@@ -49,8 +51,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
   }
 
-  // 5. Si l'utilisateur a déjà un abonnement actif, rediriger vers le portail
-  if (user.stripe_subscription_id) {
+  // 5. Déterminer le mode de paiement
+  const isOneTime = ONE_TIME_TIERS.has(tier);
+
+  // Pour les abonnements, si l'utilisateur en a déjà un, rediriger vers le portail
+  if (!isOneTime && user.stripe_subscription_id) {
     return NextResponse.json({
       error: 'Vous avez déjà un abonnement actif. Utilisez le portail pour le modifier.',
       redirect: '/api/stripe/portal',
@@ -63,10 +68,7 @@ export async function POST(request: NextRequest) {
   try {
     // 6. Créer la session Stripe Checkout
     const sessionParams: Record<string, unknown> = {
-      mode: 'subscription',
-      // Pas de payment_method_types → Stripe utilise les méthodes activées
-      // dans le Dashboard (carte, SEPA, etc.) automatiquement.
-      // Pour ajouter SEPA : Dashboard → Paramètres → Moyens de paiement → activer "Prélèvement SEPA"
+      mode: isOneTime ? 'payment' : 'subscription',
       line_items: [
         {
           price: priceId,
@@ -78,15 +80,31 @@ export async function POST(request: NextRequest) {
       metadata: {
         user_id: user.id,
         tier: tier,
+        payment_type: isOneTime ? 'one_time' : 'subscription',
       },
-      subscription_data: {
+      allow_promotion_codes: true,
+    };
+
+    // Pour les abonnements, ajouter subscription_data avec metadata
+    if (!isOneTime) {
+      sessionParams.subscription_data = {
         metadata: {
           user_id: user.id,
           tier: tier,
         },
-      },
-      allow_promotion_codes: true,
-    };
+      };
+    }
+
+    // Pour les paiements one-time, ajouter payment_intent_data avec metadata
+    if (isOneTime) {
+      sessionParams.payment_intent_data = {
+        metadata: {
+          user_id: user.id,
+          tier: tier,
+          payment_type: 'one_time',
+        },
+      };
+    }
 
     // Réutiliser le customer existant ou pré-remplir l'email
     if (user.stripe_customer_id) {

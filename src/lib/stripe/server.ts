@@ -19,13 +19,20 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
  * https://dashboard.stripe.com/test/products
  */
 export const STRIPE_PRICE_IDS: Record<string, string> = {
-  // Candidats
+  // Candidats (abonnements mensuels)
   starter: process.env.STRIPE_PRICE_STARTER || 'price_starter_placeholder',
   pro: process.env.STRIPE_PRICE_PRO || 'price_pro_placeholder',
   elite: process.env.STRIPE_PRICE_ELITE || 'price_elite_placeholder',
-  // Recruteurs
-  business: process.env.STRIPE_PRICE_BUSINESS || 'price_business_placeholder',
+  // Recruteurs — packs (one-time sauf agence)
+  solo: process.env.STRIPE_PRICE_SOLO || 'price_solo_placeholder',
+  equipe: process.env.STRIPE_PRICE_EQUIPE || 'price_equipe_placeholder',
+  campagne: process.env.STRIPE_PRICE_CAMPAGNE || 'price_campagne_placeholder',
   agency: process.env.STRIPE_PRICE_AGENCY || 'price_agency_placeholder',
+  // Recruteurs — add-ons (one-time)
+  deblocage_1: process.env.STRIPE_PRICE_DEBLOCAGE_1 || 'price_deblocage1_placeholder',
+  deblocage_5: process.env.STRIPE_PRICE_DEBLOCAGE_5 || 'price_deblocage5_placeholder',
+  boost: process.env.STRIPE_PRICE_BOOST || 'price_boost_placeholder',
+  annonce_sup: process.env.STRIPE_PRICE_ANNONCE_SUP || 'price_annoncesupp_placeholder',
 };
 
 /**
@@ -43,9 +50,18 @@ export function getTierFromPriceId(priceId: string): string | null {
  * Mapping tier → nom affiché (pour Stripe Checkout metadata)
  */
 export const TIER_NAMES: Record<string, string> = {
+  // Candidats
   starter: 'Starter (9€/mois)',
   pro: 'Pro (19€/mois)',
   elite: 'Élite (39€/mois)',
-  business: 'Business (49€/mois)',
+  // Recruteurs — packs
+  solo: 'Solo (39€)',
+  equipe: 'Équipe (79€)',
+  campagne: 'Campagne (129€)',
   agency: 'Agence (199€/mois)',
+  // Add-ons
+  deblocage_1: '1 Déblocage (9€)',
+  deblocage_5: '5 Déblocages (39€)',
+  boost: 'Boost (9€)',
+  annonce_sup: 'Annonce supplémentaire (19€)',
 };

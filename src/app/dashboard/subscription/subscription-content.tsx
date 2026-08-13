@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui';
 import { Check, X, Crown, Zap, Lock, TrendingUp, Award, Users, BarChart3, Loader2, Settings, CheckCircle, AlertTriangle } from 'lucide-react';
-import { TIER_PRICES } from '@/types/database';
+import { TIER_PRICES, RECRUITER_ADDON_PRICES, ONE_TIME_TIERS } from '@/types/database';
 import type { User, SubscriptionTier } from '@/types/database';
 import { SubscriptionTabs } from './subscription-tabs';
+import { ShoppingCart, Package, Sparkles } from 'lucide-react';
 
 // ==========================================
 // Tier definitions
@@ -88,43 +89,73 @@ const CANDIDATE_TIERS: TierInfo[] = [
 
 const RECRUITER_TIERS: TierInfo[] = [
   {
-    tier: 'free', name: 'Découverte', subtitle: 'Tester le recrutement', icon: <Zap className="h-6 w-6" />,
+    tier: 'solo', name: 'Solo', subtitle: 'Un besoin ponctuel', icon: <Zap className="h-6 w-6" />,
     features: [
-      { label: '1 offre active', included: true },
-      { label: '5 contacts / mois', included: true },
-      { label: 'Messagerie basique', included: true },
-      { label: 'CVthèque', included: false },
+      { label: '1 annonce (60 jours)', included: true },
+      { label: '3 déblocages de profil inclus', included: true },
+      { label: 'Smart Sourcing IA', included: true },
+      { label: 'Questionnaire personnalisé', included: true },
+      { label: 'Garantie republication', included: true },
+      { label: 'Profils anonymisés avant déblocage', included: true },
       { label: 'Boost d\'offre', included: false },
-      { label: 'Matching IA', included: false },
-      { label: 'Analytics', included: false },
-      { label: 'Multi-utilisateurs', included: false },
+      { label: 'Dashboard analytics', included: false },
     ],
   },
   {
-    tier: 'business', name: 'Business', subtitle: 'Recrutement régulier', highlight: 'Recommandé', icon: <Users className="h-6 w-6" />,
+    tier: 'equipe', name: 'Équipe', subtitle: 'Plusieurs postes à pourvoir', highlight: 'Populaire', icon: <Users className="h-6 w-6" />,
     features: [
-      { label: '5 offres actives', included: true },
-      { label: '30 contacts / mois', included: true },
-      { label: '1 boost / mois inclus', included: true },
-      { label: 'CVthèque complète', included: true },
-      { label: 'Filtres avancés', included: true },
-      { label: 'Matching IA', included: false },
-      { label: 'Analytics avancés', included: false },
-      { label: 'Multi-utilisateurs', included: false },
+      { label: '3 annonces (90 jours)', included: true },
+      { label: '5 déblocages de profil inclus', included: true },
+      { label: '1 boost d\'offre inclus', included: true },
+      { label: 'Smart Sourcing IA', included: true },
+      { label: 'Questionnaire personnalisé', included: true },
+      { label: 'Garantie republication', included: true },
+      { label: 'Profils anonymisés avant déblocage', included: true },
+      { label: 'Dashboard analytics', included: false },
     ],
   },
   {
-    tier: 'agency', name: 'Agence', subtitle: 'Volume + équipe', icon: <BarChart3 className="h-6 w-6" />,
+    tier: 'campagne', name: 'Campagne', subtitle: 'Recrutement à grande échelle', icon: <TrendingUp className="h-6 w-6" />,
     features: [
-      { label: 'Offres illimitées', included: true },
-      { label: 'Contacts illimités', included: true },
-      { label: 'Boosts illimités', included: true },
-      { label: 'Matching IA', included: true },
-      { label: 'Analytics avancés', included: true },
-      { label: 'Multi-utilisateurs', included: true },
-      { label: 'Tout Business inclus', included: true },
+      { label: '5 annonces (120 jours)', included: true },
+      { label: '10 déblocages de profil inclus', included: true },
+      { label: '3 boosts d\'offre inclus', included: true },
+      { label: 'Smart Sourcing IA', included: true },
+      { label: 'Questionnaire personnalisé', included: true },
+      { label: 'Garantie republication', included: true },
+      { label: 'Profils anonymisés avant déblocage', included: true },
+      { label: 'Dashboard analytics', included: false },
     ],
   },
+  {
+    tier: 'agency', name: 'Agence', subtitle: 'Volume illimité + analytics', icon: <BarChart3 className="h-6 w-6" />,
+    features: [
+      { label: 'Annonces illimitées', included: true },
+      { label: '15 déblocages / mois', included: true },
+      { label: '5 boosts / mois', included: true },
+      { label: 'Smart Sourcing IA prioritaire', included: true },
+      { label: 'Dashboard analytics avancé', included: true },
+      { label: 'Questionnaire personnalisé', included: true },
+      { label: 'Garantie republication', included: true },
+      { label: 'Profils anonymisés avant déblocage', included: true },
+    ],
+  },
+];
+
+/** Add-ons achetables individuellement */
+interface AddonInfo {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  icon: React.ReactNode;
+}
+
+const RECRUITER_ADDONS: AddonInfo[] = [
+  { id: 'deblocage_1', name: '1 Déblocage', description: 'Débloquer un profil candidat supplémentaire', price: 9, icon: <Lock className="h-5 w-5" /> },
+  { id: 'deblocage_5', name: '5 Déblocages', description: 'Pack de 5 déblocages de profils', price: 39, icon: <Package className="h-5 w-5" /> },
+  { id: 'boost', name: '1 Boost', description: 'Mettre en avant une annonce pendant 7 jours', price: 9, icon: <Sparkles className="h-5 w-5" /> },
+  { id: 'annonce_sup', name: '1 Annonce', description: 'Publier une annonce supplémentaire', price: 19, icon: <ShoppingCart className="h-5 w-5" /> },
 ];
 
 // ==========================================
@@ -147,6 +178,7 @@ function TierCard({
   const price = TIER_PRICES[info.tier as keyof typeof TIER_PRICES];
   const isLoading = loadingTier === info.tier;
   const isFreeTier = info.tier === 'free';
+  const isOneTime = ONE_TIME_TIERS.has(info.tier);
 
   return (
     <Card className={`relative ${isCurrent ? 'ring-2 ring-brand-amber border-brand-amber' : ''}`}>
@@ -175,7 +207,11 @@ function TierCard({
             <span className="text-2xl font-bold text-brand-dark">Gratuit</span>
           ) : (
             <span className="text-2xl font-bold text-brand-dark">
-              {price}&euro;<span className="text-sm font-normal text-gray-500">/mois</span>
+              {price}&euro;{isOneTime ? (
+                <span className="text-sm font-normal text-gray-500"> unique</span>
+              ) : (
+                <span className="text-sm font-normal text-gray-500">/mois</span>
+              )}
             </span>
           )}
         </div>
@@ -229,6 +265,8 @@ function TierCard({
             >
               {isLoading ? (
                 <><Loader2 className="h-4 w-4 animate-spin" /> Redirection...</>
+              ) : isOneTime ? (
+                'Acheter ce pack'
               ) : hasSubscription ? (
                 'Changer pour ce plan'
               ) : (
@@ -236,6 +274,52 @@ function TierCard({
               )}
             </button>
           )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==========================================
+// Addon Card (recruteur)
+// ==========================================
+
+function AddonCard({
+  addon,
+  loadingTier,
+  onPurchase,
+}: {
+  addon: AddonInfo;
+  loadingTier: string | null;
+  onPurchase: (addonId: string) => void;
+}) {
+  const isLoading = loadingTier === addon.id;
+
+  return (
+    <Card className="flex flex-col justify-between">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="h-9 w-9 rounded-lg bg-brand-amber/10 flex items-center justify-center text-brand-amber">
+            {addon.icon}
+          </div>
+          <div>
+            <h4 className="font-semibold text-brand-dark text-sm">{addon.name}</h4>
+            <p className="text-xs text-gray-500">{addon.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-3">
+          <span className="text-lg font-bold text-brand-dark">{addon.price}&euro;</span>
+          <button
+            onClick={() => onPurchase(addon.id)}
+            disabled={isLoading || loadingTier !== null}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand-amber rounded-lg hover:bg-brand-amber/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <><Loader2 className="h-3 w-3 animate-spin" /> ...</>
+            ) : (
+              'Acheter'
+            )}
+          </button>
         </div>
       </CardContent>
     </Card>
@@ -359,9 +443,13 @@ export function SubscriptionContent({ user }: { user: User }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-dark">Abonnement</h1>
+        <h1 className="text-2xl font-bold text-brand-dark">
+          {isCandidateView ? 'Abonnement' : 'Packs Recruteur'}
+        </h1>
         <p className="text-gray-500 mt-1">
-          Chaque plan inclut toutes les fonctionnalités des plans inférieurs.
+          {isCandidateView
+            ? 'Chaque plan inclut toutes les fonctionnalités des plans inférieurs.'
+            : 'Choisissez le pack adapté à vos besoins de recrutement. Smart Sourcing IA et garantie inclus.'}
         </p>
       </div>
 
@@ -424,18 +512,9 @@ export function SubscriptionContent({ user }: { user: User }) {
       )}
 
       {/* Grille des plans */}
-      {showTabs ? (
-        <SubscriptionTabs
-          candidateContent={
-            <TierGrid
-              tiers={CANDIDATE_TIERS}
-              currentTier={user.tier}
-              loadingTier={loadingTier}
-              onSubscribe={handleSubscribe}
-              hasSubscription={hasSubscription}
-            />
-          }
-          recruiterContent={
+      {(() => {
+        const recruiterContent = (
+          <>
             <TierGrid
               tiers={RECRUITER_TIERS}
               currentTier={user.tier}
@@ -443,26 +522,76 @@ export function SubscriptionContent({ user }: { user: User }) {
               onSubscribe={handleSubscribe}
               hasSubscription={hasSubscription}
             />
-          }
-          defaultTab={isCandidateView ? 'candidate' : 'recruiter'}
-        />
-      ) : isCandidateView ? (
-        <TierGrid
-          tiers={CANDIDATE_TIERS}
-          currentTier={user.tier}
-          loadingTier={loadingTier}
-          onSubscribe={handleSubscribe}
-          hasSubscription={hasSubscription}
-        />
-      ) : (
-        <TierGrid
-          tiers={RECRUITER_TIERS}
-          currentTier={user.tier}
-          loadingTier={loadingTier}
-          onSubscribe={handleSubscribe}
-          hasSubscription={hasSubscription}
-        />
-      )}
+            {/* Crédits restants */}
+            {(user.recruiter_annonces_remaining > 0 || user.recruiter_deblocages_remaining > 0 || user.recruiter_boosts_remaining > 0) && (
+              <Card className="mt-6">
+                <CardContent className="p-4">
+                  <h3 className="text-sm font-semibold text-brand-dark mb-3">Vos crédits restants</h3>
+                  <div className="flex gap-6">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-brand-amber">{user.recruiter_annonces_remaining}</p>
+                      <p className="text-xs text-gray-500">Annonces</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-brand-amber">{user.recruiter_deblocages_remaining}</p>
+                      <p className="text-xs text-gray-500">Déblocages</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-brand-amber">{user.recruiter_boosts_remaining}</p>
+                      <p className="text-xs text-gray-500">Boosts</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* Add-ons */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-brand-dark mb-1">Recharges à la carte</h3>
+              <p className="text-sm text-gray-500 mb-4">Besoin de plus ? Achetez des crédits supplémentaires.</p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {RECRUITER_ADDONS.map((addon) => (
+                  <AddonCard
+                    key={addon.id}
+                    addon={addon}
+                    loadingTier={loadingTier}
+                    onPurchase={handleSubscribe}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        );
+
+        if (showTabs) {
+          return (
+            <SubscriptionTabs
+              candidateContent={
+                <TierGrid
+                  tiers={CANDIDATE_TIERS}
+                  currentTier={user.tier}
+                  loadingTier={loadingTier}
+                  onSubscribe={handleSubscribe}
+                  hasSubscription={hasSubscription}
+                />
+              }
+              recruiterContent={recruiterContent}
+              defaultTab={isCandidateView ? 'candidate' : 'recruiter'}
+            />
+          );
+        }
+        if (isCandidateView) {
+          return (
+            <TierGrid
+              tiers={CANDIDATE_TIERS}
+              currentTier={user.tier}
+              loadingTier={loadingTier}
+              onSubscribe={handleSubscribe}
+              hasSubscription={hasSubscription}
+            />
+          );
+        }
+        return recruiterContent;
+      })()}
     </div>
   );
 }

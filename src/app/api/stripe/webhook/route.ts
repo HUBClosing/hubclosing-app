@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, getTierFromPriceId, TIER_NAMES } from '@/lib/stripe/server';
-import type { SubscriptionTier } from '@/types/database';
+import type { SubscriptionTier, RecruiterPack, RecruiterAddon } from '@/types/database';
+import { ONE_TIME_TIERS, TIER_LIMITS, RECRUITER_ADDON_CREDITS } from '@/types/database';
 import { sendEmail } from '@/lib/email';
 import { paymentConfirmationEmail } from '@/lib/email/templates/payment-confirmation';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
@@ -38,6 +39,54 @@ async function updateUserSubscription(
   if (error) {
     console.error(`Webhook: erreur update user ${userId}:`, error.message);
     throw error;
+  }
+}
+
+/**
+ * Initialise ou ajoute des crédits recruteur après un achat de pack ou add-on.
+ */
+async function applyRecruiterCredits(
+  userId: string,
+  tier: string
+) {
+  const supabase = getSupabaseAdmin();
+
+  // Vérifier si c'est un add-on
+  const addonCredits = RECRUITER_ADDON_CREDITS[tier as RecruiterAddon];
+  if (addonCredits) {
+    // Add-on : ajouter les crédits au solde existant
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('recruiter_annonces_remaining, recruiter_deblocages_remaining, recruiter_boosts_remaining')
+      .eq('id', userId)
+      .single();
+
+    const current = currentUser || { recruiter_annonces_remaining: 0, recruiter_deblocages_remaining: 0, recruiter_boosts_remaining: 0 };
+
+    await supabase.from('users').update({
+      recruiter_annonces_remaining: (current.recruiter_annonces_remaining || 0) + addonCredits.annonces,
+      recruiter_deblocages_remaining: (current.recruiter_deblocages_remaining || 0) + addonCredits.deblocages,
+      recruiter_boosts_remaining: (current.recruiter_boosts_remaining || 0) + addonCredits.boosts,
+      updated_at: new Date().toISOString(),
+    }).eq('id', userId);
+
+    console.log(`🛒 Add-on applied: user=${userId} addon=${tier}`);
+    return;
+  }
+
+  // Pack recruteur : initialiser les crédits
+  const packLimits = TIER_LIMITS[tier as keyof typeof TIER_LIMITS];
+  if (packLimits && 'annonces' in packLimits) {
+    const limits = packLimits as typeof TIER_LIMITS['solo'];
+    await supabase.from('users').update({
+      recruiter_annonces_remaining: limits.annonces === Infinity ? 999 : limits.annonces,
+      recruiter_deblocages_remaining: limits.deblocages_included,
+      recruiter_boosts_remaining: limits.boosts_included,
+      recruiter_pack_purchased_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }).eq('id', userId);
+
+    console.log(`📦 Pack credits initialized: user=${userId} pack=${tier} annonces=${limits.annonces} deblocages=${limits.deblocages_included} boosts=${limits.boosts_included}`);
   }
 }
 
@@ -90,29 +139,60 @@ export async function POST(request: NextRequest) {
       case 'checkout.session.completed': {
         const session = event.data.object;
         const userId = session.metadata?.user_id;
-        const tier = session.metadata?.tier as SubscriptionTier;
+        const tier = session.metadata?.tier as string;
         const customerId = session.customer as string;
-        const subscriptionId = session.subscription as string;
+        const subscriptionId = session.subscription as string | null;
+        const isOneTime = session.metadata?.payment_type === 'one_time' || ONE_TIME_TIERS.has(tier || '');
 
         if (!userId || !tier) {
           console.error('Webhook checkout: metadata manquante', { userId, tier });
           break;
         }
 
-        // Récupérer les détails de l'abonnement
-        let periodEnd: string | null = null;
-        if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        }
+        if (isOneTime) {
+          // ====== PAIEMENT UNIQUE (pack recruteur ou add-on) ======
+          // Mettre à jour le customer_id + tier (pour les packs, pas les add-ons)
+          const isAddon = ['deblocage_1', 'deblocage_5', 'boost', 'annonce_sup'].includes(tier);
 
-        await updateUserSubscription(userId, {
-          tier,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId,
-          subscription_status: 'active',
-          subscription_period_end: periodEnd,
-        });
+          const updateData: Record<string, unknown> = {
+            stripe_customer_id: customerId,
+          };
+
+          // Les packs (solo/equipe/campagne) changent le tier
+          if (!isAddon) {
+            updateData.tier = tier as SubscriptionTier;
+            updateData.subscription_status = 'active';
+          }
+
+          await updateUserSubscription(userId, updateData as any);
+
+          // Initialiser/ajouter les crédits recruteur
+          await applyRecruiterCredits(userId, tier);
+
+          console.log(`✅ One-time checkout completed: user=${userId} tier=${tier} addon=${isAddon}`);
+        } else {
+          // ====== ABONNEMENT (candidat ou agence recruteur) ======
+          let periodEnd: string | null = null;
+          if (subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+          }
+
+          await updateUserSubscription(userId, {
+            tier: tier as SubscriptionTier,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            subscription_status: 'active',
+            subscription_period_end: periodEnd,
+          });
+
+          // Pour l'agence, initialiser aussi les crédits recruteur
+          if (tier === 'agency') {
+            await applyRecruiterCredits(userId, tier);
+          }
+
+          console.log(`✅ Subscription checkout completed: user=${userId} tier=${tier}`);
+        }
 
         // Envoyer l'email de confirmation de paiement
         const supabaseAdmin = getSupabaseAdmin();
@@ -136,7 +216,6 @@ export async function POST(request: NextRequest) {
           sendEmail({ to: paidUser.email, subject: emailData.subject, html: emailData.html }).catch(() => {});
         }
 
-        console.log(`✅ Checkout completed: user=${userId} tier=${tier}`);
         break;
       }
 

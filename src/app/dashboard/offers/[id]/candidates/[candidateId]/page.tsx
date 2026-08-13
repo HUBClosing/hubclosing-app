@@ -60,7 +60,9 @@ export default function CandidateProfilePage() {
     starter: 5,
     pro: 15,
     elite: 30,
-    business: 50,
+    solo: 3,
+    equipe: 5,
+    campagne: 10,
     agency: 9999,
   };
 

@@ -257,7 +257,7 @@ export default function NewOfferPage() {
       .single();
 
     const tier = userData?.tier || 'free';
-    const maxOffers = tier === 'agency' ? Infinity : tier === 'business' ? 5 : 1;
+    const maxOffers = tier === 'agency' ? Infinity : tier === 'campagne' ? 5 : tier === 'equipe' ? 3 : tier === 'solo' ? 1 : 1;
 
     if ((count || 0) >= maxOffers) {
       setError(`Vous avez atteint la limite de ${maxOffers} offre${maxOffers > 1 ? 's' : ''} active${maxOffers > 1 ? 's' : ''} pour votre plan. Passez au plan supérieur pour en publier davantage.`);

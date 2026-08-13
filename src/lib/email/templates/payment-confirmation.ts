@@ -25,17 +25,29 @@ const TIER_FEATURES: Record<string, string[]> = {
     'Badge &Eacute;lite &amp; priorit&eacute; matching',
     'Acc&egrave;s anticip&eacute; aux offres',
   ],
-  business: [
-    'Offres illimit&eacute;es',
-    'CVth&egrave;que compl&egrave;te',
-    'Questionnaires candidats',
-    'Analytics recrutement',
+  solo: [
+    '1 annonce (60 jours)',
+    '3 d&eacute;blocages de profil',
+    'Smart Sourcing IA',
+    'Garantie republication',
   ],
-  agence: [
-    'Tout Business +',
-    'Offres en vedette',
-    'Support prioritaire',
-    'Multi-utilisateurs',
+  equipe: [
+    '3 annonces (90 jours)',
+    '5 d&eacute;blocages de profil',
+    '1 boost inclus',
+    'Smart Sourcing IA',
+  ],
+  campagne: [
+    '5 annonces (120 jours)',
+    '10 d&eacute;blocages de profil',
+    '3 boosts inclus',
+    'Smart Sourcing IA',
+  ],
+  agency: [
+    'Annonces illimit&eacute;es',
+    '15 d&eacute;blocages / mois',
+    '5 boosts / mois',
+    'Dashboard analytics',
   ],
 };
 

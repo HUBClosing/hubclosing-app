@@ -36,8 +36,10 @@ const TIER_LABELS: Record<SubscriptionTier, { label: string; color: string; icon
   starter: { label: 'Starter', color: 'bg-blue-100 text-blue-700', icon: Star },
   pro: { label: 'Pro', color: 'bg-purple-100 text-purple-700', icon: Trophy },
   elite: { label: 'Elite', color: 'bg-amber-100 text-amber-700', icon: Crown },
-  business: { label: 'Business', color: 'bg-green-100 text-green-700', icon: Briefcase },
-  agency: { label: 'Agency', color: 'bg-indigo-100 text-indigo-700', icon: Gem },
+  solo: { label: 'Solo', color: 'bg-green-100 text-green-700', icon: Briefcase },
+  equipe: { label: 'Équipe', color: 'bg-teal-100 text-teal-700', icon: Briefcase },
+  campagne: { label: 'Campagne', color: 'bg-cyan-100 text-cyan-700', icon: Briefcase },
+  agency: { label: 'Agence', color: 'bg-indigo-100 text-indigo-700', icon: Gem },
 };
 
 const NICHE_SUGGESTIONS = [

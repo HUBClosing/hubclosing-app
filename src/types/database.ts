@@ -16,8 +16,18 @@ export type UserRole = 'closer' | 'manager' | 'admin' | 'pending';
 /** Compétences qu'un candidat peut cocher */
 export type Skill = 'closing' | 'setting' | 'management' | 'hos' | 'coaching' | 'training';
 
-/** Tier d'abonnement */
-export type SubscriptionTier = 'free' | 'starter' | 'business' | 'pro' | 'elite' | 'agency';
+/** Tier d'abonnement (candidats: free→starter→pro→elite, recruteurs: solo→equipe→campagne→agence) */
+export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'elite' | 'solo' | 'equipe' | 'campagne' | 'agency';
+
+/** Pack recruteur (sous-ensemble de SubscriptionTier) */
+export type RecruiterPack = 'solo' | 'equipe' | 'campagne' | 'agency';
+
+/** Add-ons recruteur achetables à l'unité */
+export type RecruiterAddon = 'deblocage_1' | 'deblocage_5' | 'boost' | 'annonce_sup';
+
+/** Tiers one-time (paiement unique) vs subscription */
+export const ONE_TIME_TIERS = new Set<string>(['solo', 'equipe', 'campagne', 'deblocage_1', 'deblocage_5', 'boost', 'annonce_sup']);
+export const SUBSCRIPTION_TIERS = new Set<string>(['starter', 'pro', 'elite', 'agency']);
 
 /** Ancien plan — rétrocompatibilité */
 export type SubscriptionPlan = 'free' | 'pro' | 'premium';
@@ -89,9 +99,27 @@ export const TIER_LIMITS = {
     has_accounting: true,
     has_direct_contact: true,
   },
-  // --- Recruteurs ---
-  business: { active_offers: 5, contacts_per_month: 30, has_boost: 1, has_matching: false, has_analytics: false, team_members: 1, has_masterclass: true, has_replays: true, has_upskill: false },
-  agency: { active_offers: Infinity, contacts_per_month: Infinity, has_boost: Infinity, has_matching: true, has_analytics: true, team_members: Infinity, has_masterclass: true, has_replays: true, has_upskill: true },
+  // --- Recruteurs — Packs all-in-one ---
+  solo: {
+    annonces: 1, offer_duration_days: 60, deblocages_included: 3,
+    boosts_included: 0, has_smart_sourcing: true, has_questionnaire: true,
+    has_guarantee: true, has_analytics: false, is_subscription: false,
+  },
+  equipe: {
+    annonces: 3, offer_duration_days: 90, deblocages_included: 5,
+    boosts_included: 1, has_smart_sourcing: true, has_questionnaire: true,
+    has_guarantee: true, has_analytics: false, is_subscription: false,
+  },
+  campagne: {
+    annonces: 5, offer_duration_days: 120, deblocages_included: 10,
+    boosts_included: 3, has_smart_sourcing: true, has_questionnaire: true,
+    has_guarantee: true, has_analytics: false, is_subscription: false,
+  },
+  agency: {
+    annonces: Infinity, offer_duration_days: Infinity, deblocages_included: 15,
+    boosts_included: 5, has_smart_sourcing: true, has_questionnaire: true,
+    has_guarantee: true, has_analytics: true, is_subscription: true,
+  },
 } as const;
 
 export const TIER_PRICES = {
@@ -99,10 +127,28 @@ export const TIER_PRICES = {
   starter: 9,
   pro: 19,
   elite: 39,
-  business: 49,
-  scale: 99,
+  // Recruteurs — packs
+  solo: 39,
+  equipe: 79,
+  campagne: 129,
   agency: 199,
 } as const;
+
+/** Prix des add-ons recruteur (one-time) */
+export const RECRUITER_ADDON_PRICES = {
+  deblocage_1: 9,
+  deblocage_5: 39,
+  boost: 9,
+  annonce_sup: 19,
+} as const;
+
+/** Crédits ajoutés par chaque add-on */
+export const RECRUITER_ADDON_CREDITS: Record<RecruiterAddon, { deblocages: number; boosts: number; annonces: number }> = {
+  deblocage_1: { deblocages: 1, boosts: 0, annonces: 0 },
+  deblocage_5: { deblocages: 5, boosts: 0, annonces: 0 },
+  boost:       { deblocages: 0, boosts: 1, annonces: 0 },
+  annonce_sup: { deblocages: 0, boosts: 0, annonces: 1 },
+};
 
 // --- Interfaces principales ---
 
@@ -134,6 +180,11 @@ export interface User {
   monthly_applications_reset_at: string;
   monthly_contacts_count: number;
   monthly_contacts_reset_at: string;
+  // Crédits recruteur (packs)
+  recruiter_annonces_remaining: number;
+  recruiter_deblocages_remaining: number;
+  recruiter_boosts_remaining: number;
+  recruiter_pack_purchased_at: string | null;
   is_active: boolean;
   is_onboarded: boolean;
   created_at: string;
@@ -708,7 +759,7 @@ export function getUpgradeTier(currentTier: SubscriptionTier, roleType: RoleType
     return idx < order.length - 1 ? order[idx + 1] : null;
   }
   if (roleType === 'recruiter') {
-    const order: SubscriptionTier[] = ['free', 'business', 'pro', 'agency'];
+    const order: SubscriptionTier[] = ['free', 'solo', 'equipe', 'campagne', 'agency'];
     const idx = order.indexOf(currentTier);
     return idx < order.length - 1 ? order[idx + 1] : null;
   }
