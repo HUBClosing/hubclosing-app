@@ -22,6 +22,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: str
   reviewing: { label: 'À étudier', color: 'text-blue-700', bgColor: 'bg-blue-100' },
   accepted: { label: 'Profil validé', color: 'text-green-700', bgColor: 'bg-green-100' },
   rejected: { label: 'Non retenu', color: 'text-red-700', bgColor: 'bg-red-100' },
+  completed: { label: 'Mission terminée', color: 'text-purple-700', bgColor: 'bg-purple-100' },
   withdrawn: { label: 'Retiré', color: 'text-gray-600', bgColor: 'bg-gray-100' },
 };
 
@@ -50,21 +51,9 @@ export default function CandidateProfilePage() {
   const [responses, setResponses] = useState<Record<string, QuestionnaireResponse>>({});
   const [offerTitle, setOfferTitle] = useState('');
   const [myTier, setMyTier] = useState<string>('free');
-  const [validationCount, setValidationCount] = useState(0);
+  const [deblocagesRemaining, setDeblocagesRemaining] = useState(0);
   const [validationError, setValidationError] = useState('');
   const [hasConversation, setHasConversation] = useState(false);
-
-  // Limites de validations par plan par mois
-  const VALIDATION_LIMITS: Record<string, number> = {
-    free: 0,
-    starter: 5,
-    pro: 15,
-    elite: 30,
-    solo: 3,
-    equipe: 5,
-    campagne: 10,
-    agency: 9999,
-  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -112,26 +101,16 @@ export default function CandidateProfilePage() {
       .limit(5);
     setPortfolio((portfolioData || []) as PortfolioEntry[]);
 
-    // 6. Mon tier + nombre de validations ce mois
+    // 6. Mon tier + crédits de déblocage restants
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (authUser) {
       const { data: meData } = await supabase
         .from('users')
-        .select('tier')
+        .select('tier, recruiter_deblocages_remaining')
         .eq('id', authUser.id)
         .single();
       setMyTier(meData?.tier || 'free');
-
-      // Compter les validations ce mois-ci
-      const now = new Date();
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const { count: valCount } = await supabase
-        .from('applications')
-        .select('id', { count: 'exact', head: true })
-        .not('validated_at', 'is', null)
-        .gte('validated_at', firstOfMonth)
-        .in('offer_id', [offerId]); // Only count for recruiter's offers
-      setValidationCount(valCount || 0);
+      setDeblocagesRemaining(meData?.recruiter_deblocages_remaining || 0);
     }
 
     // 7. Vérifier si une conversation existe avec ce candidat
@@ -213,9 +192,9 @@ export default function CandidateProfilePage() {
       return;
     }
 
-    const limit = VALIDATION_LIMITS[myTier] || 0;
-    if (validationCount >= limit) {
-      setValidationError(`Vous avez atteint votre limite de ${limit} validation${limit > 1 ? 's' : ''} ce mois-ci. Passez au plan supérieur pour en débloquer davantage.`);
+    // Vérifier les crédits de déblocage (agency = illimité)
+    if (myTier !== 'agency' && deblocagesRemaining <= 0) {
+      setValidationError('Vous n\'avez plus de déblocage disponible. Achetez des déblocages supplémentaires depuis votre page abonnement.');
       setValidating(false);
       return;
     }
@@ -229,7 +208,18 @@ export default function CandidateProfilePage() {
       setValidationError(error.message);
     } else {
       setApplication(prev => prev ? { ...prev, validated_at: new Date().toISOString() } : prev);
-      setValidationCount(prev => prev + 1);
+
+      // Décrémenter le crédit de déblocage (sauf agency)
+      if (myTier !== 'agency') {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          const newRemaining = Math.max(0, deblocagesRemaining - 1);
+          await supabase.from('users').update({
+            recruiter_deblocages_remaining: newRemaining,
+          }).eq('id', authUser.id);
+          setDeblocagesRemaining(newRemaining);
+        }
+      }
     }
     setValidating(false);
   };
@@ -265,7 +255,7 @@ export default function CandidateProfilePage() {
   };
 
   const isValidated = !!application?.validated_at;
-  const canValidate = validationCount < (VALIDATION_LIMITS[myTier] || 0);
+  const canValidate = myTier === 'agency' || deblocagesRemaining > 0;
 
   if (loading) {
     return <div className="text-center py-12 text-gray-400">Chargement du profil...</div>;
@@ -424,7 +414,7 @@ export default function CandidateProfilePage() {
                   Valider le profil — débloquer email & téléphone
                 </button>
                 <p className="text-xs text-gray-400 text-center">
-                  {validationCount}/{VALIDATION_LIMITS[myTier] || 0} validations utilisées ce mois · Plan {myTier}
+                  {myTier === 'agency' ? '∞' : deblocagesRemaining} déblocage{deblocagesRemaining > 1 ? 's' : ''} restant{deblocagesRemaining > 1 ? 's' : ''} · Plan {myTier}
                 </p>
                 {!canValidate && (
                   <div className="text-center">

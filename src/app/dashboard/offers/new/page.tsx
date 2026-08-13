@@ -252,15 +252,22 @@ export default function NewOfferPage() {
 
     const { data: userData } = await supabase
       .from('users')
-      .select('tier')
+      .select('tier, recruiter_annonces_remaining')
       .eq('id', user.id)
       .single();
 
     const tier = userData?.tier || 'free';
-    const maxOffers = tier === 'agency' ? Infinity : 1;
+    const annoncesRemaining = userData?.recruiter_annonces_remaining || 0;
 
-    if ((count || 0) >= maxOffers) {
-      setError(`Vous avez atteint la limite de ${maxOffers} offre${maxOffers > 1 ? 's' : ''} active${maxOffers > 1 ? 's' : ''} pour votre plan. Passez au plan supérieur pour en publier davantage.`);
+    // Vérifier les crédits d'annonces (agency = illimité, packs = basé sur crédits)
+    if (tier === 'free') {
+      setError('Vous devez acheter un pack recruteur pour publier une offre.');
+      setLoading(false);
+      return;
+    }
+
+    if (tier !== 'agency' && annoncesRemaining <= 0) {
+      setError('Vous n\'avez plus de crédit d\'annonce. Achetez une annonce supplémentaire ou un nouveau pack.');
       setLoading(false);
       return;
     }
@@ -324,7 +331,7 @@ export default function NewOfferPage() {
       const qTitle = questionnaireTitle.trim() || `Questionnaire — ${title}`;
       const { data: qData, error: qError } = await supabase.from('questionnaires').insert({
         title: qTitle,
-        created_by: user.id,
+        recruiter_id: user.id,
       }).select('id').single();
 
       if (qError) {
@@ -339,7 +346,7 @@ export default function NewOfferPage() {
       const questionsToInsert = inlineQuestions.map((q, idx) => ({
         questionnaire_id: questionnaireId,
         question_text: q.text,
-        question_type: q.type === 'mcq' ? 'mcq' : 'free_text',
+        question_type: q.type === 'mcq' ? 'mcq' : 'text',
         options: q.type === 'mcq' ? q.options.filter(o => o.trim()) : null,
         correct_answers: q.type === 'mcq' && q.correctAnswers.length > 0 ? q.correctAnswers.map(i => q.options[i]) : null,
         is_required: q.isRequired,
@@ -380,6 +387,13 @@ export default function NewOfferPage() {
       setError(insertError.message);
       setLoading(false);
       return;
+    }
+
+    // Décrémenter le crédit d'annonce (sauf agency = illimité)
+    if (tier !== 'agency') {
+      await supabase.from('users').update({
+        recruiter_annonces_remaining: Math.max(0, annoncesRemaining - 1),
+      }).eq('id', user.id);
     }
 
     router.push('/dashboard/offers');

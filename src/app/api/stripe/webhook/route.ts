@@ -43,7 +43,41 @@ async function updateUserSubscription(
 }
 
 /**
+ * Vérifie si un événement Stripe a déjà été traité (idempotence).
+ * Utilise une table stripe_events pour stocker les event IDs traités.
+ * Si la table n'existe pas, on log un warning et on continue (pas bloquant).
+ */
+async function isEventAlreadyProcessed(eventId: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  try {
+    const { data } = await supabase
+      .from('stripe_events')
+      .select('id')
+      .eq('event_id', eventId)
+      .maybeSingle();
+    return !!data;
+  } catch {
+    // Table n'existe peut-être pas encore — on continue
+    return false;
+  }
+}
+
+async function markEventProcessed(eventId: string, eventType: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  try {
+    await supabase.from('stripe_events').insert({
+      event_id: eventId,
+      event_type: eventType,
+      processed_at: new Date().toISOString(),
+    });
+  } catch {
+    console.warn(`Could not record event ${eventId} — stripe_events table may not exist yet`);
+  }
+}
+
+/**
  * Initialise ou ajoute des crédits recruteur après un achat de pack ou add-on.
+ * Utilise des incréments SQL atomiques pour les add-ons (pas de read-then-write).
  */
 async function applyRecruiterCredits(
   userId: string,
@@ -54,21 +88,38 @@ async function applyRecruiterCredits(
   // Vérifier si c'est un add-on
   const addonCredits = RECRUITER_ADDON_CREDITS[tier as RecruiterAddon];
   if (addonCredits) {
-    // Add-on : ajouter les crédits au solde existant
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('recruiter_annonces_remaining, recruiter_deblocages_remaining, recruiter_boosts_remaining')
-      .eq('id', userId)
-      .single();
+    // Add-on : incrémenter atomiquement via RPC ou fallback SQL
+    // On utilise un update avec les valeurs calculées côté SQL pour éviter les race conditions
+    const { error } = await supabase.rpc('increment_recruiter_credits', {
+      p_user_id: userId,
+      p_annonces: addonCredits.annonces,
+      p_deblocages: addonCredits.deblocages,
+      p_boosts: addonCredits.boosts,
+    });
 
-    const current = currentUser || { recruiter_annonces_remaining: 0, recruiter_deblocages_remaining: 0, recruiter_boosts_remaining: 0 };
+    if (error) {
+      // Fallback : read-then-write si la RPC n'existe pas encore
+      console.warn(`RPC increment_recruiter_credits failed (${error.message}), using fallback`);
+      const { data: currentUser } = await supabase
+        .from('users')
+        .select('recruiter_annonces_remaining, recruiter_deblocages_remaining, recruiter_boosts_remaining')
+        .eq('id', userId)
+        .single();
 
-    await supabase.from('users').update({
-      recruiter_annonces_remaining: (current.recruiter_annonces_remaining || 0) + addonCredits.annonces,
-      recruiter_deblocages_remaining: (current.recruiter_deblocages_remaining || 0) + addonCredits.deblocages,
-      recruiter_boosts_remaining: (current.recruiter_boosts_remaining || 0) + addonCredits.boosts,
-      updated_at: new Date().toISOString(),
-    }).eq('id', userId);
+      const current = currentUser || { recruiter_annonces_remaining: 0, recruiter_deblocages_remaining: 0, recruiter_boosts_remaining: 0 };
+
+      const { error: updateError } = await supabase.from('users').update({
+        recruiter_annonces_remaining: (current.recruiter_annonces_remaining || 0) + addonCredits.annonces,
+        recruiter_deblocages_remaining: (current.recruiter_deblocages_remaining || 0) + addonCredits.deblocages,
+        recruiter_boosts_remaining: (current.recruiter_boosts_remaining || 0) + addonCredits.boosts,
+        updated_at: new Date().toISOString(),
+      }).eq('id', userId);
+
+      if (updateError) {
+        console.error(`Failed to apply add-on credits for user ${userId}:`, updateError.message);
+        throw updateError;
+      }
+    }
 
     console.log(`🛒 Add-on applied: user=${userId} addon=${tier}`);
     return;
@@ -78,13 +129,18 @@ async function applyRecruiterCredits(
   const packLimits = TIER_LIMITS[tier as keyof typeof TIER_LIMITS];
   if (packLimits && 'annonces' in packLimits) {
     const limits = packLimits as typeof TIER_LIMITS['solo'];
-    await supabase.from('users').update({
+    const { error } = await supabase.from('users').update({
       recruiter_annonces_remaining: limits.annonces === Infinity ? 999 : limits.annonces,
       recruiter_deblocages_remaining: limits.deblocages_included,
       recruiter_boosts_remaining: limits.boosts_included,
       recruiter_pack_purchased_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', userId);
+
+    if (error) {
+      console.error(`Failed to init pack credits for user ${userId}:`, error.message);
+      throw error;
+    }
 
     console.log(`📦 Pack credits initialized: user=${userId} pack=${tier} annonces=${limits.annonces} deblocages=${limits.deblocages_included} boosts=${limits.boosts_included}`);
   }
@@ -128,7 +184,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Signature invalide' }, { status: 400 });
   }
 
-  // 2. Traiter les événements
+  // 2. Idempotence — vérifier si cet événement a déjà été traité
+  const alreadyProcessed = await isEventAlreadyProcessed(event.id);
+  if (alreadyProcessed) {
+    console.log(`⏭️ Event ${event.id} already processed, skipping`);
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
+  // 3. Traiter les événements
   try {
     switch (event.type) {
       /**
@@ -146,7 +209,8 @@ export async function POST(request: NextRequest) {
 
         if (!userId || !tier) {
           console.error('Webhook checkout: metadata manquante', { userId, tier });
-          break;
+          // Retourner 500 pour que Stripe re-essaie — un paiement sans metadata = bug à investiguer
+          return NextResponse.json({ error: 'Metadata manquante' }, { status: 500 });
         }
 
         if (isOneTime) {
@@ -213,7 +277,9 @@ export async function POST(request: NextRequest) {
             amount: tierAmount,
             appUrl,
           });
-          sendEmail({ to: paidUser.email, subject: emailData.subject, html: emailData.html }).catch(() => {});
+          sendEmail({ to: paidUser.email, subject: emailData.subject, html: emailData.html }).catch((err) => {
+            console.error('Email send failed:', err);
+          });
         }
 
         break;
@@ -229,6 +295,7 @@ export async function POST(request: NextRequest) {
         const status = subscription.status; // active, past_due, canceled, etc.
         const priceId = subscription.items.data[0]?.price?.id;
         const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const previousAttributes = (event.data as any).previous_attributes || {};
 
         const user = await findUserByCustomerId(customerId);
         if (!user) {
@@ -259,6 +326,16 @@ export async function POST(request: NextRequest) {
         }
 
         await updateUserSubscription(user.id, updateData as any);
+
+        // Renouvellement agence : si la période a changé et l'abo est actif,
+        // on rafraîchit les crédits mensuels (20 déblocages, 5 boosts)
+        const currentTier = newTier || user.tier;
+        const isRenewal = previousAttributes.current_period_end && status === 'active';
+        if (currentTier === 'agency' && isRenewal) {
+          await applyRecruiterCredits(user.id, 'agency');
+          console.log(`🔄 Agency credits refreshed on renewal: user=${user.id}`);
+        }
+
         console.log(`✅ Subscription updated: user=${user.id} status=${status}`);
         break;
       }
@@ -278,14 +355,20 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        await updateUserSubscription(user.id, {
+        // Rétrograder et remettre les crédits recruteur à zéro
+        const supabaseAdmin = getSupabaseAdmin();
+        await supabaseAdmin.from('users').update({
           tier: 'free',
           stripe_subscription_id: null,
           subscription_status: 'canceled',
           subscription_period_end: null,
-        });
+          recruiter_annonces_remaining: 0,
+          recruiter_deblocages_remaining: 0,
+          recruiter_boosts_remaining: 0,
+          updated_at: new Date().toISOString(),
+        }).eq('id', user.id);
 
-        console.log(`❌ Subscription deleted: user=${user.id} → free`);
+        console.log(`❌ Subscription deleted: user=${user.id} → free (credits zeroed)`);
         break;
       }
 
@@ -318,6 +401,9 @@ export async function POST(request: NextRequest) {
     // mais non traité côté BDD = utilisateur qui paie sans recevoir son tier)
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 });
   }
+
+  // Marquer l'événement comme traité (idempotence)
+  await markEventProcessed(event.id, event.type);
 
   return NextResponse.json({ received: true });
 }

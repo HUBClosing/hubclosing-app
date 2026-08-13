@@ -152,10 +152,10 @@ interface AddonInfo {
 }
 
 const RECRUITER_ADDONS: AddonInfo[] = [
-  { id: 'deblocage_1', name: '1 Déblocage', description: 'Débloquer un profil candidat supplémentaire', price: 12, icon: <Lock className="h-5 w-5" /> },
-  { id: 'deblocage_5', name: '5 Déblocages', description: 'Pack de 5 déblocages de profils', price: 49, icon: <Package className="h-5 w-5" /> },
-  { id: 'boost', name: '1 Boost', description: 'Mettre en avant une annonce pendant 7 jours', price: 9, icon: <Sparkles className="h-5 w-5" /> },
-  { id: 'annonce_sup', name: '1 Annonce', description: 'Publier une annonce supplémentaire', price: 19, icon: <ShoppingCart className="h-5 w-5" /> },
+  { id: 'deblocage_1', name: '1 Déblocage', description: 'Accéder au profil complet d\'un candidat (nom, photo, chat, visio)', price: 12, icon: <Lock className="h-5 w-5" /> },
+  { id: 'deblocage_5', name: '5 Déblocages', description: 'Pack de 5 accès profils — idéal pour comparer plusieurs candidats', price: 49, icon: <Package className="h-5 w-5" /> },
+  { id: 'boost', name: '1 Boost', description: 'Votre annonce en tête de liste pendant 7 jours pour attirer plus de candidats', price: 9, icon: <Sparkles className="h-5 w-5" /> },
+  { id: 'annonce_sup', name: '+ 1 Annonce', description: 'Publier un nouveau poste sans racheter un pack (utilise vos déblocages de profils restants)', price: 29, icon: <ShoppingCart className="h-5 w-5" /> },
 ];
 
 // ==========================================
@@ -381,9 +381,13 @@ export function SubscriptionContent({ user }: { user: User }) {
     setLoadingTier(tier);
     setError(null);
 
+    // Les add-ons passent toujours par checkout, jamais par le portail
+    const ADDON_IDS = new Set(['deblocage_1', 'deblocage_5', 'boost', 'annonce_sup']);
+    const isAddon = ADDON_IDS.has(tier);
+
     try {
-      // Si l'utilisateur a déjà un abonnement, ouvrir le portail pour changer de plan
-      if (hasSubscription) {
+      // Si l'utilisateur a déjà un abonnement ET ce n'est pas un add-on, ouvrir le portail
+      if (hasSubscription && !isAddon) {
         await handleOpenPortal();
         setLoadingTier(null);
         return;
@@ -460,7 +464,9 @@ export function SubscriptionContent({ user }: { user: User }) {
           <div>
             <p className="text-sm font-medium text-green-800">Paiement réussi !</p>
             <p className="text-xs text-green-600">
-              Votre abonnement est activé. Vos nouvelles fonctionnalités sont disponibles immédiatement.
+              {searchParams.get('tier') && ONE_TIME_TIERS.has(searchParams.get('tier')!)
+                ? 'Votre pack est activé. Vos crédits sont disponibles immédiatement.'
+                : 'Votre abonnement est activé. Vos nouvelles fonctionnalités sont disponibles immédiatement.'}
             </p>
           </div>
         </div>

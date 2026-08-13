@@ -139,7 +139,7 @@ export const RECRUITER_ADDON_PRICES = {
   deblocage_1: 12,
   deblocage_5: 49,
   boost: 9,
-  annonce_sup: 19,
+  annonce_sup: 29,
 } as const;
 
 /** Crédits ajoutés par chaque add-on */

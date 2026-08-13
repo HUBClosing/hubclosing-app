@@ -1,4 +1,4 @@
-import { emailLayout, ctaButton, divider } from './base';
+import { emailLayout, ctaButton, divider, escapeHtml } from './base';
 
 interface NewApplicationEmailProps {
   recruiterName: string;
@@ -23,7 +23,10 @@ export function newApplicationEmail({
   subject: string;
   html: string;
 } {
-  const firstName = recruiterName.split(' ')[0] || recruiterName;
+  const firstName = escapeHtml(recruiterName.split(' ')[0] || recruiterName);
+  const safeCandidateName = escapeHtml(candidateName);
+  const safeOfferTitle = escapeHtml(offerTitle);
+  const safeCandidateRole = escapeHtml(candidateRole);
   const subject = `Nouvelle candidature pour "${offerTitle}"`;
   const preheader = `${candidateName} vient de postuler à votre offre.`;
 
@@ -43,15 +46,15 @@ export function newApplicationEmail({
             <tr>
               <td width="48" valign="top">
                 <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#E8913A,#D4782E);text-align:center;line-height:48px;font-size:20px;font-weight:700;color:#FFF;">
-                  ${candidateName.charAt(0).toUpperCase()}
+                  ${safeCandidateName.charAt(0).toUpperCase()}
                 </div>
               </td>
               <td style="padding-left:16px;vertical-align:top;">
                 <p style="margin:0;font-size:16px;font-weight:700;color:#F5F5F0;">
-                  ${candidateName}
+                  ${safeCandidateName}
                 </p>
                 <p style="margin:4px 0 0;font-size:13px;color:#A5A59A;text-transform:capitalize;">
-                  ${candidateRole}
+                  ${safeCandidateRole}
                 </p>
               </td>
             </tr>
@@ -68,7 +71,7 @@ export function newApplicationEmail({
             Offre concern&eacute;e
           </p>
           <p style="margin:0;font-size:15px;font-weight:600;color:#F5F5F0;">
-            ${offerTitle}
+            ${safeOfferTitle}
           </p>
         </td>
       </tr>

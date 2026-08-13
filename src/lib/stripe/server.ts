@@ -63,5 +63,5 @@ export const TIER_NAMES: Record<string, string> = {
   deblocage_1: '1 Déblocage (12€)',
   deblocage_5: '5 Déblocages (49€)',
   boost: 'Boost (9€)',
-  annonce_sup: 'Annonce supplémentaire (19€)',
+  annonce_sup: 'Annonce supplémentaire (29€)',
 };

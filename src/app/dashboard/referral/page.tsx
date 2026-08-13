@@ -158,15 +158,18 @@ export default async function ReferralPage() {
             <h3 className="text-sm font-medium text-gray-700 mb-3">Commissions par plan</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-sm">
               {[
-                { plan: 'Starter', price: 9, com: 0.90 },
-                { plan: 'Pro', price: 19, com: 1.90 },
-                { plan: 'Élite', price: 39, com: 3.90 },
-                { plan: 'Business', price: 49, com: 4.90 },
+                { plan: 'Starter', price: 9, com: 0.90, recurring: true },
+                { plan: 'Pro', price: 19, com: 1.90, recurring: true },
+                { plan: 'Élite', price: 39, com: 3.90, recurring: true },
+                { plan: 'Solo', price: 49, com: 4.90, recurring: false },
+                { plan: 'Équipe', price: 79, com: 7.90, recurring: false },
+                { plan: 'Campagne', price: 129, com: 12.90, recurring: false },
+                { plan: 'Agence', price: 199, com: 19.90, recurring: true },
               ].map((item) => (
                 <div key={item.plan} className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-500">{item.plan} ({item.price}€/mois)</p>
+                  <p className="text-xs text-gray-500">{item.plan} ({item.price}€{item.recurring ? '/mois' : ''})</p>
                   <p className="text-lg font-bold text-green-600">{item.com}€</p>
-                  <p className="text-xs text-gray-400">/mois par filleul</p>
+                  <p className="text-xs text-gray-400">{item.recurring ? '/mois par filleul' : 'par vente'}</p>
                 </div>
               ))}
             </div>

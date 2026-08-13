@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Lock, ArrowRight } from 'lucide-react';
-import { canUserDo, getUpgradeTier, TIER_PRICES } from '@/types/database';
+import { canUserDo, getUpgradeTier, TIER_PRICES, ONE_TIME_TIERS } from '@/types/database';
 import type { User, SubscriptionTier } from '@/types/database';
 
 const TIER_LABELS: Record<SubscriptionTier, string> = {
@@ -80,7 +80,7 @@ export function UpgradeGate({ user, requiredFeature, children, fallback }: Upgra
               href="/dashboard/subscription"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-amber text-white rounded-lg font-medium text-sm hover:bg-amber-dark transition-colors"
             >
-              Passer au plan {nextTierLabel} — {nextTierPrice}&euro;/mois
+              Passer au plan {nextTierLabel} — {nextTierPrice}&euro;{nextTier && ONE_TIME_TIERS.has(nextTier) ? '' : '/mois'}
               <ArrowRight className="h-4 w-4" />
             </Link>
           )}

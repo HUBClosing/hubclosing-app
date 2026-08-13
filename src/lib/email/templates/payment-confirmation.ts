@@ -1,4 +1,4 @@
-import { emailLayout, ctaButton, divider } from './base';
+import { emailLayout, ctaButton, divider, escapeHtml } from './base';
 
 interface PaymentConfirmationEmailProps {
   fullName: string;
@@ -63,19 +63,21 @@ export function paymentConfirmationEmail({
   subject: string;
   html: string;
 } {
-  const firstName = fullName.split(' ')[0] || fullName;
+  const firstName = escapeHtml(fullName.split(' ')[0] || fullName);
+  const safeTierName = escapeHtml(tierName);
+  const safeAmount = escapeHtml(amount);
   const tierKey = tierName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const features = TIER_FEATURES[tierKey] || TIER_FEATURES.starter;
 
-  const subject = `Abonnement ${tierName} activé !`;
-  const preheader = `Votre plan ${tierName} est actif. Profitez de toutes les fonctionnalités.`;
+  const subject = `Abonnement ${safeTierName} activé !`;
+  const preheader = `Votre plan ${safeTierName} est actif. Profitez de toutes les fonctionnalités.`;
 
   const content = `
     <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;color:#F5F5F0;letter-spacing:-0.5px;">
       Abonnement activ&eacute; 🚀
     </h1>
     <p style="margin:0 0 24px;font-size:15px;color:#A5A59A;line-height:1.7;">
-      ${firstName}, votre plan <strong style="color:#E8913A;">${tierName}</strong> est d&eacute;sormais actif.
+      ${firstName}, votre plan <strong style="color:#E8913A;">${safeTierName}</strong> est d&eacute;sormais actif.
     </p>
 
     <!-- Plan Card -->
@@ -86,12 +88,12 @@ export function paymentConfirmationEmail({
             <tr>
               <td>
                 <p style="margin:0;font-size:20px;font-weight:800;color:#F5F5F0;">
-                  HUBClosing ${tierName}
+                  HUBClosing ${safeTierName}
                 </p>
               </td>
               <td align="right">
                 <p style="margin:0;font-size:20px;font-weight:800;color:#E8913A;">
-                  ${amount}
+                  ${safeAmount}
                 </p>
               </td>
             </tr>

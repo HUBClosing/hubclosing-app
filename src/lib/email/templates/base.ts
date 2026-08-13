@@ -4,6 +4,16 @@
  * Charte : fond sombre (#0A0F08), accents amber (#E8913A), texte cream (#F5F5F0).
  */
 
+/** Échappe les caractères HTML dangereux pour éviter l'injection XSS dans les emails. */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function emailLayout(content: string, preheader?: string): string {
   return `<!DOCTYPE html>
 <html lang="fr">

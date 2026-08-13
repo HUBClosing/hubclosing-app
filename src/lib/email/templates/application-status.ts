@@ -1,4 +1,4 @@
-import { emailLayout, ctaButton, divider, statusBadge } from './base';
+import { emailLayout, ctaButton, divider, statusBadge, escapeHtml } from './base';
 
 type ApplicationStatus = 'reviewing' | 'accepted' | 'rejected' | 'completed';
 
@@ -57,7 +57,10 @@ export function applicationStatusEmail({
   subject: string;
   html: string;
 } {
-  const firstName = candidateName.split(' ')[0] || candidateName;
+  const firstName = escapeHtml(candidateName.split(' ')[0] || candidateName);
+  const safeOfferTitle = escapeHtml(offerTitle);
+  const safeRecruiterName = escapeHtml(recruiterName);
+  const safeMessage = message ? escapeHtml(message) : undefined;
   const config = STATUS_CONFIG[status];
   const subject = `${config.emoji} Candidature ${config.label.toLowerCase()} — ${offerTitle}`;
   const preheader = config.description;
@@ -78,13 +81,13 @@ export function applicationStatusEmail({
             Offre
           </p>
           <p style="margin:0 0 16px;font-size:16px;font-weight:700;color:#F5F5F0;">
-            ${offerTitle}
+            ${safeOfferTitle}
           </p>
           <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#7A7A72;text-transform:uppercase;letter-spacing:1px;">
             Recruteur
           </p>
           <p style="margin:0 0 16px;font-size:14px;color:#A5A59A;">
-            ${recruiterName}
+            ${safeRecruiterName}
           </p>
           <p style="margin:0 0 4px;font-size:11px;font-weight:600;color:#7A7A72;text-transform:uppercase;letter-spacing:1px;">
             Statut
@@ -98,14 +101,14 @@ export function applicationStatusEmail({
       ${config.description}
     </p>
 
-    ${message ? `
+    ${safeMessage ? `
     ${divider()}
     <p style="margin:0 0 8px;font-size:11px;font-weight:600;color:#7A7A72;text-transform:uppercase;letter-spacing:1px;">
       Message du recruteur
     </p>
     <div style="background:rgba(255,255,255,0.03);border-left:3px solid #E8913A;padding:16px;border-radius:0 8px 8px 0;margin:0;">
       <p style="margin:0;font-size:14px;color:#D8D5CC;line-height:1.7;font-style:italic;">
-        "${message}"
+        "${safeMessage}"
       </p>
     </div>
     ` : ''}

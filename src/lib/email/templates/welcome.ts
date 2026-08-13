@@ -1,4 +1,4 @@
-import { emailLayout, ctaButton, divider } from './base';
+import { emailLayout, ctaButton, divider, escapeHtml } from './base';
 
 interface WelcomeEmailProps {
   fullName: string;
@@ -10,7 +10,7 @@ export function welcomeEmail({ fullName, role, appUrl }: WelcomeEmailProps): {
   subject: string;
   html: string;
 } {
-  const firstName = fullName.split(' ')[0] || fullName;
+  const firstName = escapeHtml(fullName.split(' ')[0] || fullName);
   const isCandidate = role === 'candidate';
 
   const subject = `Bienvenue sur HUBClosing, ${firstName} !`;

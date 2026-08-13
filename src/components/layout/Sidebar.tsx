@@ -289,7 +289,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
                 className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium bg-brand-amber/20 text-brand-amber hover:bg-brand-amber/30 transition-colors"
               >
                 <CreditCard className="h-4 w-4" />
-                Passer au Starter — 9€/mois
+                {activeRole === 'recruiter' ? 'Passer au Solo — 49€' : 'Passer au Starter — 9€/mois'}
               </a>
             </div>
           )}

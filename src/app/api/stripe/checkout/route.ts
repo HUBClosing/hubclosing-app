@@ -43,12 +43,31 @@ export async function POST(request: NextRequest) {
   // 4. Récupérer le profil utilisateur
   const { data: user } = await supabase
     .from('users')
-    .select('id, email, full_name, stripe_customer_id, tier, stripe_subscription_id')
+    .select('id, email, full_name, stripe_customer_id, tier, stripe_subscription_id, role_type')
     .eq('id', authUser.id)
     .single();
 
   if (!user) {
     return NextResponse.json({ error: 'Profil introuvable' }, { status: 404 });
+  }
+
+  // 4b. Valider cohérence rôle ↔ tier
+  const RECRUITER_TIER_IDS = new Set(['solo', 'equipe', 'campagne', 'agency', 'deblocage_1', 'deblocage_5', 'boost', 'annonce_sup']);
+  const CANDIDATE_TIER_IDS = new Set(['starter', 'pro', 'elite']);
+  const userRole = user.role_type || 'candidate';
+
+  if (RECRUITER_TIER_IDS.has(tier) && userRole === 'candidate') {
+    return NextResponse.json({ error: 'Ce pack est réservé aux recruteurs.' }, { status: 403 });
+  }
+  if (CANDIDATE_TIER_IDS.has(tier) && userRole === 'recruiter') {
+    return NextResponse.json({ error: 'Cet abonnement est réservé aux candidats.' }, { status: 403 });
+  }
+
+  // 4c. Valider qu'un add-on n'est acheté que si le recruteur a un pack actif
+  const ADDON_IDS = new Set(['deblocage_1', 'deblocage_5', 'boost', 'annonce_sup']);
+  const ACTIVE_RECRUITER_TIERS = new Set(['solo', 'equipe', 'campagne', 'agency']);
+  if (ADDON_IDS.has(tier) && !ACTIVE_RECRUITER_TIERS.has(user.tier)) {
+    return NextResponse.json({ error: 'Vous devez d\'abord acheter un pack recruteur avant d\'acheter des recharges.' }, { status: 403 });
   }
 
   // 5. Déterminer le mode de paiement
