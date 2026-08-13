@@ -89,10 +89,10 @@ const CANDIDATE_TIERS: TierInfo[] = [
 
 const RECRUITER_TIERS: TierInfo[] = [
   {
-    tier: 'solo', name: 'Solo', subtitle: 'Un besoin ponctuel', icon: <Zap className="h-6 w-6" />,
+    tier: 'solo', name: 'Solo', subtitle: 'Recruter un profil ciblé', icon: <Zap className="h-6 w-6" />,
     features: [
       { label: '1 annonce (60 jours)', included: true },
-      { label: '3 déblocages de profil inclus', included: true },
+      { label: '3 profils débloqués', included: true },
       { label: 'Smart Sourcing IA', included: true },
       { label: 'Questionnaire personnalisé', included: true },
       { label: 'Garantie republication', included: true },
@@ -102,10 +102,10 @@ const RECRUITER_TIERS: TierInfo[] = [
     ],
   },
   {
-    tier: 'equipe', name: 'Équipe', subtitle: 'Plusieurs postes à pourvoir', highlight: 'Populaire', icon: <Users className="h-6 w-6" />,
+    tier: 'equipe', name: 'Équipe', subtitle: 'Plus de profils à découvrir', highlight: 'Populaire', icon: <Users className="h-6 w-6" />,
     features: [
-      { label: '3 annonces (90 jours)', included: true },
-      { label: '5 déblocages de profil inclus', included: true },
+      { label: '1 annonce (90 jours)', included: true },
+      { label: '5 profils débloqués', included: true },
       { label: '1 boost d\'offre inclus', included: true },
       { label: 'Smart Sourcing IA', included: true },
       { label: 'Questionnaire personnalisé', included: true },
@@ -115,10 +115,10 @@ const RECRUITER_TIERS: TierInfo[] = [
     ],
   },
   {
-    tier: 'campagne', name: 'Campagne', subtitle: 'Recrutement à grande échelle', icon: <TrendingUp className="h-6 w-6" />,
+    tier: 'campagne', name: 'Campagne', subtitle: 'Accès élargi aux talents', icon: <TrendingUp className="h-6 w-6" />,
     features: [
-      { label: '5 annonces (120 jours)', included: true },
-      { label: '10 déblocages de profil inclus', included: true },
+      { label: '1 annonce (120 jours)', included: true },
+      { label: '10 profils débloqués', included: true },
       { label: '3 boosts d\'offre inclus', included: true },
       { label: 'Smart Sourcing IA', included: true },
       { label: 'Questionnaire personnalisé', included: true },
@@ -131,7 +131,7 @@ const RECRUITER_TIERS: TierInfo[] = [
     tier: 'agency', name: 'Agence', subtitle: 'Volume illimité + analytics', icon: <BarChart3 className="h-6 w-6" />,
     features: [
       { label: 'Annonces illimitées', included: true },
-      { label: '15 déblocages / mois', included: true },
+      { label: '20 profils débloqués / mois', included: true },
       { label: '5 boosts / mois', included: true },
       { label: 'Smart Sourcing IA prioritaire', included: true },
       { label: 'Dashboard analytics avancé', included: true },
@@ -152,8 +152,8 @@ interface AddonInfo {
 }
 
 const RECRUITER_ADDONS: AddonInfo[] = [
-  { id: 'deblocage_1', name: '1 Déblocage', description: 'Débloquer un profil candidat supplémentaire', price: 9, icon: <Lock className="h-5 w-5" /> },
-  { id: 'deblocage_5', name: '5 Déblocages', description: 'Pack de 5 déblocages de profils', price: 39, icon: <Package className="h-5 w-5" /> },
+  { id: 'deblocage_1', name: '1 Déblocage', description: 'Débloquer un profil candidat supplémentaire', price: 12, icon: <Lock className="h-5 w-5" /> },
+  { id: 'deblocage_5', name: '5 Déblocages', description: 'Pack de 5 déblocages de profils', price: 49, icon: <Package className="h-5 w-5" /> },
   { id: 'boost', name: '1 Boost', description: 'Mettre en avant une annonce pendant 7 jours', price: 9, icon: <Sparkles className="h-5 w-5" /> },
   { id: 'annonce_sup', name: '1 Annonce', description: 'Publier une annonce supplémentaire', price: 19, icon: <ShoppingCart className="h-5 w-5" /> },
 ];

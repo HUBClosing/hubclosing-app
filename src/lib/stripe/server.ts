@@ -55,13 +55,13 @@ export const TIER_NAMES: Record<string, string> = {
   pro: 'Pro (19€/mois)',
   elite: 'Élite (39€/mois)',
   // Recruteurs — packs
-  solo: 'Solo (39€)',
+  solo: 'Solo (49€)',
   equipe: 'Équipe (79€)',
   campagne: 'Campagne (129€)',
   agency: 'Agence (199€/mois)',
   // Add-ons
-  deblocage_1: '1 Déblocage (9€)',
-  deblocage_5: '5 Déblocages (39€)',
+  deblocage_1: '1 Déblocage (12€)',
+  deblocage_5: '5 Déblocages (49€)',
   boost: 'Boost (9€)',
   annonce_sup: 'Annonce supplémentaire (19€)',
 };

@@ -106,17 +106,17 @@ export const TIER_LIMITS = {
     has_guarantee: true, has_analytics: false, is_subscription: false,
   },
   equipe: {
-    annonces: 3, offer_duration_days: 90, deblocages_included: 5,
+    annonces: 1, offer_duration_days: 90, deblocages_included: 5,
     boosts_included: 1, has_smart_sourcing: true, has_questionnaire: true,
     has_guarantee: true, has_analytics: false, is_subscription: false,
   },
   campagne: {
-    annonces: 5, offer_duration_days: 120, deblocages_included: 10,
+    annonces: 1, offer_duration_days: 120, deblocages_included: 10,
     boosts_included: 3, has_smart_sourcing: true, has_questionnaire: true,
     has_guarantee: true, has_analytics: false, is_subscription: false,
   },
   agency: {
-    annonces: Infinity, offer_duration_days: Infinity, deblocages_included: 15,
+    annonces: Infinity, offer_duration_days: Infinity, deblocages_included: 20,
     boosts_included: 5, has_smart_sourcing: true, has_questionnaire: true,
     has_guarantee: true, has_analytics: true, is_subscription: true,
   },
@@ -128,7 +128,7 @@ export const TIER_PRICES = {
   pro: 19,
   elite: 39,
   // Recruteurs — packs
-  solo: 39,
+  solo: 49,
   equipe: 79,
   campagne: 129,
   agency: 199,
@@ -136,8 +136,8 @@ export const TIER_PRICES = {
 
 /** Prix des add-ons recruteur (one-time) */
 export const RECRUITER_ADDON_PRICES = {
-  deblocage_1: 9,
-  deblocage_5: 39,
+  deblocage_1: 12,
+  deblocage_5: 49,
   boost: 9,
   annonce_sup: 19,
 } as const;

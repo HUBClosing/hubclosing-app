@@ -11,9 +11,9 @@ import type { Offer, SubscriptionTier } from '@/types/database';
 
 function getMaxActiveOffers(tier: SubscriptionTier): number {
   if (tier === 'agency') return Infinity;
-  if (tier === 'campagne') return 5;
-  if (tier === 'equipe') return 3;
-  if (tier === 'solo') return 1;
+  // Solo, Équipe, Campagne = 1 annonce par pack (+ add-ons annonce_sup)
+  // La limite réelle est gérée par recruiter_annonces_remaining
+  if (tier === 'solo' || tier === 'equipe' || tier === 'campagne') return 1;
   return 1; // free
 }
 
