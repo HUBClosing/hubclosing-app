@@ -65,16 +65,16 @@ export async function updateSession(request: NextRequest) {
     const csp = [
       // Par défaut : uniquement le même domaine
       "default-src 'self'",
-      // Scripts : self + Stripe + Jitsi
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://meet.jit.si https://*.jitsi.net",
+      // Scripts : self + Stripe + Jitsi + GA4 + Clarity
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://meet.jit.si https://*.jitsi.net https://www.googletagmanager.com https://www.clarity.ms",
       // Styles : self + inline (Next.js en a besoin)
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      // Images : self + Supabase Storage + Stripe + data URIs
-      "img-src 'self' data: blob: https://*.supabase.co https://*.stripe.com",
+      // Images : self + Supabase Storage + Stripe + GA4 + Clarity + data URIs
+      "img-src 'self' data: blob: https://*.supabase.co https://*.stripe.com https://www.google-analytics.com https://www.clarity.ms https://c.clarity.ms",
       // Polices
       "font-src 'self' https://fonts.gstatic.com",
-      // Connexions API : self + Supabase + Stripe + Resend
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.jitsi.net wss://*.jitsi.net",
+      // Connexions API : self + Supabase + Stripe + Jitsi + GA4 + Clarity
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.jitsi.net wss://*.jitsi.net https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.clarity.ms https://clarity.ms",
       // Frames : Stripe Checkout + Jitsi Meet
       "frame-src https://js.stripe.com https://hooks.stripe.com https://meet.jit.si https://*.jitsi.net",
       // Pas d'objets Flash/Java
