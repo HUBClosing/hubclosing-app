@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import '@/styles/globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -8,6 +9,10 @@ const SITE_URL = 'https://hubclosing.fr';
 const SITE_NAME = 'HUBClosing';
 const SITE_DESCRIPTION =
   'La 1ère plateforme dédiée au closing. Candidats (closers, setters) trouvez des missions qualifiées. Recruteurs (HOS, managers, infopreneurs) trouvez vos pépites.';
+
+// ─── IDs Analytics (à renseigner dans .env.local) ───
+const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -60,6 +65,11 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
+  verification: {
+    // Google Search Console — remplacer par ton code de vérification
+    // Tu le trouveras dans Search Console > Paramètres > Vérification de la propriété > Balise HTML
+    // google: 'ton-code-verification-ici',
+  },
 };
 
 export const viewport: Viewport = {
@@ -71,7 +81,43 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+
+        {/* ─── Google Analytics 4 ─── */}
+        {GA_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}', {
+                  page_path: window.location.pathname,
+                  send_page_view: true,
+                });
+              `}
+            </Script>
+          </>
+        )}
+
+        {/* ─── Microsoft Clarity ─── */}
+        {CLARITY_ID && (
+          <Script id="clarity-init" strategy="afterInteractive">
+            {`
+              (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "${CLARITY_ID}");
+            `}
+          </Script>
+        )}
+      </body>
     </html>
   );
 }
