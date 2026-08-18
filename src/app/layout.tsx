@@ -10,7 +10,7 @@ const SITE_NAME = 'HUBClosing';
 const SITE_DESCRIPTION =
   'La 1ère plateforme dédiée au closing. Candidats (closers, setters) trouvez des missions qualifiées. Recruteurs (HOS, managers, infopreneurs) trouvez vos pépites.';
 
-// ─── IDs Analytics (à renseigner dans .env.local) ───
+// ─── IDs Analytics (à renseigner dans .nv.local) ───
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID;
 
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
   verification: {
     // Google Search Console — remplacer par ton code de vérification
     // Tu le trouveras dans Search Console > Paramètres > Vérification de la propriété > Balise HTML
-    // google: 'ton-code-verification-ici',
+    google: 'UmENAexA_JmwrbGQzPLPlQbghr8mGzzm0KFQJYNesbM',
   },
 };
 
