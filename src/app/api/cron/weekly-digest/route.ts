@@ -95,7 +95,9 @@ export async function GET(req: NextRequest) {
     offers: typeof newOffers
   ) {
     const pref = candidate.notif_offers || 'all';
-    if (pref === 'all') return offers;
+    if (pref === 'all') return offers || [];
+
+    if (!offers) return [];
 
     const prefNiches = candidate.notif_offer_niches || [];
     const prefTypes = candidate.notif_offer_types || [];
