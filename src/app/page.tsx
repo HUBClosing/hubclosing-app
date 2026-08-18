@@ -14,7 +14,7 @@ const HOME = () => {
 /* ===== RESET & VARIABLES ===== */
 :root {
   --bg: #0A0F08; --bg2: #0F1A0A; --card: #141F0E; --card-h: #1A2814; --card-b: rgba(255,255,255,0.04);
-  --amber-d: #9A7E08; --amber: #B8960C; --amber-l: #D4AF37; --amber-g: #E8D06C;
+  --amber-d: #B03008; --amber: #D04510; --amber-l: #F05A28; --amber-g: #F57A4A;
   --cream: #F5F5F0; --cream-d: #D8D5CC; --gray: #7A7A72; --gray-l: #A5A59A; --gray-s: #4A4A42;
   --success: #22C55E; --radius: 14px;
 }
@@ -48,7 +48,7 @@ img{max-width:100%;height:auto;}
 .nav-links a:hover::after{width:100%;}
 .nav-cta{padding:10px 22px;border-radius:10px;font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--amber),var(--amber-d));color:#FFF;transition:all 0.3s;position:relative;overflow:hidden;}
 .nav-cta::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--amber-g),var(--amber));opacity:0;transition:opacity 0.3s;}
-.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(212,175,55,0.35);}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(240,90,40,0.35);}
 .nav-cta:hover::before{opacity:1;}
 .nav-cta span{position:relative;z-index:1;}
 .nav-cta-ghost{padding:10px 22px;border-radius:10px;font-weight:700;font-size:13px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--cream-d);transition:all 0.3s;}
@@ -57,8 +57,8 @@ img{max-width:100%;height:auto;}
 
 /* ===== HERO ===== */
 .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:140px 24px 80px;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:1000px;height:1000px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.08) 0%,rgba(212,175,55,0.03) 30%,transparent 55%);pointer-events:none;animation:heroGlow 8s ease-in-out infinite alternate;}
-.hero::after{content:'';position:absolute;bottom:-10%;right:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.04) 0%,transparent 50%);pointer-events:none;}
+.hero::before{content:'';position:absolute;top:-20%;left:50%;transform:translateX(-50%);width:1000px;height:1000px;border-radius:50%;background:radial-gradient(circle,rgba(240,90,40,0.08) 0%,rgba(240,90,40,0.03) 30%,transparent 55%);pointer-events:none;animation:heroGlow 8s ease-in-out infinite alternate;}
+.hero::after{content:'';position:absolute;bottom:-10%;right:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(240,90,40,0.04) 0%,transparent 50%);pointer-events:none;}
 @keyframes heroGlow{0%{transform:translateX(-50%) scale(1);opacity:0.8;}100%{transform:translateX(-50%) scale(1.15);opacity:1;}}
 .hero-video{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.35;}
 .hero-video canvas{width:100%;height:100%;display:block;}
@@ -68,7 +68,7 @@ img{max-width:100%;height:auto;}
 .particle{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--amber);opacity:0;animation:floatUp var(--dur) var(--delay) infinite;}
 @keyframes floatUp{0%{opacity:0;transform:translateY(100vh) scale(0);}15%{opacity:0.6;}85%{opacity:0.3;}100%{opacity:0;transform:translateY(-20vh) scale(1);}}
 
-.hero-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(212,175,55,0.2);border-radius:30px;padding:7px 20px;margin-bottom:36px;background:rgba(212,175,55,0.04);opacity:0;animation:fadeInUp 0.8s 2.0s cubic-bezier(0.16,1,0.3,1) forwards;}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(240,90,40,0.2);border-radius:30px;padding:7px 20px;margin-bottom:36px;background:rgba(240,90,40,0.04);opacity:0;animation:fadeInUp 0.8s 2.0s cubic-bezier(0.16,1,0.3,1) forwards;}
 .hero-pill-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.8);}}
 .hero-pill span{font-size:14px;font-weight:500;color:var(--amber-l);}
@@ -81,9 +81,9 @@ img{max-width:100%;height:auto;}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:16px 32px;border-radius:12px;font-weight:700;font-size:15px;border:none;cursor:pointer;font-family:inherit;transition:all 0.35s cubic-bezier(0.16,1,0.3,1);letter-spacing:0.3px;position:relative;overflow:hidden;}
-.btn-primary{background:linear-gradient(135deg,var(--amber),var(--amber-d));color:#FFF;box-shadow:0 4px 24px rgba(212,175,55,0.2);}
+.btn-primary{background:linear-gradient(135deg,var(--amber),var(--amber-d));color:#FFF;box-shadow:0 4px 24px rgba(240,90,40,0.2);}
 .btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--amber-g),var(--amber));opacity:0;transition:opacity 0.3s;}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(212,175,55,0.35);}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(240,90,40,0.35);}
 .btn-primary:hover::before{opacity:1;}
 .btn-primary span{position:relative;z-index:1;}
 .btn-ghost{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--cream-d);}
@@ -113,11 +113,11 @@ img{max-width:100%;height:auto;}
 .band-light .split-feature p strong{color:#1A1A18;}
 .band-light .split-visual-card{background:#FFFFFF;border-color:rgba(0,0,0,0.08);box-shadow:0 30px 80px rgba(0,0,0,0.08);}
 .band-light .testimonial-card{background:#FFFFFF;border-color:rgba(0,0,0,0.06);}
-.band-light .testimonial-card:hover{border-color:rgba(212,175,55,0.2);}
+.band-light .testimonial-card:hover{border-color:rgba(240,90,40,0.2);}
 .band-light .testimonial-text{color:#5A5A52;}
 .band-light .testimonial-name{color:#1A1A18;}
 .band-light .testimonial-role{color:#7A7A72;}
-.band-light .testimonial-card::before{color:rgba(212,175,55,0.1);}
+.band-light .testimonial-card::before{color:rgba(240,90,40,0.1);}
 .band-light .feature-card{background:#FFFFFF;border-color:rgba(0,0,0,0.06);}
 .band-light .feature-card:hover{background:#FAFAF7;box-shadow:0 16px 40px rgba(0,0,0,0.06);}
 .band-light .feature-card h3{color:#1A1A18;}
@@ -129,9 +129,9 @@ img{max-width:100%;height:auto;}
 .nav.nav-white .nav-logo svg circle[fill="url(#navHubG)"]{fill:#1A1A18;}
 .nav.nav-white .nav-logo svg path{stroke:#1A1A18;}
 .nav.nav-white .nav-logo svg line{stroke:rgba(26,26,24,0.15);}
-.nav.nav-white .nav-logo svg circle[fill="#E8D06C"]{fill:#9A7E08;}
-.nav.nav-white .nav-logo svg circle[fill="#D4AF37"]{fill:#9A7E08;}
-.nav.nav-white .nav-logo svg text[fill="url(#navClosingG)"]{fill:#9A7E08;}
+.nav.nav-white .nav-logo svg circle[fill="#F57A4A"]{fill:#B03008;}
+.nav.nav-white .nav-logo svg circle[fill="#F05A28"]{fill:#B03008;}
+.nav.nav-white .nav-logo svg text[fill="url(#navClosingG)"]{fill:#B03008;}
 .nav.nav-white .nav-logo svg text[fill="url(#navOppoG)"]{fill:#B0650F;}
 .nav.nav-white .nav-logo svg text[fill="rgba(255,255,255,0.3)"]{fill:rgba(26,26,24,0.3);}
 .nav.nav-white .nav-links a{color:#5A5A52;}
@@ -163,12 +163,12 @@ img{max-width:100%;height:auto;}
 
 /* ===== HOW IT WORKS ===== */
 .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;position:relative;}
-.steps-grid::before{content:'';position:absolute;top:50%;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.15),transparent);pointer-events:none;}
+.steps-grid::before{content:'';position:absolute;top:50%;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(240,90,40,0.15),transparent);pointer-events:none;}
 .step-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:36px 28px;text-align:center;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;}
-.step-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(212,175,55,0.06) 0%,transparent 60%);opacity:0;transition:opacity 0.4s;}
-.step-card:hover{background:var(--card-h);transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,0.25);border-color:rgba(212,175,55,0.1);}
+.step-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(240,90,40,0.06) 0%,transparent 60%);opacity:0;transition:opacity 0.4s;}
+.step-card:hover{background:var(--card-h);transform:translateY(-6px);box-shadow:0 20px 50px rgba(0,0,0,0.25);border-color:rgba(240,90,40,0.1);}
 .step-card:hover::before{opacity:1;}
-.step-num{width:52px;height:52px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#FFF;margin-bottom:20px;background:linear-gradient(135deg,var(--amber),var(--amber-d));box-shadow:0 4px 20px rgba(212,175,55,0.2);transition:transform 0.3s;}
+.step-num{width:52px;height:52px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#FFF;margin-bottom:20px;background:linear-gradient(135deg,var(--amber),var(--amber-d));box-shadow:0 4px 20px rgba(240,90,40,0.2);transition:transform 0.3s;}
 .step-card:hover .step-num{transform:scale(1.1) rotate(-5deg);}
 .step-card h3{font-size:18px;font-weight:700;margin-bottom:10px;color:var(--cream);position:relative;}
 .step-card p{font-size:14px;color:var(--gray-l);line-height:1.6;position:relative;}
@@ -176,12 +176,12 @@ img{max-width:100%;height:auto;}
 /* ===== FEATURES ===== */
 .features-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 .feature-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:32px 28px;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);position:relative;overflow:hidden;}
-.feature-card::before{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,rgba(212,175,55,0.04) 0%,transparent 60%);opacity:0;transition:opacity 0.4s;}
-.feature-card:hover{background:var(--card-h);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.2);border-color:rgba(212,175,55,0.08);}
+.feature-card::before{content:'';position:absolute;top:-50%;right:-50%;width:100%;height:100%;background:radial-gradient(circle,rgba(240,90,40,0.04) 0%,transparent 60%);opacity:0;transition:opacity 0.4s;}
+.feature-card:hover{background:var(--card-h);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.2);border-color:rgba(240,90,40,0.08);}
 .feature-card:hover::before{opacity:1;}
 .feature-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:22px;transition:transform 0.3s,box-shadow 0.3s;}
-.feature-card:hover .feature-icon{transform:scale(1.1);box-shadow:0 4px 16px rgba(212,175,55,0.15);}
-.feature-icon-amber{background:rgba(212,175,55,0.1);}
+.feature-card:hover .feature-icon{transform:scale(1.1);box-shadow:0 4px 16px rgba(240,90,40,0.15);}
+.feature-icon-amber{background:rgba(240,90,40,0.1);}
 .feature-icon-blue{background:rgba(43,94,158,0.15);}
 .feature-card h3{font-size:16px;font-weight:700;margin-bottom:8px;color:var(--cream);position:relative;}
 .feature-card p{font-size:14px;color:var(--gray-l);line-height:1.6;position:relative;}
@@ -198,11 +198,11 @@ img{max-width:100%;height:auto;}
 @keyframes marquee-scroll{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
 @keyframes marquee-scroll-reverse{0%{transform:translateX(-50%);}100%{transform:translateX(0);}}
 .testimonial-card{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:28px 24px;transition:all 0.4s;position:relative;overflow:hidden;min-width:340px;max-width:340px;flex-shrink:0;}
-.testimonial-card:hover{transform:translateY(-4px);border-color:rgba(212,175,55,0.1);}
-.testimonial-card::before{content:'\\201C';position:absolute;top:12px;right:20px;font-size:60px;color:rgba(212,175,55,0.06);font-family:Georgia,serif;line-height:1;}
+.testimonial-card:hover{transform:translateY(-4px);border-color:rgba(240,90,40,0.1);}
+.testimonial-card::before{content:'\\201C';position:absolute;top:12px;right:20px;font-size:60px;color:rgba(240,90,40,0.06);font-family:Georgia,serif;line-height:1;}
 .testimonial-text{font-size:14px;color:var(--gray-l);line-height:1.7;margin-bottom:18px;font-style:italic;position:relative;}
 .testimonial-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:14px;}
-.badge-closer{background:rgba(212,175,55,0.12);color:#9A7E08;}
+.badge-closer{background:rgba(240,90,40,0.12);color:#B03008;}
 .badge-setter{background:rgba(43,94,158,0.12);color:#2B5E9E;}
 .badge-recruteur{background:rgba(139,92,246,0.12);color:#7C3AED;}
 .testimonial-author{display:flex;align-items:center;gap:12px;}
@@ -216,13 +216,13 @@ img{max-width:100%;height:auto;}
 .faq-question{font-size:16px;font-weight:600;color:var(--cream);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;transition:color 0.3s;}
 .faq-question:hover{color:var(--amber-l);}
 .faq-arrow{font-size:18px;color:var(--gray);transition:transform 0.4s cubic-bezier(0.16,1,0.3,1),color 0.3s;flex-shrink:0;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);}
-.faq-item.open .faq-arrow{transform:rotate(45deg);color:var(--amber);background:rgba(212,175,55,0.1);}
+.faq-item.open .faq-arrow{transform:rotate(45deg);color:var(--amber);background:rgba(240,90,40,0.1);}
 .faq-answer{max-height:0;overflow:hidden;transition:max-height 0.4s cubic-bezier(0.16,1,0.3,1),padding 0.4s;font-size:15px;color:var(--gray-l);line-height:1.7;}
 .faq-item.open .faq-answer{max-height:300px;padding-top:14px;}
 
 /* ===== CTA SECTION ===== */
 .cta-section{text-align:center;padding:120px 24px;position:relative;overflow:hidden;}
-.cta-section::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,0.07) 0%,transparent 55%);pointer-events:none;}
+.cta-section::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(240,90,40,0.07) 0%,transparent 55%);pointer-events:none;}
 .cta-section h2{font-size:clamp(28px,4vw,52px);font-weight:800;letter-spacing:-2px;margin-bottom:16px;}
 .cta-section p{font-size:17px;color:var(--gray);max-width:480px;margin:0 auto 40px;line-height:1.7;}
 
@@ -258,11 +258,11 @@ img{max-width:100%;height:auto;}
 .opt-badge{display:inline-block;font-size:10px;font-weight:600;background:rgba(251,190,94,0.12);color:var(--amber-g);padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;}
 
 /* ===== DASHBOARD PREVIEW ===== */
-.dash-preview{border-radius:20px;border:1px solid rgba(255,255,255,0.06);background:var(--card);overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.4),0 0 80px rgba(212,175,55,0.05);}
+.dash-preview{border-radius:20px;border:1px solid rgba(255,255,255,0.06);background:var(--card);overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.4),0 0 80px rgba(240,90,40,0.05);}
 .dash-topbar{display:flex;align-items:center;gap:8px;padding:14px 20px;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(255,255,255,0.04);}
 .dash-toggle{display:flex;gap:8px;margin-bottom:20px;}
 .dash-toggle-btn{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.3s;}
-.dash-toggle-active{background:rgba(212,175,55,0.12);color:var(--amber-l);}
+.dash-toggle-active{background:rgba(240,90,40,0.12);color:var(--amber-l);}
 .dash-toggle-inactive{background:rgba(255,255,255,0.03);color:var(--gray);}
 .dash-toggle-inactive:hover{background:rgba(255,255,255,0.06);color:var(--gray-l);}
 .dash-view{display:none;min-height:340px;animation:fadeIn 0.4s ease;}
@@ -271,7 +271,7 @@ img{max-width:100%;height:auto;}
 .dash-body{display:flex;min-height:340px;}
 .dash-sidebar{width:180px;padding:16px;border-right:1px solid rgba(255,255,255,0.04);}
 .dash-sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:13px;color:var(--gray-l);margin-bottom:4px;transition:all 0.3s;}
-.dash-sidebar-item.active{background:rgba(212,175,55,0.1);color:var(--amber-l);}
+.dash-sidebar-item.active{background:rgba(240,90,40,0.1);color:var(--amber-l);}
 .dash-sidebar-icon{font-size:16px;width:20px;text-align:center;}
 .dash-main{flex:1;padding:20px;}
 .dash-welcome{font-size:16px;font-weight:600;margin-bottom:16px;}
@@ -282,21 +282,21 @@ img{max-width:100%;height:auto;}
 .dash-stat-label{font-size:11px;opacity:0.6;margin-top:2px;}
 .dash-offers-title{font-size:13px;font-weight:600;color:var(--gray-l);margin-bottom:10px;}
 .dash-offer{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;transition:all 0.3s;}
-.dash-offer:hover{background:rgba(255,255,255,0.04);border-color:rgba(212,175,55,0.15);transform:translateX(4px);}
+.dash-offer:hover{background:rgba(255,255,255,0.04);border-color:rgba(240,90,40,0.15);transform:translateX(4px);}
 .dash-offer-title{font-size:14px;font-weight:600;color:var(--cream);}
 .dash-offer-sub{font-size:12px;color:var(--gray);margin-top:2px;}
 .dash-offer-badge{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;}
 
 /* ===== COMMUNITY REF ===== */
-.community-ref-box{background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.12);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:16px;}
-.band-light .community-ref-box{background:rgba(212,175,55,0.06);border-color:rgba(212,175,55,0.12);}
+.community-ref-box{background:rgba(240,90,40,0.06);border:1px solid rgba(240,90,40,0.12);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:16px;}
+.band-light .community-ref-box{background:rgba(240,90,40,0.06);border-color:rgba(240,90,40,0.12);}
 
 /* ===== APP PREVIEW ===== */
 .app-preview-section{padding:40px 24px 100px;position:relative;overflow:hidden;}
 .app-preview-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:100%;height:200px;background:linear-gradient(to bottom,var(--bg),transparent);pointer-events:none;z-index:1;}
 .app-preview-wrap{max-width:1000px;margin:0 auto;position:relative;}
 .app-preview-label{text-align:center;margin-bottom:28px;}
-.app-preview-label span{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-weight:600;padding:6px 16px;border:1px solid rgba(212,175,55,0.2);border-radius:20px;background:rgba(212,175,55,0.04);}
+.app-preview-label span{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);font-weight:600;padding:6px 16px;border:1px solid rgba(240,90,40,0.2);border-radius:20px;background:rgba(240,90,40,0.04);}
 .app-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.08);}
 .app-dot:first-child{background:#FF5F56;}
 .app-dot:nth-child(2){background:#FFBD2E;}
@@ -734,37 +734,37 @@ img{max-width:100%;height:auto;}
       {/* SPLASH INTRO */}
       <div className="splash" id="splash">
         <div className="splash-logo" id="splashLogo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" height="120" style={{ filter: 'drop-shadow(0 8px 60px rgba(212,175,55,0.25))' }}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" height="120" style={{ filter: 'drop-shadow(0 8px 60px rgba(240,90,40,0.25))' }}>
             <defs>
               <linearGradient id="sClosG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#E8D06C" />
-                <stop offset="40%" stopColor="#D4AF37" />
-                <stop offset="100%" stopColor="#B8960C" />
+                <stop offset="0%" stopColor="#F57A4A" />
+                <stop offset="40%" stopColor="#F05A28" />
+                <stop offset="100%" stopColor="#D04510" />
               </linearGradient>
               <linearGradient id="sHubG" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#FFFFFF" />
                 <stop offset="100%" stopColor="#E8E6DF" />
               </linearGradient>
               <linearGradient id="sOppoG" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#E8D06C" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#F57A4A" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#F05A28" stopOpacity="0.9" />
               </linearGradient>
             </defs>
             <g transform="translate(58, 78)">
               <circle cx="0" cy="0" r="30" fill="url(#sHubG)" />
-              <circle cx="0" cy="0" r="30" fill="none" stroke="#D4AF37" strokeWidth="0.8" opacity="0.15" />
+              <circle cx="0" cy="0" r="30" fill="none" stroke="#F05A28" strokeWidth="0.8" opacity="0.15" />
               <path d="M-11,-13 L-11,13 M-11,0 L11,0 M11,-13 L11,13" stroke="url(#sClosG)" strokeWidth="3.8" strokeLinecap="round" fill="none" />
               <line x1="26" y1="-16" x2="44" y2="-30" stroke="rgba(255,255,255,0.15)" strokeWidth="1.3" />
               <line x1="30" y1="0" x2="48" y2="0" stroke="rgba(255,255,255,0.15)" strokeWidth="1.3" />
               <line x1="26" y1="16" x2="44" y2="30" stroke="rgba(255,255,255,0.15)" strokeWidth="1.3" />
-              <circle cx="48" cy="-34" r="6" fill="#E8D06C" />
-              <circle cx="52" cy="0" r="6" fill="#D4AF37" />
-              <circle cx="48" cy="34" r="6" fill="#E8D06C" />
+              <circle cx="48" cy="-34" r="6" fill="#F57A4A" />
+              <circle cx="52" cy="0" r="6" fill="#F05A28" />
+              <circle cx="48" cy="34" r="6" fill="#F57A4A" />
             </g>
             <text x="125" y="100" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="800" fontSize="68" fill="url(#sHubG)" letterSpacing="-2.5">HUB</text>
             <text x="305" y="100" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="800" fontSize="68" fill="url(#sClosG)" letterSpacing="-2.5">Closing</text>
             <text x="127" y="134" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="600" fontSize="20" fill="url(#sOppoG)" letterSpacing="1">Opportunités</text>
-            <circle cx="272" cy="128" r="2.5" fill="#D4AF37" opacity="0.3" />
+            <circle cx="272" cy="128" r="2.5" fill="#F05A28" opacity="0.3" />
             <text x="288" y="134" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="400" fontSize="13" fill="rgba(255,255,255,0.35)" letterSpacing="3">CONNECTEZ . CLOSEZ . ÉVOLUEZ</text>
           </svg>
         </div>
@@ -779,34 +779,34 @@ img{max-width:100%;height:auto;}
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" height="38">
             <defs>
               <linearGradient id="navClosingG" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#E8D06C" />
-                <stop offset="40%" stopColor="#D4AF37" />
-                <stop offset="100%" stopColor="#B8960C" />
+                <stop offset="0%" stopColor="#F57A4A" />
+                <stop offset="40%" stopColor="#F05A28" />
+                <stop offset="100%" stopColor="#D04510" />
               </linearGradient>
               <linearGradient id="navHubG" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#FFFFFF" />
                 <stop offset="100%" stopColor="#E8E6DF" />
               </linearGradient>
               <linearGradient id="navOppoG" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#E8D06C" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#F57A4A" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#F05A28" stopOpacity="0.9" />
               </linearGradient>
             </defs>
             <g transform="translate(28, 48)">
               <circle cx="0" cy="0" r="18" fill="url(#navHubG)" />
-              <circle cx="0" cy="0" r="18" fill="none" stroke="#D4AF37" strokeWidth="0.5" opacity="0.15" />
+              <circle cx="0" cy="0" r="18" fill="none" stroke="#F05A28" strokeWidth="0.5" opacity="0.15" />
               <path d="M-7,-8 L-7,8 M-7,0 L7,0 M7,-8 L7,8" stroke="url(#navClosingG)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
               <line x1="16" y1="-10" x2="26" y2="-18" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
               <line x1="18" y1="0" x2="28" y2="0" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
               <line x1="16" y1="10" x2="26" y2="18" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
-              <circle cx="28" cy="-20" r="3.5" fill="#E8D06C" />
-              <circle cx="31" cy="0" r="3.5" fill="#D4AF37" />
-              <circle cx="28" cy="20" r="3.5" fill="#E8D06C" />
+              <circle cx="28" cy="-20" r="3.5" fill="#F57A4A" />
+              <circle cx="31" cy="0" r="3.5" fill="#F05A28" />
+              <circle cx="28" cy="20" r="3.5" fill="#F57A4A" />
             </g>
             <text x="72" y="60" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="800" fontSize="40" fill="url(#navHubG)" letterSpacing="-1.5">HUB</text>
             <text x="172" y="60" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="800" fontSize="40" fill="url(#navClosingG)" letterSpacing="-1.5">Closing</text>
             <text x="73" y="82" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="600" fontSize="12" fill="url(#navOppoG)" letterSpacing="0.8">Opportunités</text>
-            <circle cx="128" cy="78" r="1.5" fill="#D4AF37" opacity="0.3" />
+            <circle cx="128" cy="78" r="1.5" fill="#F05A28" opacity="0.3" />
             <text x="138" y="82" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="400" fontSize="8" fill="rgba(255,255,255,0.3)" letterSpacing="2">CONNECTEZ . CLOSEZ . ÉVOLUEZ</text>
           </svg>
         </Link>
@@ -920,7 +920,7 @@ img{max-width:100%;height:auto;}
                     <div className="dash-stat-num" style={{ color: 'var(--success)' }}>12</div>
                     <div className="dash-stat-label" style={{ color: 'var(--success)' }}>Calls ce mois</div>
                   </div>
-                  <div className="dash-stat-card" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.12)' }}>
+                  <div className="dash-stat-card" style={{ background: 'rgba(240,90,40,0.08)', border: '1px solid rgba(240,90,40,0.12)' }}>
                     <div className="dash-stat-num" style={{ color: 'var(--amber-l)' }}>67%</div>
                     <div className="dash-stat-label" style={{ color: 'var(--amber-l)' }}>Taux de closing</div>
                   </div>
@@ -975,7 +975,7 @@ img{max-width:100%;height:auto;}
                     <div className="dash-stat-num" style={{ color: 'var(--success)' }}>18</div>
                     <div className="dash-stat-label" style={{ color: 'var(--success)' }}>Candidatures reçues</div>
                   </div>
-                  <div className="dash-stat-card" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.12)' }}>
+                  <div className="dash-stat-card" style={{ background: 'rgba(240,90,40,0.08)', border: '1px solid rgba(240,90,40,0.12)' }}>
                     <div className="dash-stat-num" style={{ color: 'var(--amber-l)' }}>4.8</div>
                     <div className="dash-stat-label" style={{ color: 'var(--amber-l)' }}>Score réputation</div>
                   </div>
@@ -993,7 +993,7 @@ img{max-width:100%;height:auto;}
                     <div className="dash-offer-title">Emma R. — Setter</div>
                     <div className="dash-offer-sub">A postulé à &quot;Setter E-commerce Premium&quot; — il y a 5h</div>
                   </div>
-                  <div className="dash-offer-badge" style={{ background: 'rgba(212,175,55,0.1)', color: 'var(--amber-l)' }}>En attente</div>
+                  <div className="dash-offer-badge" style={{ background: 'rgba(240,90,40,0.1)', color: 'var(--amber-l)' }}>En attente</div>
                 </div>
                 <div className="dash-offer">
                   <div>
@@ -1219,8 +1219,8 @@ img{max-width:100%;height:auto;}
 
           <div style={{ maxWidth: '1100px', margin: '32px auto 0', padding: '0 24px' }}>
             <div className="reveal" style={{
-              background: 'rgba(212,175,55,0.06)',
-              border: '1px solid rgba(212,175,55,0.12)',
+              background: 'rgba(240,90,40,0.06)',
+              border: '1px solid rgba(240,90,40,0.12)',
               borderRadius: '14px',
               padding: '18px 24px',
               display: 'flex',
@@ -1323,29 +1323,29 @@ img{max-width:100%;height:auto;}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" height="36">
                 <defs>
                   <linearGradient id="fClosG" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#E8D06C" />
-                    <stop offset="40%" stopColor="#D4AF37" />
-                    <stop offset="100%" stopColor="#B8960C" />
+                    <stop offset="0%" stopColor="#F57A4A" />
+                    <stop offset="40%" stopColor="#F05A28" />
+                    <stop offset="100%" stopColor="#D04510" />
                   </linearGradient>
                   <linearGradient id="fHubG" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#FFFFFF" />
                     <stop offset="100%" stopColor="#E8E6DF" />
                   </linearGradient>
                   <linearGradient id="fOppoG" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#E8D06C" stopOpacity="0.9" />
-                    <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.9" />
+                    <stop offset="0%" stopColor="#F57A4A" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#F05A28" stopOpacity="0.9" />
                   </linearGradient>
                 </defs>
                 <g transform="translate(28, 48)">
                   <circle cx="0" cy="0" r="18" fill="url(#fHubG)" />
-                  <circle cx="0" cy="0" r="18" fill="none" stroke="#D4AF37" strokeWidth="0.5" opacity="0.15" />
+                  <circle cx="0" cy="0" r="18" fill="none" stroke="#F05A28" strokeWidth="0.5" opacity="0.15" />
                   <path d="M-7,-8 L-7,8 M-7,0 L7,0 M7,-8 L7,8" stroke="url(#fClosG)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
                   <line x1="16" y1="-10" x2="26" y2="-18" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
                   <line x1="18" y1="0" x2="28" y2="0" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
                   <line x1="16" y1="10" x2="26" y2="18" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8" />
-                  <circle cx="28" cy="-20" r="3.5" fill="#E8D06C" />
-                  <circle cx="31" cy="0" r="3.5" fill="#D4AF37" />
-                  <circle cx="28" cy="20" r="3.5" fill="#E8D06C" />
+                  <circle cx="28" cy="-20" r="3.5" fill="#F57A4A" />
+                  <circle cx="31" cy="0" r="3.5" fill="#F05A28" />
+                  <circle cx="28" cy="20" r="3.5" fill="#F57A4A" />
                 </g>
                 <text x="72" y="60" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="800" fontSize="40" fill="url(#fHubG)" letterSpacing="-1.5">HUB</text>
                 <text x="172" y="60" fontFamily="'Plus Jakarta Sans','DM Sans','Inter',sans-serif" fontWeight="800" fontSize="40" fill="url(#fClosG)" letterSpacing="-1.5">Closing</text>
