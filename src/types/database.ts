@@ -166,6 +166,10 @@ export interface User {
   niches: string[] | null;
   skills: Skill[];             // Tags de compétences flexibles
   infopreneur_type: string | null;
+  training_center: string | null;
+  is_employed: boolean;
+  languages: string[];
+  loom_url: string | null;
   sub_role: string | null;     // Legacy
   subscription_plan: SubscriptionPlan; // Legacy
   tier: SubscriptionTier;      // Nouveau tier d'abonnement
@@ -185,8 +189,66 @@ export interface User {
   recruiter_deblocages_remaining: number;
   recruiter_boosts_remaining: number;
   recruiter_pack_purchased_at: string | null;
+  // Préférences de notification offres
+  notif_offers: 'all' | 'filtered' | 'none';
+  notif_offer_niches: string[];
+  notif_offer_types: string[];
   is_active: boolean;
   is_onboarded: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Options pour le champ centre de formation */
+export const TRAINING_CENTER_OPTIONS = [
+  'Aucune formation',
+  'Closers Group',
+  'Best Closer',
+  'CGM ELITE',
+  'Closer Mastery',
+  'Navy Sales',
+  'Sales Influence',
+  'Striker',
+  'Ossama Rhamri',
+  'Cole Gordon',
+  'Momentum',
+  'Mon Closer',
+  'Closer Evolution',
+] as const;
+
+/** Options pour le type d'événement */
+export const EVENT_TYPE_OPTIONS = [
+  'Webinaire',
+  'Masterclass',
+  'Call 1-to-1',
+  'Workshop',
+  'Lancement',
+  'Séminaire',
+  'Autre',
+] as const;
+
+/** Performance record — tracking des performances candidat */
+export interface PerformanceRecord {
+  id: string;
+  user_id: string;
+  event_name: string;
+  event_type: string;
+  event_date: string;
+  calls_scheduled: number;
+  calls_completed: number;
+  revenue_collected: number;
+  revenue_invoiced: number;
+  no_shows: number;
+  cancellations: number;
+  hos_name: string;
+  hos_email: string | null;
+  is_verified: boolean;
+  verified_at: string | null;
+  verified_by: string | null;
+  verifier_name: string | null;
+  validation_token: string | null;
+  validation_token_expires_at: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -491,6 +553,7 @@ export type NotificationType =
   | 'message_received'
   | 'review_request'
   | 'review_received'
+  | 'new_offer'
   | 'system';
 
 export interface Notification {
@@ -825,6 +888,7 @@ export interface MatchingResult {
   score: number;
   score_details: MatchingScoreDetails;
   status: MatchingResultStatus;
+  candidate_status: string;
   created_at: string;
   updated_at: string;
 
