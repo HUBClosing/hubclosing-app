@@ -435,7 +435,7 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Détail du score de matching</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {SCORE_CRITERIA.map(criteria => {
-                      const value = (result.score_details as Record<string, number>)[criteria.key] || 0;
+                      const value = (result.score_details as unknown as Record<string, number>)[criteria.key] || 0;
                       const pct = (value / criteria.max) * 100;
                       const Icon = criteria.icon;
 

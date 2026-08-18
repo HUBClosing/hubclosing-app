@@ -411,7 +411,7 @@ export function SuggestionsList() {
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {SCORE_CRITERIA.map(criteria => {
-                      const value = (suggestion.score_details as Record<string, number>)[criteria.key] || 0;
+                      const value = (suggestion.score_details as unknown as Record<string, number>)[criteria.key] || 0;
                       const pct = (value / criteria.max) * 100;
                       const Icon = criteria.icon;
 
