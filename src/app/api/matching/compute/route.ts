@@ -237,7 +237,7 @@ function computeScore(
   if (fiche.location) {
     // Simple matching par inclusion de texte
     const ficheLocation = fiche.location.toLowerCase();
-    const profileLocation = ''; // Users don't have a location field yet
+    const profileLocation: string = ''; // Users don't have a location field yet
     if (ficheLocation.includes('remote') || ficheLocation.includes('distance') || ficheLocation.includes('télétravail')) {
       details.location = W.location; // Remote = tout le monde matche
     } else if (profileLocation && profileLocation.includes(ficheLocation)) {
