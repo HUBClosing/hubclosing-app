@@ -69,8 +69,7 @@ const candidateLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/candidatures', label: 'Mes candidatures', icon: FileText },
-  { href: '/dashboard/tracking', label: 'Tracking Calls', icon: Target },
-  { href: '/dashboard/performance', label: 'Mes performances', icon: TrendingUp, minTier: 'starter' },
+  { href: '/dashboard/performance', label: 'Tracking Performance', icon: TrendingUp, minTier: 'starter' },
   { href: '/dashboard/reputation', label: 'Réputation', icon: Award, minTier: 'starter' },
   { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar, minTier: 'pro' },
   { href: '/dashboard/accounting', label: 'Comptabilité', icon: Receipt, minTier: 'elite' },
@@ -232,7 +231,6 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
               const hasAccess = admin || hasTierAccess(userTier, link.minTier);
 
               if (!hasAccess) {
-                // Lien verrouillé — visible mais grisé avec cadenas
                 return (
                   <a
                     key={link.href}

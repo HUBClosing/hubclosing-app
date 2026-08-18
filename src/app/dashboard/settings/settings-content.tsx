@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import type { User, Profile, Skill, ExperienceLevel, SubscriptionTier } from '@/types/database';
-import { TIER_PRICES } from '@/types/database';
+import { TIER_PRICES, TRAINING_CENTER_OPTIONS } from '@/types/database';
 import { Card, CardContent, CardHeader, Badge, Switch } from '@/components/ui';
 import {
   Save, Loader2, Trash2, Bell, Mail, MessageSquare,
   User as UserIcon, Briefcase, Globe, Linkedin, Phone,
   Crown, ArrowRight, CheckCircle2, Shield, Star, Trophy, Gem,
-  CreditCard, Calendar,
+  CreditCard, Calendar, GraduationCap, Languages, Video, Building2,
 } from 'lucide-react';
 
 // ── Config ──
@@ -48,6 +48,11 @@ const NICHE_SUGGESTIONS = [
   'Développement personnel', 'Finance', 'Assurance', 'High-ticket',
 ];
 
+const COMMON_LANGUAGES = [
+  'Français', 'Anglais', 'Espagnol', 'Arabe', 'Portugais',
+  'Allemand', 'Italien', 'Néerlandais', 'Russe', 'Mandarin',
+];
+
 interface SettingsContentProps {
   user: User;
   profile: Profile;
@@ -77,6 +82,13 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
   const [hourlyRate, setHourlyRate] = useState<string>(profile.hourly_rate?.toString() || '');
   const [commissionRate, setCommissionRate] = useState<string>(profile.commission_rate?.toString() || '');
   const [isPublic, setIsPublic] = useState(profile.is_public || false);
+
+  // Nouveaux champs candidat
+  const [trainingCenter, setTrainingCenter] = useState(user.training_center || '');
+  const [isEmployed, setIsEmployed] = useState(user.is_employed || false);
+  const [languages, setLanguages] = useState<string[]>(user.languages || []);
+  const [languageInput, setLanguageInput] = useState('');
+  const [loomUrl, setLoomUrl] = useState(user.loom_url || '');
 
   // Recruteur
   const [companyName, setCompanyName] = useState(profile.company_name || '');
@@ -122,10 +134,29 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
     setNiches((prev) => prev.filter((n) => n !== niche));
   };
 
+  const addLanguage = (lang: string) => {
+    const trimmed = lang.trim();
+    if (trimmed && !languages.includes(trimmed)) {
+      setLanguages((prev) => [...prev, trimmed]);
+    }
+    setLanguageInput('');
+  };
+
+  const removeLanguage = (lang: string) => {
+    setLanguages((prev) => prev.filter((l) => l !== lang));
+  };
+
   const saveProfile = async () => {
     setSavingProfile(true);
     setProfileError('');
     try {
+      // Valider l'URL Loom si fournie
+      if (loomUrl && !loomUrl.match(/^https?:\/\/(www\.)?(loom\.com|youtu\.?be|youtube\.com)\//)) {
+        setProfileError('L\'URL de présentation doit être un lien Loom ou YouTube valide');
+        setSavingProfile(false);
+        return;
+      }
+
       // Update users table
       const { error: userErr } = await supabase
         .from('users')
@@ -135,6 +166,10 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
           skills,
           niches,
           years_experience: yearsExperience ? parseInt(yearsExperience) : null,
+          training_center: trainingCenter || null,
+          is_employed: isEmployed,
+          languages,
+          loom_url: loomUrl.trim() || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);
@@ -431,6 +466,23 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
                   </div>
                 </div>
 
+                {/* Centre de formation */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                    <GraduationCap className="h-3.5 w-3.5" /> Centre de formation
+                  </label>
+                  <select
+                    value={trainingCenter}
+                    onChange={(e) => setTrainingCenter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                  >
+                    <option value="">Non renseigné</option>
+                    {TRAINING_CENTER_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Experience + years */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
@@ -458,6 +510,76 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
                     />
                   </div>
+                </div>
+
+                {/* Salarié ou non */}
+                <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Actuellement salarié</p>
+                      <p className="text-xs text-gray-500">Indiquez si vous êtes salarié en parallèle</p>
+                    </div>
+                  </div>
+                  <Switch checked={isEmployed} onChange={setIsEmployed} />
+                </div>
+
+                {/* Langues parlées */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-gray-700 block mb-2 flex items-center gap-1">
+                    <Languages className="h-3.5 w-3.5" /> Langues parlées
+                  </label>
+                  {languages.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {languages.map((l) => (
+                        <span key={l} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                          {l}
+                          <button onClick={() => removeLanguage(l)} className="hover:text-red-500 transition-colors">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      value={languageInput}
+                      onChange={(e) => setLanguageInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLanguage(languageInput); } }}
+                      placeholder="Ajouter une langue..."
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                    />
+                    <button
+                      onClick={() => addLanguage(languageInput)}
+                      disabled={!languageInput.trim()}
+                      className="px-3 py-2 bg-brand-green text-white rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors disabled:opacity-30"
+                    >
+                      +
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {COMMON_LANGUAGES.filter((l) => !languages.includes(l)).slice(0, 6).map((l) => (
+                      <button
+                        key={l}
+                        onClick={() => addLanguage(l)}
+                        className="text-xs text-gray-400 hover:text-blue-600 border border-dashed border-gray-200 hover:border-blue-400 px-2 py-0.5 rounded-full transition-colors"
+                      >
+                        + {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Loom de présentation */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                    <Video className="h-3.5 w-3.5" /> Vidéo de présentation
+                  </label>
+                  <input
+                    value={loomUrl}
+                    onChange={(e) => setLoomUrl(e.target.value)}
+                    placeholder="https://www.loom.com/share/..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Lien Loom ou YouTube pour vous présenter aux recruteurs</p>
                 </div>
 
                 {/* Disponibilité */}

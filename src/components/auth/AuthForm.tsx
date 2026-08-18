@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Camera } from 'lucide-react';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
@@ -22,10 +22,14 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
+  // Avatar upload state
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const supabase = createClient();
 
   // Vérifier côté client si l'utilisateur est déjà connecté
-  // Cela remplace la redirection middleware qui causait des boucles
   useEffect(() => {
     const checkSession = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -40,6 +44,60 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
     setMode(newMode);
     setError('');
     setMessage('');
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier le type de fichier
+    if (!file.type.startsWith('image/')) {
+      setError('Veuillez sélectionner une image (JPG, PNG, etc.)');
+      return;
+    }
+
+    // Vérifier la taille (max 2 Mo)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('L\'image ne doit pas dépasser 2 Mo');
+      return;
+    }
+
+    setAvatarFile(file);
+    setError('');
+
+    // Créer un preview
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setAvatarPreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadAvatar = async (userId: string): Promise<string | null> => {
+    if (!avatarFile) return null;
+
+    const fileExt = avatarFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const filePath = `${userId}/avatar.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, avatarFile, { upsert: true });
+
+    if (uploadError) {
+      console.error('Avatar upload error:', uploadError.message);
+      return null;
+    }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,21 +121,35 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         if (error) throw error;
 
         // Si la confirmation email est désactivée, l'utilisateur est auto-connecté
-        // Le trigger handle_new_user() crée le profil avec role 'pending'
-        // → on redirige directement vers l'onboarding
         if (signUpData.session) {
-          // S'assurer que le profil existe (le trigger devrait l'avoir créé)
           if (signUpData.user) {
+            // Upload avatar si fourni
+            let avatarUrl: string | null = null;
+            if (avatarFile) {
+              avatarUrl = await uploadAvatar(signUpData.user.id);
+            }
+
             await supabase.from('users').upsert({
               id: signUpData.user.id,
               email: signUpData.user.email || '',
               role: 'pending',
               full_name: fullName || '',
+              ...(avatarUrl && { avatar_url: avatarUrl }),
             }, { onConflict: 'id' });
           }
           router.push('/onboarding');
           router.refresh();
           return;
+        }
+
+        // Email confirmation activée — upload avatar après vérification
+        // On stocke le fichier dans localStorage pour le récupérer après callback
+        if (avatarFile && signUpData.user) {
+          // Upload quand même — le user existe déjà côté Supabase Auth
+          const avatarUrl = await uploadAvatar(signUpData.user.id);
+          if (avatarUrl) {
+            await supabase.from('users').update({ avatar_url: avatarUrl }).eq('id', signUpData.user.id);
+          }
         }
 
         // Rediriger vers la page de vérification email
@@ -90,7 +162,6 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         });
         if (error) throw error;
 
-        // Connexion → toujours vers le dashboard
         const redirectParam = searchParams.get('redirect') || '/dashboard';
         const safeRedirect =
           redirectParam.startsWith('/') &&
@@ -123,7 +194,6 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         setError(oauthError.message);
         setLoading(false);
       }
-      // Si pas d'erreur, l'utilisateur est redirigé vers Google — loading reste true
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la connexion Google');
       setLoading(false);
@@ -177,7 +247,7 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
         </div>
 
         <div className="p-6">
-          {/* Google OAuth - toujours visible */}
+          {/* Google OAuth */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
@@ -215,22 +285,72 @@ export function AuthForm({ mode: initialMode }: AuthFormProps) {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom complet
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <>
+                {/* Photo de profil — optionnel */}
+                <div className="flex flex-col items-center gap-3">
                   <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Votre nom"
-                    required
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
                   />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative group"
+                  >
+                    {avatarPreview ? (
+                      <div className="relative">
+                        <img
+                          src={avatarPreview}
+                          alt="Preview"
+                          className="h-20 w-20 rounded-full object-cover border-2 border-brand-amber"
+                        />
+                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Camera className="h-5 w-5 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 hover:border-brand-amber hover:bg-brand-amber/5 transition-colors">
+                        <Camera className="h-5 w-5 text-gray-400" />
+                        <span className="text-[10px] text-gray-400">Photo</span>
+                      </div>
+                    )}
+                  </button>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-400">
+                      Photo de profil <span className="text-gray-300">(optionnel)</span>
+                    </p>
+                    {avatarPreview && (
+                      <button
+                        type="button"
+                        onClick={removeAvatar}
+                        className="text-xs text-red-400 hover:text-red-500 mt-0.5"
+                      >
+                        Supprimer
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nom complet
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Votre nom"
+                      required
+                      className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             <div>
