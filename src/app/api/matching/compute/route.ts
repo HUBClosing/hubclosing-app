@@ -430,7 +430,7 @@ export async function POST(req: NextRequest) {
       existing.count++;
       grouped.set(stat.user_id, existing);
     }
-    for (const [userId, data] of grouped.entries()) {
+    for (const [userId, data] of Array.from(grouped.entries())) {
       const totalRev = data.revenues.reduce((s, v) => s + v, 0);
       const avgCpc = data.cashPerCalls.length > 0
         ? data.cashPerCalls.reduce((s, v) => s + v, 0) / data.cashPerCalls.length
