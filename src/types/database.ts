@@ -991,3 +991,166 @@ export const EXPERIENCE_LABELS: Record<string, string> = {
   senior: 'Senior (3-5 ans)',
   expert: 'Expert (5+ ans)',
 };
+// ============================================================
+// À AJOUTER À LA FIN de src/types/database.ts (avant le dernier })
+// Copier-coller ce bloc à la fin du fichier
+// ============================================================
+
+// --- Matching IA ---
+
+export type MatchingFicheStatus = 'active' | 'archived';
+export type MatchingResultStatus = 'pending' | 'liked' | 'passed' | 'contacted';
+
+export interface MatchingFiche {
+  id: string;
+  recruiter_id: string;
+  title: string;
+
+  // Critères métier
+  niche: string | null;
+  required_skills: string[];
+  offer_type: string | null;
+  experience_level: string | null;
+  min_years_experience: number | null;
+  languages: string[];
+
+  // Rémunération
+  min_commission_rate: number | null;
+  max_commission_rate: number | null;
+
+  // Disponibilité
+  location: string | null;
+  availability_required: boolean;
+  min_hours_per_week: number | null;
+  is_employed_preferred: boolean | null;
+
+  // Performance
+  min_cash_per_call: number | null;
+  min_deals_closed: number | null;
+  min_revenue_generated: number | null;
+  min_reputation_score: number | null;
+  min_badge_level: string | null;
+  medal_required: string | null;
+
+  // Préférences
+  loom_required: boolean;
+  training_centers: string[];
+
+  // Meta
+  status: MatchingFicheStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  recruiter?: User;
+  results?: MatchingResult[];
+  results_count?: number;
+}
+
+export interface MatchingResult {
+  id: string;
+  fiche_id: string;
+  candidate_id: string;
+  score: number;
+  score_details: MatchingScoreDetails;
+  status: MatchingResultStatus;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  candidate?: User;
+  fiche?: MatchingFiche;
+  profile?: Profile;
+}
+
+export interface MatchingScoreDetails {
+  niche: number;
+  skills: number;
+  experience: number;
+  years: number;
+  languages: number;
+  commission: number;
+  availability: number;
+  location: number;
+  reputation: number;
+  performance: number;
+  loom: number;
+  training: number;
+  reviews: number;
+  revenue: number;
+  total: number;
+}
+
+/** Poids de chaque critère dans le score de matching (total = 100) */
+export const MATCHING_WEIGHTS = {
+  niche: 15,
+  skills: 15,
+  experience: 10,
+  years: 5,
+  languages: 10,
+  commission: 5,
+  availability: 10,
+  location: 5,
+  reputation: 8,
+  performance: 7,
+  loom: 3,
+  training: 3,
+  reviews: 2,
+  revenue: 2,
+} as const;
+
+/** Niches courantes pour le formulaire de matching */
+export const MATCHING_NICHES = [
+  'Coaching',
+  'Formation',
+  'SaaS',
+  'E-commerce',
+  'Immobilier',
+  'Finance',
+  'Assurance',
+  'Santé',
+  'Bien-être',
+  'Marketing Digital',
+  'Développement personnel',
+  'Consulting',
+  'Agence',
+  'Trading',
+  'Crypto',
+  'Infoproduit',
+  'High Ticket',
+  'B2B',
+  'B2C',
+] as const;
+
+/** Langues courantes */
+export const MATCHING_LANGUAGES = [
+  'Français',
+  'Anglais',
+  'Espagnol',
+  'Allemand',
+  'Arabe',
+  'Portugais',
+  'Italien',
+  'Néerlandais',
+  'Russe',
+  'Chinois',
+] as const;
+
+/** Labels des types de contrat */
+export const OFFER_TYPE_LABELS: Record<string, string> = {
+  challenge: 'Challenge',
+  recurring: 'Récurrent',
+  mission: 'Mission ponctuelle',
+  full_time: 'CDI / Temps plein',
+  part_time: 'Temps partiel',
+  commission_only: 'Commission only',
+};
+
+/** Labels des niveaux d'expérience */
+export const EXPERIENCE_LABELS: Record<string, string> = {
+  junior: 'Junior (0-1 an)',
+  intermediaire: 'Intermédiaire (1-3 ans)',
+  senior: 'Senior (3-5 ans)',
+  expert: 'Expert (5+ ans)',
+};
