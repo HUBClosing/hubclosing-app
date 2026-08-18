@@ -131,6 +131,19 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // Vérification email — bloquer si email non confirmé
+  if (
+    user &&
+    !user.email_confirmed_at &&
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/api/auth') &&
+    !request.nextUrl.pathname.startsWith('/api/stripe/webhook')
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/auth/verify-email';
+    return addSecurityHeaders(redirectWithCookies(url));
+  }
+
   // Routes protégées — requièrent une authentification
   if (
     !user &&
