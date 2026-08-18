@@ -99,6 +99,12 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
   const [messageNotif, setMessageNotif] = useState(true);
   const [candidatureNotif, setCandidatureNotif] = useState(true);
 
+  // ── Préférences offres ──
+  const [notifOffers, setNotifOffers] = useState<'all' | 'filtered' | 'none'>(user.notif_offers || 'all');
+  const [notifOfferNiches, setNotifOfferNiches] = useState<string[]>(user.notif_offer_niches || []);
+  const [notifOfferTypes, setNotifOfferTypes] = useState<string[]>(user.notif_offer_types || []);
+  const [notifNicheInput, setNotifNicheInput] = useState('');
+
   // ── UI state ──
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
@@ -218,8 +224,30 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
     }
   };
 
+  const toggleNotifOfferNiche = (niche: string) => {
+    setNotifOfferNiches(prev =>
+      prev.includes(niche) ? prev.filter(n => n !== niche) : [...prev, niche]
+    );
+  };
+
+  const addNotifNiche = (niche: string) => {
+    const trimmed = niche.trim();
+    if (trimmed && !notifOfferNiches.includes(trimmed)) {
+      setNotifOfferNiches(prev => [...prev, trimmed]);
+    }
+    setNotifNicheInput('');
+  };
+
+  const toggleNotifOfferType = (type: string) => {
+    setNotifOfferTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
   const saveNotifications = async () => {
     setSavingNotif(true);
+
+    // Sauvegarder les préférences email dans auth metadata
     await supabase.auth.updateUser({
       data: {
         notifications: {
@@ -229,6 +257,18 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
         },
       },
     });
+
+    // Sauvegarder les préférences offres dans la table users
+    await supabase
+      .from('users')
+      .update({
+        notif_offers: notifOffers,
+        notif_offer_niches: notifOffers === 'filtered' ? notifOfferNiches : [],
+        notif_offer_types: notifOffers === 'filtered' ? notifOfferTypes : [],
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', user.id);
+
     setSavingNotif(false);
     setNotifSaved(true);
     setTimeout(() => setNotifSaved(false), 3000);
@@ -738,6 +778,147 @@ export function SettingsContent({ user, profile }: SettingsContentProps) {
             </div>
             <Switch checked={candidatureNotif} onChange={setCandidatureNotif} />
           </div>
+
+          {/* ── Préférences offres (candidats uniquement) ── */}
+          {isCandidate && (
+            <div className="border-t border-gray-100 pt-5 space-y-4">
+              <div>
+                <p className="font-medium text-sm text-brand-dark flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  Notifications nouvelles offres
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choisissez quelles offres vous voulez recevoir par notification et email
+                </p>
+              </div>
+
+              {/* Sélection du mode */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { value: 'all' as const, label: 'Toutes les offres', desc: 'Recevoir chaque nouvelle offre' },
+                  { value: 'filtered' as const, label: 'Offres filtrées', desc: 'Seulement mes niches / types' },
+                  { value: 'none' as const, label: 'Aucune offre', desc: 'Ne pas être notifié' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setNotifOffers(option.value)}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      notifOffers === option.value
+                        ? 'bg-brand-dark text-white border-brand-dark'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-brand-dark'
+                    }`}
+                  >
+                    <span className="text-sm font-medium block">{option.label}</span>
+                    <span className={`text-xs block mt-0.5 ${notifOffers === option.value ? 'text-white/70' : 'text-gray-400'}`}>
+                      {option.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Filtres détaillés (visible seulement en mode 'filtered') */}
+              {notifOffers === 'filtered' && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  {/* Niches */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Niches qui m&apos;intéressent
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {NICHE_SUGGESTIONS.map((niche) => {
+                        const isSelected = notifOfferNiches.includes(niche);
+                        return (
+                          <button
+                            key={niche}
+                            type="button"
+                            onClick={() => toggleNotifOfferNiche(niche)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                              isSelected
+                                ? 'bg-brand-amber text-white border-brand-amber'
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-brand-amber hover:text-brand-amber'
+                            }`}
+                          >
+                            {niche}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Input libre pour ajouter une niche custom */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Autre niche..."
+                        value={notifNicheInput}
+                        onChange={(e) => setNotifNicheInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addNotifNiche(notifNicheInput))}
+                        className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-amber/20 focus:border-brand-amber"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addNotifNiche(notifNicheInput)}
+                        disabled={!notifNicheInput.trim()}
+                        className="px-3 py-1.5 bg-brand-amber text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {/* Tags des niches custom ajoutées */}
+                    {notifOfferNiches.filter(n => !NICHE_SUGGESTIONS.includes(n)).length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {notifOfferNiches.filter(n => !NICHE_SUGGESTIONS.includes(n)).map((niche) => (
+                          <span key={niche} className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-amber/10 text-brand-amber text-xs rounded-full">
+                            {niche}
+                            <button type="button" onClick={() => toggleNotifOfferNiche(niche)} className="hover:text-red-500">×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Types d'offres */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Types d&apos;offres qui m&apos;intéressent
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 'challenge', label: 'Challenge' },
+                        { value: 'recurring', label: 'Recurring' },
+                        { value: 'mission', label: 'Mission ponctuelle' },
+                        { value: 'full_time', label: 'CDI' },
+                        { value: 'part_time', label: 'Temps partiel' },
+                        { value: 'commission_only', label: 'Commission only' },
+                      ].map((type) => {
+                        const isSelected = notifOfferTypes.includes(type.value);
+                        return (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => toggleNotifOfferType(type.value)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                              isSelected
+                                ? 'bg-brand-dark text-white border-brand-dark'
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-brand-dark hover:text-brand-dark'
+                            }`}
+                          >
+                            {type.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {notifOfferNiches.length === 0 && notifOfferTypes.length === 0 && (
+                    <p className="text-xs text-amber-600 bg-amber-50 p-2 rounded-lg">
+                      Sélectionnez au moins une niche ou un type pour recevoir des offres filtrées.
+                      Sans filtre, vous ne recevrez aucune notification.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <button
             onClick={saveNotifications}

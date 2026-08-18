@@ -189,6 +189,10 @@ export interface User {
   recruiter_deblocages_remaining: number;
   recruiter_boosts_remaining: number;
   recruiter_pack_purchased_at: string | null;
+  // Préférences de notification offres
+  notif_offers: 'all' | 'filtered' | 'none';
+  notif_offer_niches: string[];
+  notif_offer_types: string[];
   is_active: boolean;
   is_onboarded: boolean;
   created_at: string;

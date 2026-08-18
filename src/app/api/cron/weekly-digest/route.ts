@@ -57,19 +57,19 @@ export async function GET(req: NextRequest) {
     (managers || []).map(m => [m.id, m.company_name || m.full_name || 'Recruteur'])
   );
 
-  // Récupérer tous les candidats avec email
+  // Récupérer tous les candidats avec email et préférences
   const { data: candidates, error: candidatesError } = await supabase
     .from('users')
-    .select('id, email, full_name')
+    .select('id, email, full_name, notif_offers, notif_offer_niches, notif_offer_types')
     .or('role_type.eq.candidate,active_role.eq.candidate')
-    .not('email', 'is', null);
+    .not('email', 'is', null)
+    .neq('notif_offers', 'none');
 
   if (candidatesError || !candidates || candidates.length === 0) {
     return NextResponse.json({ success: true, message: 'Aucun candidat à notifier', sent: 0 });
   }
 
-  // Vérifier les préférences de notification de chaque candidat
-  // Les préférences sont stockées dans auth.users.raw_user_meta_data.notifications.email
+  // Vérifier les préférences email (auth metadata)
   const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
 
   const optedOutEmails = new Set<string>();
@@ -82,11 +82,33 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Filtrer les candidats qui n'ont pas désactivé les notifications email
+  // Filtrer : pas d'opt-out email
   const eligibleCandidates = candidates.filter(c => !optedOutEmails.has(c.email));
 
   if (eligibleCandidates.length === 0) {
     return NextResponse.json({ success: true, message: 'Tous les candidats ont désactivé les emails', sent: 0 });
+  }
+
+  // Fonction pour filtrer les offres selon les préférences d'un candidat
+  function filterOffersForCandidate(
+    candidate: { notif_offers: string | null; notif_offer_niches: string[] | null; notif_offer_types: string[] | null },
+    offers: typeof newOffers
+  ) {
+    const pref = candidate.notif_offers || 'all';
+    if (pref === 'all') return offers;
+
+    const prefNiches = candidate.notif_offer_niches || [];
+    const prefTypes = candidate.notif_offer_types || [];
+
+    if (prefNiches.length === 0 && prefTypes.length === 0) return [];
+
+    return offers.filter(offer => {
+      const nicheMatch = prefNiches.length === 0 || (
+        offer.niche && prefNiches.some((n: string) => n.toLowerCase() === (offer.niche || '').toLowerCase())
+      );
+      const typeMatch = prefTypes.length === 0 || prefTypes.includes(offer.offer_type);
+      return nicheMatch || typeMatch;
+    });
   }
 
   // Construire le HTML du digest
@@ -99,39 +121,43 @@ export async function GET(req: NextRequest) {
     commission_only: 'Commission',
   };
 
-  const offersHtml = newOffers.map(offer => {
-    const typeLabel = offerTypeLabels[offer.offer_type] || offer.offer_type;
-    const recruiterName = managerMap.get(offer.manager_id) || 'Recruteur';
-    const commission = offer.commission_rate ? `${offer.commission_rate}%` : '—';
-    const niche = offer.niche || '—';
-    const date = new Date(offer.created_at).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-    });
+  // Helper pour construire le HTML d'une liste d'offres
+  function buildOffersHtml(offers: typeof newOffers) {
+    return offers.map(offer => {
+      const typeLabel = offerTypeLabels[offer.offer_type] || offer.offer_type;
+      const recruiterName = managerMap.get(offer.manager_id) || 'Recruteur';
+      const commission = offer.commission_rate ? `${offer.commission_rate}%` : '—';
+      const niche = offer.niche || '—';
+      const date = new Date(offer.created_at).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+      });
 
-    return `
-      <tr>
-        <td style="padding: 16px; border-bottom: 1px solid #f0f0f0;">
-          <div style="margin-bottom: 6px;">
-            <a href="https://hubclosing.fr/dashboard/marketplace/${offer.id}"
-               style="color: #0A0F08; font-weight: 600; font-size: 15px; text-decoration: none;">
-              ${offer.title}
-            </a>
-          </div>
-          <div style="font-size: 13px; color: #666;">
-            <span style="display: inline-block; background: #F05A28; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 8px;">${typeLabel}</span>
-            <span style="margin-right: 12px;">📍 ${niche}</span>
-            <span style="margin-right: 12px;">💰 ${commission}</span>
-            <span>🏢 ${recruiterName}</span>
-          </div>
-          <div style="font-size: 12px; color: #999; margin-top: 4px;">Publiée le ${date}</div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+      return `
+        <tr>
+          <td style="padding: 16px; border-bottom: 1px solid #f0f0f0;">
+            <div style="margin-bottom: 6px;">
+              <a href="https://hubclosing.fr/dashboard/marketplace/${offer.id}"
+                 style="color: #0A0F08; font-weight: 600; font-size: 15px; text-decoration: none;">
+                ${offer.title}
+              </a>
+            </div>
+            <div style="font-size: 13px; color: #666;">
+              <span style="display: inline-block; background: #F05A28; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 8px;">${typeLabel}</span>
+              <span style="margin-right: 12px;">📍 ${niche}</span>
+              <span style="margin-right: 12px;">💰 ${commission}</span>
+              <span>🏢 ${recruiterName}</span>
+            </div>
+            <div style="font-size: 12px; color: #999; margin-top: 4px;">Publiée le ${date}</div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
 
   // Envoyer les emails par batch de 10 (limite Resend)
   let totalSent = 0;
+  let totalSkipped = 0;
   const { Resend } = await import('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -139,12 +165,23 @@ export async function GET(req: NextRequest) {
     const batch = eligibleCandidates.slice(i, i + 10);
 
     const emailPromises = batch.map(candidate => {
+      // Filtrer les offres selon les préférences du candidat
+      const candidateOffers = filterOffersForCandidate(candidate, newOffers);
+
+      // Si aucune offre ne matche les préférences, skip
+      if (candidateOffers.length === 0) {
+        totalSkipped++;
+        return null;
+      }
+
       const firstName = candidate.full_name?.split(' ')[0] || 'Closer';
+      const offersHtml = buildOffersHtml(candidateOffers);
+      const count = candidateOffers.length;
 
       return resend.emails.send({
         from: 'HUBClosing <noreply@hubclosing.fr>',
         to: candidate.email,
-        subject: `🚀 ${newOffers.length} nouvelle${newOffers.length > 1 ? 's' : ''} offre${newOffers.length > 1 ? 's' : ''} cette semaine sur HUBClosing`,
+        subject: `🚀 ${count} nouvelle${count > 1 ? 's' : ''} offre${count > 1 ? 's' : ''} cette semaine sur HUBClosing`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
             <!-- Header -->
@@ -158,7 +195,7 @@ export async function GET(req: NextRequest) {
               Bonjour ${firstName},
             </p>
             <p style="color: #333; font-size: 15px; line-height: 1.6;">
-              Voici les <strong>${newOffers.length} nouvelle${newOffers.length > 1 ? 's' : ''} offre${newOffers.length > 1 ? 's' : ''}</strong> publiée${newOffers.length > 1 ? 's' : ''} cette semaine sur HUBClosing :
+              Voici les <strong>${count} nouvelle${count > 1 ? 's' : ''} offre${count > 1 ? 's' : ''}</strong> publiée${count > 1 ? 's' : ''} cette semaine${candidate.notif_offers === 'filtered' ? ' correspondant à vos critères' : ''} :
             </p>
 
             <!-- Offres -->
@@ -180,7 +217,7 @@ export async function GET(req: NextRequest) {
             <div style="border-top: 1px solid #eee; padding-top: 16px; margin-top: 30px;">
               <p style="color: #999; font-size: 12px; text-align: center; line-height: 1.5;">
                 Vous recevez cet email car vous êtes inscrit sur HUBClosing.<br/>
-                Pour ne plus recevoir ces emails, désactivez les notifications email dans vos
+                Pour gérer vos préférences de notification, rendez-vous dans vos
                 <a href="https://hubclosing.fr/dashboard/settings" style="color: #F05A28; text-decoration: none;">paramètres</a>.
               </p>
               <p style="color: #ccc; font-size: 11px; text-align: center;">
@@ -209,5 +246,6 @@ export async function GET(req: NextRequest) {
     offers_count: newOffers.length,
     candidates_count: eligibleCandidates.length,
     emails_sent: totalSent,
+    skipped_no_match: totalSkipped,
   });
 }
