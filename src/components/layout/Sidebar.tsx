@@ -30,6 +30,7 @@ import {
   CreditCard,
   Receipt,
   ClipboardList,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -69,7 +70,8 @@ const candidateLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/candidatures', label: 'Mes candidatures', icon: FileText },
-  { href: '/dashboard/performance', label: 'Tracking Performance', icon: TrendingUp, minTier: 'starter' },
+  { href: '/dashboard/tracking', label: 'Tracking Calls', icon: Target },
+  { href: '/dashboard/performance', label: 'Mes performances', icon: TrendingUp, minTier: 'starter' },
   { href: '/dashboard/reputation', label: 'Réputation', icon: Award, minTier: 'starter' },
   { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar, minTier: 'pro' },
   { href: '/dashboard/accounting', label: 'Comptabilité', icon: Receipt, minTier: 'elite' },
@@ -84,6 +86,7 @@ const candidateLinks: NavLink[] = [
 const recruiterLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
+  { href: '/dashboard/matching', label: 'Matching IA', icon: Sparkles, minTier: 'solo' },
   { href: '/dashboard/recruitment', label: 'Dashboard recrutement', icon: BarChart3 },
   { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
@@ -174,10 +177,10 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <a href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-              <div className="h-10 w-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-white text-lg">H</div>
-              <span className="font-bold text-lg"><span className="text-white">HUB</span><span className="text-brand-light/70">Closing</span></span>
-            </a>
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-brand-amber flex items-center justify-center font-bold text-brand-dark">H</div>
+              <span className="font-bold text-lg">HUBClosing</span>
+            </div>
             <button onClick={onClose} className="lg:hidden text-white/70 hover:text-white">
               <X className="h-5 w-5" />
             </button>
@@ -227,10 +230,11 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
             {links.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href;
+              const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
               const hasAccess = admin || hasTierAccess(userTier, link.minTier);
 
               if (!hasAccess) {
+                // Lien verrouillé — visible mais grisé avec cadenas
                 return (
                   <a
                     key={link.href}
