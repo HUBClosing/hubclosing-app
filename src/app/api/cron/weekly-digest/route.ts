@@ -92,12 +92,10 @@ export async function GET(req: NextRequest) {
   // Fonction pour filtrer les offres selon les préférences d'un candidat
   function filterOffersForCandidate(
     candidate: { notif_offers: string | null; notif_offer_niches: string[] | null; notif_offer_types: string[] | null },
-    offers: typeof newOffers
+    offers: NonNullable<typeof newOffers>
   ) {
     const pref = candidate.notif_offers || 'all';
-    if (pref === 'all') return offers || [];
-
-    if (!offers) return [];
+    if (pref === 'all') return offers;
 
     const prefNiches = candidate.notif_offer_niches || [];
     const prefTypes = candidate.notif_offer_types || [];
@@ -124,7 +122,7 @@ export async function GET(req: NextRequest) {
   };
 
   // Helper pour construire le HTML d'une liste d'offres
-  function buildOffersHtml(offers: typeof newOffers) {
+  function buildOffersHtml(offers: NonNullable<typeof newOffers>) {
     return offers.map(offer => {
       const typeLabel = offerTypeLabels[offer.offer_type] || offer.offer_type;
       const recruiterName = managerMap.get(offer.manager_id) || 'Recruteur';
