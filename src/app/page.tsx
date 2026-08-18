@@ -65,8 +65,8 @@ img{max-width:100%;height:auto;}
 .hero>*:not(.hero-video):not(.hero-particles){position:relative;z-index:2;}
 
 .hero-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
-.particle{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--amber);opacity:0;animation:floatUp var(--dur) var(--delay) infinite;}
-@keyframes floatUp{0%{opacity:0;transform:translateY(100vh) scale(0);}15%{opacity:0.6;}85%{opacity:0.3;}100%{opacity:0;transform:translateY(-20vh) scale(1);}}
+.particle{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--amber);opacity:0;animation:floatUp var(--dur) var(--delay) infinite;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(100vh) scale(0);}15%{opacity:0.85;}85%{opacity:0.5;}100%{opacity:0;transform:translateY(-20vh) scale(1);}}
 
 .hero-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(240,90,40,0.2);border-radius:30px;padding:7px 20px;margin-bottom:36px;background:rgba(240,90,40,0.04);opacity:0;animation:fadeInUp 0.8s 2.0s cubic-bezier(0.16,1,0.3,1) forwards;}
 .hero-pill-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:pulse 2s infinite;}
@@ -478,12 +478,12 @@ img{max-width:100%;height:auto;}
     if (!particlesEl) return;
 
     particlesEl.innerHTML = '';
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 30; i++) {
       const p = document.createElement('div');
       p.className = 'particle';
       const dur = 6 + Math.random() * 8;
       const delay = Math.random() * 8;
-      const size = 2 + Math.random() * 3;
+      const size = 2 + Math.random() * 5;
       p.style.cssText = `left:${Math.random() * 100}%;--dur:${dur}s;--delay:${delay}s;width:${size}px;height:${size}px;`;
       particlesEl.appendChild(p);
     }
