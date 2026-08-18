@@ -549,6 +549,7 @@ export type NotificationType =
   | 'message_received'
   | 'review_request'
   | 'review_received'
+  | 'new_offer'
   | 'system';
 
 export interface Notification {

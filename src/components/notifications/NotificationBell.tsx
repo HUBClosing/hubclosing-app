@@ -17,6 +17,7 @@ const NOTIF_TYPE_CONFIG: Record<string, { emoji: string; color: string }> = {
   message_received:     { emoji: '💬', color: 'bg-purple-100' },
   review_request:       { emoji: '⭐', color: 'bg-yellow-100' },
   review_received:      { emoji: '🌟', color: 'bg-yellow-100' },
+  new_offer:            { emoji: '🚀', color: 'bg-green-100' },
   system:               { emoji: '📢', color: 'bg-gray-100' },
 };
 
