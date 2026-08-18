@@ -40,7 +40,7 @@ const config: Config = {
         'gradient-brand': 'linear-gradient(135deg, #F57A4A 0%, #F05A28 50%, #D04510 100%)',
         'gradient-dark': 'linear-gradient(180deg, #0A0F08 0%, #060A04 100%)',
         'gradient-card': 'linear-gradient(145deg, #111A0C 0%, #0D1509 100%)',
-      }
+      },
       boxShadow: {
         'glow': '0 0 20px rgba(240, 90, 40, 0.15)',
         'glow-lg': '0 0 40px rgba(240, 90, 40, 0.2)',
