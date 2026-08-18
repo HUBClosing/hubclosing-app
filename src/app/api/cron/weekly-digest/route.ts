@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Récupérer les noms des recruteurs
-  const managerIds = [...new Set(newOffers.map(o => o.manager_id))];
+  const managerIds = Array.from(new Set(newOffers.map(o => o.manager_id)));
   const { data: managers } = await supabase
     .from('users')
     .select('id, full_name, company_name')

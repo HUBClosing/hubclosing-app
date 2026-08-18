@@ -361,7 +361,7 @@ export default function NewOfferPage() {
       }
     }
 
-    const { error: insertError } = await supabase.from('offers').insert({
+    const { data: insertedOffer, error: insertError } = await supabase.from('offers').insert({
       manager_id: user.id,
       title,
       description,
@@ -381,7 +381,7 @@ export default function NewOfferPage() {
       application_deadline: deadline || null,
       max_applicants: maxApplicants,
       status: 'active',
-    });
+    }).select('id, title').single();
 
     if (insertError) {
       setError(insertError.message);
@@ -394,6 +394,15 @@ export default function NewOfferPage() {
       await supabase.from('users').update({
         recruiter_annonces_remaining: Math.max(0, annoncesRemaining - 1),
       }).eq('id', user.id);
+    }
+
+    // Notifier les candidats de la nouvelle offre (fire-and-forget)
+    if (insertedOffer?.id) {
+      fetch('/api/notify-new-offer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ offer_id: insertedOffer.id }),
+      }).catch(() => {});
     }
 
     router.push('/dashboard/offers');
