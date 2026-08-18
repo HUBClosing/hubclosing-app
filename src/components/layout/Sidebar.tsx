@@ -175,10 +175,10 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-brand-amber flex items-center justify-center font-bold text-brand-dark">H</div>
-              <span className="font-bold text-lg">HUBClosing</span>
-            </div>
+            <a href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+              <div className="h-10 w-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-white text-lg">H</div>
+              <span className="font-bold text-lg"><span className="text-white">HUB</span><span className="text-brand-light/70">Closing</span></span>
+            </a>
             <button onClick={onClose} className="lg:hidden text-white/70 hover:text-white">
               <X className="h-5 w-5" />
             </button>
