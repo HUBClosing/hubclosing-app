@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 // GET /api/performances — lister les performances du candidat connecté
 export async function GET(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/performances — créer un nouveau record de performance
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
