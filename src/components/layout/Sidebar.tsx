@@ -31,6 +31,7 @@ import {
   Receipt,
   ClipboardList,
   Sparkles,
+  PieChart,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -89,6 +90,7 @@ const recruiterLinks: NavLink[] = [
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
   { href: '/dashboard/matching', label: 'Matching IA', icon: Sparkles, minTier: 'solo' },
   { href: '/dashboard/recruitment', label: 'Dashboard recrutement', icon: BarChart3 },
+  { href: '/dashboard/crm', label: 'CRM Événements', icon: PieChart, minTier: 'solo' },
   { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'solo' },
