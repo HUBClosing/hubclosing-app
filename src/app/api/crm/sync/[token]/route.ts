@@ -285,7 +285,7 @@ export async function GET(
   return NextResponse.json({
     status: 'active',
     message: 'Endpoint HUBClosing prêt à recevoir les données CRM. Envoyez vos webhooks en POST.',
-    supported_crms: ['GoHighLevel', 'HubSpot', 'Airtable', 'Tout CRM avec webhooks'],
+    supported_crms: ['GoHighLevel', 'HubSpot', 'Airtable', 'Salesforce', 'Pipedrive', 'Zoho', 'Monday', 'Notion', 'Close', 'Freshsales', 'Sellsy', 'noCRM', 'Tout CRM avec webhooks'],
     documentation: 'https://hubclosing.fr/dashboard/settings/webhooks',
   });
 }

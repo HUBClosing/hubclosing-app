@@ -33,7 +33,7 @@ export default function WebhooksSettingsPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Active CRM tab for guide
-  const [activeGuide, setActiveGuide] = useState<'ghl' | 'hubspot' | 'airtable'>('ghl');
+  const [activeGuide, setActiveGuide] = useState<'ghl' | 'hubspot' | 'airtable' | 'autre'>('ghl');
 
   useEffect(() => {
     fetchIncomingToken();
@@ -153,7 +153,7 @@ export default function WebhooksSettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-brand-dark">Connexion CRM</h1>
-        <p className="text-gray-500 mt-1">Synchronisez automatiquement HUBClosing avec votre CRM</p>
+        <p className="text-gray-500 mt-1">Synchronisez automatiquement HUBClosing avec n&apos;importe quel CRM (GoHighLevel, HubSpot, Salesforce, Pipedrive, Zoho, Airtable, et tous les autres)</p>
       </div>
 
       {message && (
@@ -208,11 +208,12 @@ export default function WebhooksSettingsPage() {
             {/* Guide par CRM */}
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm font-medium text-gray-700 mb-3">Comment faire selon votre CRM :</p>
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {[
                   { id: 'ghl' as const, label: 'GoHighLevel' },
                   { id: 'hubspot' as const, label: 'HubSpot' },
                   { id: 'airtable' as const, label: 'Airtable' },
+                  { id: 'autre' as const, label: 'Autre CRM' },
                 ].map((crm) => (
                   <button
                     key={crm.id}
@@ -254,6 +255,27 @@ export default function WebhooksSettingsPage() {
                   <li>Collez l&apos;URL HUBClosing et mappez les champs (nom, email, montant)</li>
                   <li>Activez l&apos;automation</li>
                 </ol>
+              )}
+              {activeGuide === 'autre' && (
+                <div className="space-y-3 text-sm text-gray-600">
+                  <p className="font-medium text-gray-700">HUBClosing fonctionne avec tous les CRM qui supportent les webhooks (Salesforce, Pipedrive, Zoho, Monday, Notion, Close, Freshsales, noCRM, Sellsy, etc.)</p>
+                  <ol className="list-decimal list-inside space-y-2">
+                    <li>Dans votre CRM, cherchez la section <strong>Webhooks</strong>, <strong>Automations</strong> ou <strong>Intégrations</strong></li>
+                    <li>Créez un webhook ou une automation qui envoie des données en <strong>POST</strong></li>
+                    <li>Collez l&apos;URL HUBClosing ci-dessus comme destination</li>
+                    <li>Sélectionnez les événements déclencheurs (nouveau deal, mise à jour, etc.)</li>
+                    <li>Assurez-vous que le payload JSON contient au minimum :</li>
+                  </ol>
+                  <div className="bg-white rounded-lg p-3 border border-gray-200 font-mono text-xs">
+                    <p>{`{`}</p>
+                    <p className="ml-4">&quot;name&quot; ou &quot;nom&quot; : &quot;Nom du closer&quot;,</p>
+                    <p className="ml-4">&quot;email&quot; : &quot;closer@email.com&quot;,</p>
+                    <p className="ml-4">&quot;revenue&quot; ou &quot;montant&quot; ou &quot;amount&quot; : 1500,</p>
+                    <p className="ml-4">&quot;calls&quot; ou &quot;appels&quot; : 3</p>
+                    <p>{`}`}</p>
+                  </div>
+                  <p className="text-xs text-gray-400">HUBClosing détecte automatiquement les champs de votre CRM — pas besoin de mapping exact. Les noms de champs courants (name, nom, email, revenue, montant, amount, calls, appels, status, etc.) sont reconnus quelle que soit la structure.</p>
+                </div>
               )}
             </div>
 
@@ -423,7 +445,7 @@ export default function WebhooksSettingsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
           <div className="flex items-start gap-2">
             <ArrowDownToLine className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <span><strong>CRM → HUBClosing :</strong> copiez l&apos;URL HUBClosing dans les webhooks de votre CRM. Les modifications (deals, revenue, appels) se synchronisent automatiquement.</span>
+            <span><strong>CRM → HUBClosing :</strong> copiez l&apos;URL HUBClosing dans les webhooks de votre CRM. Compatible avec tous les CRM (GoHighLevel, HubSpot, Salesforce, Pipedrive, Zoho, Airtable, etc.) — les modifications se synchronisent automatiquement.</span>
           </div>
           <div className="flex items-start gap-2">
             <ArrowUpFromLine className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
