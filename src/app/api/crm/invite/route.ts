@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { triggerWebhooks } from '@/lib/webhooks';
 
 // POST /api/crm/invite — inviter un closer externe (par email)
 export async function POST(req: NextRequest) {
@@ -123,6 +124,16 @@ export async function POST(req: NextRequest) {
         console.error('Erreur envoi email invitation closer');
       }
     }
+
+    // Webhook: invitation envoyée ou closer assigné
+    const webhookEvent = closerId ? 'assignment.created' : 'invitation.sent';
+    triggerWebhooks(user.id, webhookEvent, {
+      event_id,
+      assignment,
+      closer_name: closer_name.trim(),
+      closer_email: closer_email.trim(),
+      is_new_user: !closerId,
+    }).catch(() => {});
 
     return NextResponse.json({
       assignment,

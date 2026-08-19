@@ -1049,3 +1049,79 @@ export interface EventAggregatedStats {
   total_cancellations: number;
   avg_cash_per_call: number;
 }
+
+// =============================================
+// WEBHOOKS — Intégration CRM externe
+// =============================================
+
+/** Types d'événements webhook */
+export type WebhookEventType =
+  | 'event.created'
+  | 'event.updated'
+  | 'event.deleted'
+  | 'assignment.created'
+  | 'assignment.removed'
+  | 'performance.created'
+  | 'performance.updated'
+  | 'performance.deleted'
+  | 'invitation.sent';
+
+export const WEBHOOK_EVENT_LABELS: Record<WebhookEventType, string> = {
+  'event.created': 'Événement créé',
+  'event.updated': 'Événement modifié',
+  'event.deleted': 'Événement supprimé',
+  'assignment.created': 'Closer assigné',
+  'assignment.removed': 'Closer retiré',
+  'performance.created': 'Performance saisie',
+  'performance.updated': 'Performance modifiée',
+  'performance.deleted': 'Performance supprimée',
+  'invitation.sent': 'Invitation envoyée',
+};
+
+export const ALL_WEBHOOK_EVENTS: WebhookEventType[] = [
+  'event.created', 'event.updated', 'event.deleted',
+  'assignment.created', 'assignment.removed',
+  'performance.created', 'performance.updated', 'performance.deleted',
+  'invitation.sent',
+];
+
+/** Endpoint webhook configuré par un recruteur */
+export interface WebhookEndpoint {
+  id: string;
+  user_id: string;
+  url: string;
+  secret: string;
+  description: string | null;
+  events: WebhookEventType[];
+  active: boolean;
+  last_triggered_at: string | null;
+  last_status_code: number | null;
+  failure_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Log d'un envoi webhook */
+export interface WebhookLog {
+  id: string;
+  endpoint_id: string;
+  event_type: WebhookEventType;
+  payload: Record<string, unknown>;
+  status_code: number | null;
+  response_body: string | null;
+  success: boolean;
+  error_message: string | null;
+  sent_at: string;
+}
+
+/** Payload standard envoyé aux webhooks */
+export interface WebhookPayload {
+  event: WebhookEventType;
+  timestamp: string;
+  data: Record<string, unknown>;
+  metadata: {
+    recruiter_id: string;
+    source: 'hubclosing';
+    version: '1.0';
+  };
+}

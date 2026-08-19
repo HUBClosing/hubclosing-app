@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { triggerWebhooks } from '@/lib/webhooks';
 
 // GET /api/crm/events — liste des événements du recruteur
 export async function GET(req: NextRequest) {
@@ -95,6 +96,9 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Webhook: événement créé
+    triggerWebhooks(user.id, 'event.created', data).catch(() => {});
 
     return NextResponse.json(data, { status: 201 });
   } catch {

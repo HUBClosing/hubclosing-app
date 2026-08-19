@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { triggerWebhooks } from '@/lib/webhooks';
 
 // GET /api/crm/events/[id]/performance — performances de tous les closers d'un événement
 export async function GET(
@@ -117,6 +118,12 @@ export async function POST(
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    // Webhook: performance saisie
+    triggerWebhooks(user.id, 'performance.created', {
+      event_id: params.id,
+      performance: data,
+    }).catch(() => {});
+
     return NextResponse.json(data, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
@@ -179,6 +186,12 @@ export async function PATCH(
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    // Webhook: performance modifiée
+    triggerWebhooks(user.id, 'performance.updated', {
+      event_id: params.id,
+      performance: data,
+    }).catch(() => {});
+
     return NextResponse.json(data);
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
@@ -221,6 +234,12 @@ export async function DELETE(
       .eq('event_id', params.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Webhook: performance supprimée
+    triggerWebhooks(user.id, 'performance.deleted', {
+      event_id: params.id,
+      performance_id: performanceId,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch {

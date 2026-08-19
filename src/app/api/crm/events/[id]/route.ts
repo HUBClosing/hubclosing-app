@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { triggerWebhooks } from '@/lib/webhooks';
 
 // GET /api/crm/events/[id] — détail d'un événement avec closers et performances
 export async function GET(
@@ -73,6 +74,9 @@ export async function PATCH(
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     if (!data) return NextResponse.json({ error: 'Événement non trouvé' }, { status: 404 });
 
+    // Webhook: événement modifié
+    triggerWebhooks(user.id, 'event.updated', data).catch(() => {});
+
     return NextResponse.json(data);
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
@@ -96,6 +100,9 @@ export async function DELETE(
       .eq('recruiter_id', user.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Webhook: événement supprimé
+    triggerWebhooks(user.id, 'event.deleted', { id: params.id }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch {

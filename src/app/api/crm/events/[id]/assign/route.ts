@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { triggerWebhooks } from '@/lib/webhooks';
 
 // POST /api/crm/events/[id]/assign — assigner un closer à un événement
 export async function POST(
@@ -79,6 +80,12 @@ export async function POST(
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    // Webhook: closer assigné
+    triggerWebhooks(user.id, 'assignment.created', {
+      event_id: params.id,
+      assignment: data,
+    }).catch(() => {});
+
     return NextResponse.json(data, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
@@ -121,6 +128,12 @@ export async function DELETE(
       .eq('event_id', params.id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Webhook: closer retiré
+    triggerWebhooks(user.id, 'assignment.removed', {
+      event_id: params.id,
+      assignment_id: assignmentId,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch {
