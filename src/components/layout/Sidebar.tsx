@@ -92,7 +92,7 @@ const recruiterLinks: NavLink[] = [
   { href: '/dashboard/matching', label: 'Matching IA', icon: Sparkles, minTier: 'solo' },
   { href: '/dashboard/recruitment', label: 'Dashboard recrutement', icon: BarChart3 },
   { href: '/dashboard/crm', label: 'CRM Événements', icon: PieChart, minTier: 'solo' },
-  { href: '/dashboard/settings/webhooks', label: 'Webhooks CRM', icon: Webhook, minTier: 'solo' },
+  { href: '/dashboard/settings/webhooks', label: 'Connexion CRM', icon: Webhook, minTier: 'solo' },
   { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'solo' },
