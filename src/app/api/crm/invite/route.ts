@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 // POST /api/crm/invite — inviter un closer externe (par email)
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 // GET /api/crm/events — liste des événements du recruteur
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
 // POST /api/crm/events — créer un événement
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 

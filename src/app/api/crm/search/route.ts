@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 // GET /api/crm/search?q=nom — rechercher un closer par nom/prénom
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
 
