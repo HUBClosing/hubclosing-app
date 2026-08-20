@@ -1,17 +1,16 @@
 'use client';
 
 import clsx from 'clsx';
-import { LucideIcon } from 'lucide-react';
 
 interface EmptyStateProps {
-  icon?: LucideIcon;
+  icon?: React.ReactNode;
   title: string;
   description?: string;
   action?: React.ReactNode;
   className?: string;
 }
 
-export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
     <div
       className={clsx(
@@ -19,9 +18,9 @@ export function EmptyState({ icon: Icon, title, description, action, className }
         className,
       )}
     >
-      {Icon && (
-        <div className="p-4 rounded-2xl bg-gray-50 mb-5">
-          <Icon className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+      {icon && (
+        <div className="p-4 rounded-2xl bg-gray-50 mb-5 text-gray-300">
+          {icon}
         </div>
       )}
       <h3 className="text-base font-semibold text-gray-800">{title}</h3>
