@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import clsx from 'clsx';
 
 interface AvatarProps {
@@ -16,12 +17,16 @@ const sizeMap = {
 };
 
 export function Avatar({ src, fallback, size = 'md', className }: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
+
   const initials = fallback
     .split(' ')
     .map((w) => w[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
+
+  const showImage = src && !imgError;
 
   return (
     <div
@@ -33,11 +38,12 @@ export function Avatar({ src, fallback, size = 'md', className }: AvatarProps) {
         className,
       )}
     >
-      {src ? (
+      {showImage ? (
         <img
           src={src}
           alt={fallback}
           className="h-full w-full object-cover"
+          onError={() => setImgError(true)}
         />
       ) : (
         <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-brand-green/15 to-brand-green/5 text-brand-green font-semibold">

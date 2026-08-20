@@ -71,6 +71,8 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
 
   // Avatar
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatar_url);
+  const [avatarError, setAvatarError] = useState('');
 
   // ── UI state ──
   const [saving, setSaving] = useState(false);
@@ -103,27 +105,30 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
     if (!file) return;
 
     setAvatarUploading(true);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/avatar.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true });
+    setAvatarError('');
 
-      if (uploadErr) {
-        console.error('Upload error:', uploadErr);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setAvatarError(data.error || 'Erreur lors de l\'upload');
         return;
       }
 
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(path);
-
-      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-      await supabase.from('users').update({ avatar_url: avatarUrl }).eq('id', user.id);
+      // Mise à jour immédiate de l'avatar affiché
+      setAvatarUrl(data.avatar_url);
       router.refresh();
     } catch (err) {
       console.error('Avatar upload error:', err);
+      setAvatarError('Erreur réseau lors de l\'upload');
     } finally {
       setAvatarUploading(false);
     }
@@ -198,7 +203,7 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
         <CardContent className="p-6">
           <div className="flex items-center gap-5 mb-6">
             <div className="relative group">
-              <Avatar src={user.avatar_url} fallback={user.full_name || user.email} size="lg" />
+              <Avatar src={avatarUrl} fallback={user.full_name || user.email} size="lg" />
               <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                 {avatarUploading ? (
                   <Loader2 className="h-5 w-5 text-white animate-spin" />
@@ -207,7 +212,7 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={handleAvatarUpload}
                   disabled={avatarUploading}
@@ -220,6 +225,9 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
               <div className="flex items-center gap-2 mt-1">
                 <Badge variant={user.role === 'closer' ? 'success' : user.role === 'manager' ? 'info' : 'warning'} className="capitalize">{user.role}</Badge>
               </div>
+              {avatarError && (
+                <p className="text-xs text-red-500 mt-1">{avatarError}</p>
+              )}
             </div>
           </div>
         </CardContent>
