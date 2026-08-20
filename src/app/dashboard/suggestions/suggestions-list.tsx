@@ -8,6 +8,7 @@ import {
   Video, GraduationCap, Clock, Star, Filter,
   ChevronDown, ChevronUp, MapPin, Building2,
 } from 'lucide-react';
+import { getNicheColor } from '@/lib/niche-colors';
 
 interface ScoreDetails {
   niche: number;
@@ -314,12 +315,15 @@ export function SuggestionsList() {
                         <Building2 className="h-3.5 w-3.5" />
                         {suggestion.recruiter.company_name || suggestion.recruiter.full_name}
                       </span>
-                      {suggestion.fiche.niche && (
-                        <span className="flex items-center gap-1">
-                          <Target className="h-3.5 w-3.5" />
-                          {suggestion.fiche.niche}
-                        </span>
-                      )}
+                      {suggestion.fiche.niche && (() => {
+                        const nc = getNicheColor(suggestion.fiche.niche);
+                        return (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${nc.bg} ${nc.text} ${nc.border}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${nc.dot}`} />
+                            {suggestion.fiche.niche}
+                          </span>
+                        );
+                      })()}
                       {suggestion.fiche.offer_type && (
                         <span className="px-2 py-0.5 bg-brand-amber/10 text-brand-amber text-xs rounded-full font-medium">
                           {OFFER_TYPE_LABELS[suggestion.fiche.offer_type] || suggestion.fiche.offer_type}

@@ -6,6 +6,7 @@ import {
   Plus, Sparkles, Calendar, Users, TrendingUp,
   Archive, MoreVertical, Search,
 } from 'lucide-react';
+import { getNicheColor } from '@/lib/niche-colors';
 
 interface Fiche {
   id: string;
@@ -137,12 +138,15 @@ export function MatchingList() {
                   </div>
 
                   <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                    {fiche.niche && (
-                      <span className="flex items-center gap-1">
-                        <Search className="h-3.5 w-3.5" />
-                        {fiche.niche}
-                      </span>
-                    )}
+                    {fiche.niche && (() => {
+                      const nc = getNicheColor(fiche.niche);
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${nc.bg} ${nc.text} ${nc.border}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${nc.dot}`} />
+                          {fiche.niche}
+                        </span>
+                      );
+                    })()}
                     {fiche.offer_type && (
                       <span className="px-2 py-0.5 bg-brand-amber/10 text-brand-amber text-xs rounded-full font-medium">
                         {OFFER_TYPE_LABELS[fiche.offer_type] || fiche.offer_type}

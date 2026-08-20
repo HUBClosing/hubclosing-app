@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, RefreshCw, Loader2,
   Briefcase, Users,
 } from 'lucide-react';
+import { getNicheColor } from '@/lib/niche-colors';
 
 interface ScoreDetails {
   niche: number;
@@ -349,11 +350,15 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                     {/* Niches */}
                     {candidate.niches.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {candidate.niches.slice(0, 3).map(niche => (
-                          <span key={niche} className="text-xs text-brand-amber bg-brand-amber/10 px-2 py-0.5 rounded-full">
-                            {niche}
-                          </span>
-                        ))}
+                        {candidate.niches.slice(0, 3).map(niche => {
+                          const nc = getNicheColor(niche);
+                          return (
+                            <span key={niche} className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${nc.bg} ${nc.text} ${nc.border}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${nc.dot}`} />
+                              {niche}
+                            </span>
+                          );
+                        })}
                         {candidate.niches.length > 3 && (
                           <span className="text-xs text-gray-400">+{candidate.niches.length - 3}</span>
                         )}

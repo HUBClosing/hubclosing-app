@@ -10,6 +10,7 @@ import {
   User as UserIcon, Briefcase, Linkedin, Phone,
   Camera, Tag, Clock, Target, Instagram, Video, Mail,
 } from 'lucide-react';
+import { getNicheColor } from '@/lib/niche-colors';
 
 const SKILL_OPTIONS: { value: Skill; label: string }[] = [
   { value: 'closing', label: 'Closing' },
@@ -386,12 +387,16 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
               </label>
               {niches.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {niches.map((n) => (
-                    <span key={n} className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
-                      {n}
-                      <button onClick={() => removeNiche(n)} className="hover:text-red-500 transition-colors">×</button>
-                    </span>
-                  ))}
+                  {niches.map((n) => {
+                    const nc = getNicheColor(n);
+                    return (
+                      <span key={n} className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${nc.bg} ${nc.text} ${nc.border}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${nc.dot}`} />
+                        {n}
+                        <button onClick={() => removeNiche(n)} className="hover:text-red-500 transition-colors ml-0.5">×</button>
+                      </span>
+                    );
+                  })}
                 </div>
               )}
               <div className="flex gap-2">
@@ -411,15 +416,18 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {NICHE_SUGGESTIONS.filter((s) => !niches.includes(s)).slice(0, 6).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => addNiche(s)}
-                    className="text-xs text-gray-400 hover:text-brand-green border border-dashed border-gray-200 hover:border-brand-green px-2 py-0.5 rounded-full transition-colors"
-                  >
-                    + {s}
-                  </button>
-                ))}
+                {NICHE_SUGGESTIONS.filter((s) => !niches.includes(s)).slice(0, 6).map((s) => {
+                  const nc = getNicheColor(s);
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => addNiche(s)}
+                      className={`text-xs border border-dashed px-2 py-0.5 rounded-full transition-colors opacity-60 hover:opacity-100 ${nc.text} ${nc.border}`}
+                    >
+                      + {s}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
