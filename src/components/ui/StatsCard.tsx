@@ -1,30 +1,57 @@
+'use client';
+
+import clsx from 'clsx';
 import { Card } from './Card';
-import { clsx } from 'clsx';
+import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon?: React.ReactNode;
-  trend?: { value: number; label: string };
+  icon?: LucideIcon;
+  trend?: {
+    value: number;
+    label?: string;
+  };
   className?: string;
 }
 
-export function StatsCard({ title, value, icon, trend, className }: StatsCardProps) {
+export function StatsCard({ title, value, icon: Icon, trend, className }: StatsCardProps) {
   return (
-    <Card className={clsx('p-6', className)}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-brand-dark mt-1">{value}</p>
-          {trend && (
-            <p className={clsx('text-xs mt-1', trend.value >= 0 ? 'text-green-600' : 'text-red-600')}>
-              {trend.value >= 0 ? '+' : ''}{trend.value}% {trend.label}
-            </p>
+    <Card className={clsx('overflow-hidden', className)}>
+      <div className="p-5">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-500">{title}</p>
+            <p className="text-2xl font-bold text-brand-dark tracking-tight">{value}</p>
+          </div>
+          {Icon && (
+            <div className="p-2.5 rounded-xl bg-brand-green/8 text-brand-green">
+              <Icon className="h-5 w-5" />
+            </div>
           )}
         </div>
-        {icon && (
-          <div className="p-3 bg-brand-light rounded-lg text-brand-green">
-            {icon}
+        {trend && (
+          <div className="mt-3 flex items-center gap-1.5">
+            <span
+              className={clsx(
+                'inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-md',
+                trend.value > 0
+                  ? 'text-emerald-700 bg-emerald-50'
+                  : trend.value < 0
+                  ? 'text-red-700 bg-red-50'
+                  : 'text-gray-600 bg-gray-50',
+              )}
+            >
+              {trend.value > 0 ? (
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+              ) : trend.value < 0 ? (
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              ) : null}
+              {Math.abs(trend.value)}%
+            </span>
+            {trend.label && (
+              <span className="text-xs text-gray-400">{trend.label}</span>
+            )}
           </div>
         )}
       </div>

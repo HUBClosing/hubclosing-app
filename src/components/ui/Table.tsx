@@ -1,40 +1,78 @@
-import { clsx } from 'clsx';
-import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
+'use client';
 
-export function Table({ className, children, ...props }: HTMLAttributes<HTMLTableElement>) {
-  return (
-    <div className="overflow-x-auto">
-      <table className={clsx('min-w-full divide-y divide-gray-200', className)} {...props}>
-        {children}
-      </table>
+import { forwardRef, HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
+import clsx from 'clsx';
+
+export const Table = forwardRef<HTMLTableElement, HTMLAttributes<HTMLTableElement>>(
+  ({ className, ...props }, ref) => (
+    <div className="overflow-x-auto rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <table
+        ref={ref}
+        className={clsx('w-full text-sm', className)}
+        {...props}
+      />
     </div>
-  );
-}
+  )
+);
+Table.displayName = 'Table';
 
-export function TableHeader({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <thead className={clsx('bg-gray-50', className)} {...props}>{children}</thead>;
-}
+export const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  ({ className, ...props }, ref) => (
+    <thead
+      ref={ref}
+      className={clsx('bg-gray-50/80 border-b border-gray-100', className)}
+      {...props}
+    />
+  )
+);
+TableHeader.displayName = 'TableHeader';
 
-export function TableBody({ className, children, ...props }: HTMLAttributes<HTMLTableSectionElement>) {
-  return <tbody className={clsx('divide-y divide-gray-200 bg-white', className)} {...props}>{children}</tbody>;
-}
+export const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  ({ className, ...props }, ref) => (
+    <tbody
+      ref={ref}
+      className={clsx('divide-y divide-gray-50', className)}
+      {...props}
+    />
+  )
+);
+TableBody.displayName = 'TableBody';
 
-export function TableRow({ className, children, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={clsx('hover:bg-gray-50 transition-colors', className)} {...props}>{children}</tr>;
-}
+export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(
+  ({ className, ...props }, ref) => (
+    <tr
+      ref={ref}
+      className={clsx(
+        'transition-colors duration-100 hover:bg-gray-50/60',
+        className,
+      )}
+      {...props}
+    />
+  )
+);
+TableRow.displayName = 'TableRow';
 
-export function TableHead({ className, children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <th className={clsx('px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider', className)} {...props}>
-      {children}
-    </th>
-  );
-}
+export const TableHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(
+  ({ className, ...props }, ref) => (
+    <th
+      ref={ref}
+      className={clsx(
+        'px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider',
+        className,
+      )}
+      {...props}
+    />
+  )
+);
+TableHead.displayName = 'TableHead';
 
-export function TableCell({ className, children, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <td className={clsx('px-4 py-3 text-sm text-gray-900 whitespace-nowrap', className)} {...props}>
-      {children}
-    </td>
-  );
-}
+export const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(
+  ({ className, ...props }, ref) => (
+    <td
+      ref={ref}
+      className={clsx('px-4 py-3.5 text-gray-700', className)}
+      {...props}
+    />
+  )
+);
+TableCell.displayName = 'TableCell';

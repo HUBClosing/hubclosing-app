@@ -1,43 +1,49 @@
-import { clsx } from 'clsx';
+'use client';
+
+import clsx from 'clsx';
 
 interface AvatarProps {
-  src?: string | null;
-  alt?: string;
+  src?: string;
+  fallback: string;
   size?: 'sm' | 'md' | 'lg';
-  fallback?: string;
   className?: string;
 }
 
-export function Avatar({ src, alt, size = 'md', fallback, className }: AvatarProps) {
-  const sizeClasses = {
-    sm: 'h-8 w-8 text-xs',
-    md: 'h-10 w-10 text-sm',
-    lg: 'h-14 w-14 text-lg',
-  };
+const sizeMap = {
+  sm: 'h-8 w-8 text-xs',
+  md: 'h-10 w-10 text-sm',
+  lg: 'h-14 w-14 text-lg',
+};
 
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={alt || ''}
-        className={clsx('rounded-full object-cover', sizeClasses[size], className)}
-      />
-    );
-  }
-
+export function Avatar({ src, fallback, size = 'md', className }: AvatarProps) {
   const initials = fallback
-    ? fallback.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div
       className={clsx(
-        'rounded-full bg-brand-green/10 text-brand-green flex items-center justify-center font-medium',
-        sizeClasses[size],
-        className
+        'relative inline-flex items-center justify-center rounded-full',
+        'ring-2 ring-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]',
+        'overflow-hidden flex-shrink-0',
+        sizeMap[size],
+        className,
       )}
     >
-      {initials}
+      {src ? (
+        <img
+          src={src}
+          alt={fallback}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-brand-green/15 to-brand-green/5 text-brand-green font-semibold">
+          {initials}
+        </div>
+      )}
     </div>
   );
 }

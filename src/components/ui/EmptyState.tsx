@@ -1,20 +1,34 @@
-import { clsx } from 'clsx';
+'use client';
+
+import clsx from 'clsx';
+import { LucideIcon } from 'lucide-react';
 
 interface EmptyStateProps {
-  icon?: React.ReactNode;
+  icon?: LucideIcon;
   title: string;
   description?: string;
   action?: React.ReactNode;
   className?: string;
 }
 
-export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={clsx('text-center py-12', className)}>
-      {icon && <div className="mx-auto mb-4 text-gray-400">{icon}</div>}
-      <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-      {description && <p className="mt-1 text-sm text-gray-500">{description}</p>}
-      {action && <div className="mt-4">{action}</div>}
+    <div
+      className={clsx(
+        'flex flex-col items-center justify-center text-center py-16 px-6',
+        className,
+      )}
+    >
+      {Icon && (
+        <div className="p-4 rounded-2xl bg-gray-50 mb-5">
+          <Icon className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+        </div>
+      )}
+      <h3 className="text-base font-semibold text-gray-800">{title}</h3>
+      {description && (
+        <p className="mt-1.5 text-sm text-gray-500 max-w-sm">{description}</p>
+      )}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }

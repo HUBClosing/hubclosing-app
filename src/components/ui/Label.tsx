@@ -1,18 +1,19 @@
-import { type LabelHTMLAttributes } from 'react';
-import { clsx } from 'clsx';
+'use client';
 
-interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
-  required?: boolean;
-}
+import { forwardRef, LabelHTMLAttributes } from 'react';
+import clsx from 'clsx';
 
-export function Label({ className, children, required, ...props }: LabelProps) {
-  return (
+export const Label = forwardRef<HTMLLabelElement, LabelHTMLAttributes<HTMLLabelElement>>(
+  ({ className, ...props }, ref) => (
     <label
-      className={clsx('block text-sm font-medium text-gray-700', className)}
+      ref={ref}
+      className={clsx(
+        'block text-sm font-medium text-gray-700 leading-none',
+        className,
+      )}
       {...props}
-    >
-      {children}
-      {required && <span className="text-red-500 ml-1">*</span>}
-    </label>
-  );
-}
+    />
+  )
+);
+
+Label.displayName = 'Label';
