@@ -7,8 +7,8 @@ import type { User, Profile, Skill, ExperienceLevel } from '@/types/database';
 import { Card, CardContent, CardHeader, Avatar, Badge, Switch } from '@/components/ui';
 import {
   Save, Loader2, CheckCircle2,
-  User as UserIcon, Briefcase, Globe, Linkedin, Phone,
-  Camera, Tag, Clock, Target,
+  User as UserIcon, Briefcase, Linkedin, Phone,
+  Camera, Tag, Clock, Target, Instagram, Video, Mail,
 } from 'lucide-react';
 
 const SKILL_OPTIONS: { value: Skill; label: string }[] = [
@@ -50,8 +50,10 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
   const [phone, setPhone] = useState(user.phone || '');
   const [bio, setBio] = useState(profile.bio || '');
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedin_url || '');
-  const [portfolioUrl, setPortfolioUrl] = useState(profile.portfolio_url || '');
-  const [websiteUrl, setWebsiteUrl] = useState(profile.website_url || '');
+  const [instagramUrl, setInstagramUrl] = useState(profile.portfolio_url || '');
+  const [loomUrl, setLoomUrl] = useState(profile.website_url || '');
+  const [emailPro, setEmailPro] = useState((profile as any).email_pro || '');
+  const [emailPerso, setEmailPerso] = useState((profile as any).email_perso || '');
   const [skills, setSkills] = useState<Skill[]>(user.skills || []);
   const [niches, setNiches] = useState<string[]>(user.niches || profile.preferred_niches || []);
   const [nicheInput, setNicheInput] = useState('');
@@ -59,7 +61,6 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
   const [yearsExperience, setYearsExperience] = useState<string>(user.years_experience?.toString() || '');
   const [availability, setAvailability] = useState(profile.availability || false);
   const [availableHours, setAvailableHours] = useState<string>(profile.available_hours_per_week?.toString() || '');
-  const [hourlyRate, setHourlyRate] = useState<string>(profile.hourly_rate?.toString() || '');
   const [commissionRate, setCommissionRate] = useState<string>(profile.commission_rate?.toString() || '');
   const [isPublic, setIsPublic] = useState(profile.is_public || false);
 
@@ -154,12 +155,13 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
         .update({
           bio: (bio.trim() || '').slice(0, 500) || null,
           linkedin_url: linkedinUrl.trim() || null,
-          portfolio_url: portfolioUrl.trim() || null,
-          website_url: websiteUrl.trim() || null,
+          portfolio_url: instagramUrl.trim() || null,
+          website_url: loomUrl.trim() || null,
+          email_pro: emailPro.trim() || null,
+          email_perso: emailPerso.trim() || null,
           experience_level: experienceLevel || null,
           availability,
           available_hours_per_week: availableHours ? parseInt(availableHours) : null,
-          hourly_rate: hourlyRate ? parseFloat(hourlyRate) : null,
           commission_rate: commissionRate ? parseFloat(commissionRate) : null,
           preferred_niches: niches,
           is_public: isPublic,
@@ -280,6 +282,34 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
             <p className="text-xs text-gray-400 mt-1">{bio.length}/500 caractères</p>
           </div>
 
+          {/* Emails */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                <Mail className="h-3.5 w-3.5" /> Email pro
+              </label>
+              <input
+                type="email"
+                value={emailPro}
+                onChange={(e) => setEmailPro(e.target.value)}
+                placeholder="pro@example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
+                <Mail className="h-3.5 w-3.5" /> Email perso
+              </label>
+              <input
+                type="email"
+                value={emailPerso}
+                onChange={(e) => setEmailPerso(e.target.value)}
+                placeholder="perso@example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+              />
+            </div>
+          </div>
+
           {/* Liens */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -295,23 +325,23 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
-                <Globe className="h-3.5 w-3.5" /> Portfolio
+                <Instagram className="h-3.5 w-3.5" /> Profil Instagram
               </label>
               <input
-                value={portfolioUrl}
-                onChange={(e) => setPortfolioUrl(e.target.value)}
-                placeholder="https://monportfolio.com"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+                placeholder="https://instagram.com/votreprofil"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
               />
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center gap-1">
-                <Globe className="h-3.5 w-3.5" /> Site web
+                <Video className="h-3.5 w-3.5" /> Loom de présentation
               </label>
               <input
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                placeholder="https://monsite.com"
+                value={loomUrl}
+                onChange={(e) => setLoomUrl(e.target.value)}
+                placeholder="https://loom.com/share/..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
               />
             </div>
@@ -448,31 +478,18 @@ export function ProfileContent({ user, profile }: ProfileContentProps) {
               </div>
             )}
 
-            {/* Tarifs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Taux horaire (€)</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(e.target.value)}
-                  placeholder="ex: 50"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">Commission souhaitée (%)</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={commissionRate}
-                  onChange={(e) => setCommissionRate(e.target.value)}
-                  placeholder="ex: 10"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
-                />
-              </div>
+            {/* Commission */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1">Commission souhaitée (%)</label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={commissionRate}
+                onChange={(e) => setCommissionRate(e.target.value)}
+                placeholder="ex: 10"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+              />
             </div>
 
             {/* Profil public */}

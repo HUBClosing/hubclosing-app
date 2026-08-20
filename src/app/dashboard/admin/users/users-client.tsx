@@ -4,11 +4,12 @@ import { useState } from 'react';
 import type { User } from '@/types/database';
 import { Card, Badge, Avatar } from '@/components/ui';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui';
-import { Search, MoreVertical, Ban, CheckCircle, Shield, Loader2, Eye } from 'lucide-react';
+import { Search, MoreVertical, Ban, CheckCircle, Shield, Loader2, Eye, UserCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface UsersClientProps {
   users: User[];
@@ -30,7 +31,8 @@ export function UsersClient({ users }: UsersClientProps) {
   const filtered = users.filter(u => {
     const matchSearch = !search ||
       (u.full_name?.toLowerCase().includes(search.toLowerCase())) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      (u.phone?.toLowerCase().includes(search.toLowerCase()));
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
   });
@@ -98,7 +100,7 @@ export function UsersClient({ users }: UsersClientProps) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un utilisateur..."
+            placeholder="Rechercher un utilisateur (nom, email, tél)..."
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
           />
         </div>
@@ -126,6 +128,7 @@ export function UsersClient({ users }: UsersClientProps) {
           <TableRow>
             <TableHead>Utilisateur</TableHead>
             <TableHead>R&ocirc;le</TableHead>
+            <TableHead>T&eacute;l&eacute;phone</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Plan</TableHead>
             <TableHead>Inscrit</TableHead>
@@ -136,24 +139,32 @@ export function UsersClient({ users }: UsersClientProps) {
           {filtered.map((user) => (
             <TableRow key={user.id}>
               <TableCell>
-                <div className="flex items-center gap-3">
+                <Link href={`/dashboard/admin/users/${user.id}`} className="flex items-center gap-3 group">
                   <Avatar src={user.avatar_url} fallback={user.full_name || user.email} size="sm" />
                   <div>
-                    <p className="font-medium">{user.full_name || 'Sans nom'}</p>
+                    <p className="font-medium group-hover:text-brand-green transition-colors">{user.full_name || 'Sans nom'}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
                   </div>
-                </div>
+                </Link>
               </TableCell>
               <TableCell>
                 <Badge variant={user.role === 'admin' ? 'warning' : user.role === 'closer' ? 'success' : 'info'} className="capitalize">{user.role}</Badge>
               </TableCell>
+              <TableCell className="text-sm text-gray-500">{user.phone || '—'}</TableCell>
               <TableCell>
                 <Badge variant={user.is_active !== false ? 'success' : 'error'}>{user.is_active !== false ? 'Actif' : 'Inactif'}</Badge>
               </TableCell>
-              <TableCell className="capitalize">{user.subscription_plan || 'free'}</TableCell>
-              <TableCell className="text-gray-500">{formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: fr })}</TableCell>
+              <TableCell className="capitalize text-sm">{user.subscription_plan || user.tier || 'free'}</TableCell>
+              <TableCell className="text-gray-500 text-sm">{formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: fr })}</TableCell>
               <TableCell className="text-right">
-                <div className="relative inline-block">
+                <div className="relative inline-flex items-center gap-1">
+                  <Link
+                    href={`/dashboard/admin/users/${user.id}`}
+                    className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Voir le profil complet"
+                  >
+                    <UserCircle className="w-4 h-4 text-gray-500" />
+                  </Link>
                   {loading === user.id ? (
                     <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                   ) : (
