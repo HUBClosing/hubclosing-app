@@ -57,7 +57,7 @@ export async function GET() {
 
     if (applications && applications.length > 0) {
       // Charger les closers
-      const closerIds = [...new Set(applications.map(a => a.closer_id))];
+      const closerIds = Array.from(new Set(applications.map(a => a.closer_id)));
       const { data: closers } = await supabase
         .from('users')
         .select('id, full_name, avatar_url, niches, skills, years_experience')
