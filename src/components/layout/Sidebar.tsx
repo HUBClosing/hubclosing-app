@@ -99,7 +99,6 @@ const recruiterLinks: NavLink[] = [
   { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'solo' },
-  { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/referral', label: 'Parrainage', icon: Share2 },
