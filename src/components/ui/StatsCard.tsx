@@ -2,12 +2,11 @@
 
 import clsx from 'clsx';
 import { Card } from './Card';
-import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon?: LucideIcon;
+  icon?: React.ReactNode;
   trend?: {
     value: number;
     label?: string;
@@ -15,7 +14,7 @@ interface StatsCardProps {
   className?: string;
 }
 
-export function StatsCard({ title, value, icon: Icon, trend, className }: StatsCardProps) {
+export function StatsCard({ title, value, icon, trend, className }: StatsCardProps) {
   return (
     <Card className={clsx('overflow-hidden', className)}>
       <div className="p-5">
@@ -24,9 +23,9 @@ export function StatsCard({ title, value, icon: Icon, trend, className }: StatsC
             <p className="text-sm font-medium text-gray-500">{title}</p>
             <p className="text-2xl font-bold text-brand-dark tracking-tight">{value}</p>
           </div>
-          {Icon && (
+          {icon && (
             <div className="p-2.5 rounded-xl bg-brand-green/8 text-brand-green">
-              <Icon className="h-5 w-5" />
+              {icon}
             </div>
           )}
         </div>
