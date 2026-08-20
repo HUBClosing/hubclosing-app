@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 
 interface AvatarProps {
-  src?: string;
+  src?: string | null;
   fallback: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
