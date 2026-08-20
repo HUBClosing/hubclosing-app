@@ -118,9 +118,9 @@ export function ContactContent({ user }: { user: User }) {
                 <div>
                   <p className="font-medium text-brand-dark text-sm">Documents l&eacute;gaux</p>
                   <div className="flex flex-col gap-1 mt-1">
-                    <a href="/cgu" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Conditions g&eacute;n&eacute;rales de vente</a>
-                    <a href="/mentions-legales" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Mentions l&eacute;gales</a>
-                    <a href="/confidentialite" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Politique de confidentialit&eacute;</a>
+                    <a href="/legal/cgu" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Conditions g&eacute;n&eacute;rales de vente</a>
+                    <a href="/legal/mentions" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Mentions l&eacute;gales</a>
+                    <a href="/legal/privacy" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Politique de confidentialit&eacute;</a>
                   </div>
                 </div>
               </div>
