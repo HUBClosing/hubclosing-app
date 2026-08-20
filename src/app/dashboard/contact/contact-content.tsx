@@ -4,8 +4,8 @@ import { useState } from 'react';
 import type { User } from '@/types/database';
 import { Card, CardContent, CardHeader } from '@/components/ui';
 import {
-  Mail, Phone, MapPin, Globe, Send, Loader2, CheckCircle2,
-  MessageSquare, Clock, Instagram,
+  Mail, Globe, Send, Loader2, CheckCircle2,
+  MessageSquare, Clock, Instagram, FileText,
 } from 'lucide-react';
 
 export function ContactContent({ user }: { user: User }) {
@@ -75,18 +75,6 @@ export function ContactContent({ user }: { user: User }) {
 
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-brand-green/10 rounded-lg">
-                  <Phone className="h-5 w-5 text-brand-green" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">T&eacute;l&eacute;phone</p>
-                  <a href="tel:+33667549460" className="text-sm font-medium text-brand-dark hover:text-brand-green transition-colors">
-                    06 67 54 94 60
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-brand-green/10 rounded-lg">
                   <Globe className="h-5 w-5 text-brand-green" />
                 </div>
                 <div>
@@ -126,11 +114,14 @@ export function ContactContent({ user }: { user: User }) {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-brand-green mt-0.5" />
+                <FileText className="h-5 w-5 text-brand-green mt-0.5" />
                 <div>
-                  <p className="font-medium text-brand-dark text-sm">Ecom France</p>
-                  <p className="text-sm text-gray-500">Entrepreneur individuel</p>
-                  <p className="text-xs text-gray-400 mt-1">SIRET : 885 334 334 00020</p>
+                  <p className="font-medium text-brand-dark text-sm">Documents l&eacute;gaux</p>
+                  <div className="flex flex-col gap-1 mt-1">
+                    <a href="/cgu" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Conditions g&eacute;n&eacute;rales de vente</a>
+                    <a href="/mentions-legales" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Mentions l&eacute;gales</a>
+                    <a href="/confidentialite" target="_blank" className="text-sm text-gray-500 hover:text-brand-green transition-colors">Politique de confidentialit&eacute;</a>
+                  </div>
                 </div>
               </div>
             </CardContent>
