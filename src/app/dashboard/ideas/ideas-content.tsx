@@ -248,7 +248,7 @@ export function IdeasContent({ ideas: initialIdeas, currentUserId }: { ideas: Id
                           <Avatar
                             src={idea.users?.avatar_url || undefined}
                             fallback={idea.users?.full_name || 'U'}
-                            size="xs"
+                            size="sm"
                           />
                           <span>{isOwn ? 'Vous' : (idea.users?.full_name || 'Utilisateur')}</span>
                         </div>
