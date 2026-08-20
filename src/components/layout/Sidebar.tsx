@@ -33,6 +33,9 @@ import {
   Sparkles,
   PieChart,
   Webhook,
+  BookOpen,
+  Lightbulb,
+  Phone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -287,6 +290,34 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
               );
             })}
           </nav>
+
+          {/* Liens utilitaires en bas */}
+          <div className="px-3 pb-1 space-y-0.5">
+            <div className="border-t border-white/10 mb-2" />
+            {[
+              { href: '/dashboard/guide', label: 'Guide d\'utilisation', icon: BookOpen },
+              { href: '/dashboard/ideas', label: 'Boîte à idées', icon: Lightbulb },
+              { href: '/dashboard/contact', label: 'Contact', icon: Phone },
+            ].map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={clsx(
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                    isActive
+                      ? 'bg-white/15 text-white'
+                      : 'text-white/50 hover:bg-white/10 hover:text-white/80'
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{link.label}</span>
+                </a>
+              );
+            })}
+          </div>
 
           {/* Upgrade CTA pour les Free */}
           {userTier === 'free' && !admin && (
