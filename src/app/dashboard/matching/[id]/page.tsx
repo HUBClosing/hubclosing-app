@@ -22,6 +22,16 @@ export default async function MatchingResultsPage({ params }: { params: { id: st
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/login');
 
+  // Charger les infos recruteur (tier + crédits)
+  const { data: recruiterData } = await supabase
+    .from('users')
+    .select('tier, recruiter_deblocages_remaining, role_type')
+    .eq('id', user.id)
+    .single();
+
+  const userTier = recruiterData?.tier || 'free';
+  const deblocagesRemaining = recruiterData?.recruiter_deblocages_remaining || 0;
+
   // Charger la fiche
   const { data: fiche, error } = await supabase
     .from('matching_fiches')
@@ -33,6 +43,14 @@ export default async function MatchingResultsPage({ params }: { params: { id: st
   if (error || !fiche) {
     redirect('/dashboard/matching');
   }
+
+  // Charger les profils débloqués par ce recruteur
+  const { data: unlocks } = await supabase
+    .from('profile_unlocks')
+    .select('candidate_id')
+    .eq('recruiter_id', user.id);
+
+  const unlockedIds = (unlocks || []).map((u: { candidate_id: string }) => u.candidate_id);
 
   // Charger les résultats avec les infos candidat
   const { data: results } = await supabase
@@ -97,6 +115,9 @@ export default async function MatchingResultsPage({ params }: { params: { id: st
     <MatchingResults
       fiche={fiche}
       results={enrichedResults}
+      unlockedIds={unlockedIds}
+      userTier={userTier}
+      deblocagesRemaining={deblocagesRemaining}
     />
   );
 }

@@ -7,7 +7,7 @@ import {
   Award, Target, Globe2, TrendingUp, Video, GraduationCap,
   Clock, Star, CheckCircle2, Filter,
   ChevronDown, ChevronUp, RefreshCw, Loader2,
-  Briefcase, Users,
+  Briefcase, Users, Lock, CreditCard, Unlock,
 } from 'lucide-react';
 import { getNicheColor } from '@/lib/niche-colors';
 
@@ -71,6 +71,14 @@ interface Fiche {
   created_at: string;
 }
 
+interface MatchingResultsProps {
+  fiche: Fiche;
+  results: Result[];
+  unlockedIds: string[];
+  userTier: string;
+  deblocagesRemaining: number;
+}
+
 const SKILL_LABELS: Record<string, string> = {
   closing: 'Closing', setting: 'Setting', management: 'Management',
   hos: 'HOS', coaching: 'Coaching', training: 'Formation',
@@ -127,13 +135,30 @@ function getScoreLabel(score: number): string {
   return 'Match faible';
 }
 
-export function MatchingResults({ fiche, results: initialResults }: { fiche: Fiche; results: Result[] }) {
+/** Masque un nom : "Jean Dupont" → "J**** D****" */
+function maskName(name: string): string {
+  return name
+    .split(' ')
+    .map(part => part.charAt(0).toUpperCase() + '****')
+    .join(' ');
+}
+
+export function MatchingResults({
+  fiche,
+  results: initialResults,
+  unlockedIds: initialUnlockedIds,
+  userTier,
+  deblocagesRemaining: initialCredits,
+}: MatchingResultsProps) {
   const router = useRouter();
   const [results, setResults] = useState<Result[]>(initialResults);
   const [filter, setFilter] = useState<'all' | 'liked' | 'passed' | 'contacted'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [unlockedIds, setUnlockedIds] = useState<string[]>(initialUnlockedIds);
+  const [credits, setCredits] = useState(initialCredits);
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
 
   const filteredResults = filter === 'all'
     ? results
@@ -141,6 +166,35 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
 
   const likedCount = results.filter(r => r.status === 'liked').length;
   const contactedCount = results.filter(r => r.status === 'contacted').length;
+
+  function isUnlocked(candidateId: string): boolean {
+    // Admin voit tout
+    if (userTier === 'admin') return true;
+    return unlockedIds.includes(candidateId);
+  }
+
+  async function handleUnlock(candidateId: string) {
+    if (credits <= 0) return;
+    setUnlockingId(candidateId);
+    try {
+      const res = await fetch('/api/matching/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidate_id: candidateId, fiche_id: fiche.id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUnlockedIds(prev => [...prev, candidateId]);
+        if (!data.already_unlocked) {
+          setCredits(prev => prev - 1);
+        }
+      }
+    } catch {
+      console.error('Erreur déblocage');
+    } finally {
+      setUnlockingId(null);
+    }
+  }
 
   async function updateStatus(resultId: string, status: string) {
     setUpdatingId(resultId);
@@ -201,18 +255,28 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
             </p>
           </div>
 
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            {refreshing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Recalculer
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Crédits restants */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-brand-amber/10 rounded-lg">
+              <Unlock className="h-4 w-4 text-brand-amber" />
+              <span className="text-sm font-medium text-brand-dark">
+                {credits} déblocage{credits > 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              {refreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Recalculer
+            </button>
+          </div>
         </div>
       </div>
 
@@ -259,6 +323,7 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
           const profile = candidate.profile;
           const isExpanded = expandedId === result.id;
           const badge = profile?.badge_level ? BADGE_CONFIG[profile.badge_level] : null;
+          const unlocked = isUnlocked(result.candidate_id);
 
           return (
             <div
@@ -281,16 +346,25 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                   </div>
 
                   {/* Avatar */}
-                  <div className="flex-shrink-0">
-                    {candidate.avatar_url ? (
-                      <img
-                        src={candidate.avatar_url}
-                        alt={candidate.full_name}
-                        className="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
-                      />
+                  <div className="flex-shrink-0 relative">
+                    {unlocked ? (
+                      // Avatar visible
+                      candidate.avatar_url ? (
+                        <img
+                          src={candidate.avatar_url}
+                          alt={candidate.full_name}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-gray-100"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-brand-amber/10 flex items-center justify-center text-brand-amber font-bold text-lg">
+                          {candidate.full_name.charAt(0).toUpperCase()}
+                        </div>
+                      )
                     ) : (
-                      <div className="w-14 h-14 rounded-full bg-brand-amber/10 flex items-center justify-center text-brand-amber font-bold text-lg">
-                        {candidate.full_name.charAt(0).toUpperCase()}
+                      // Avatar camouflé
+                      <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center relative overflow-hidden">
+                        <div className="absolute inset-0 backdrop-blur-sm bg-gray-300/60" />
+                        <Lock className="h-5 w-5 text-gray-400 relative z-10" />
                       </div>
                     )}
                   </div>
@@ -299,10 +373,16 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-gray-900 truncate">
-                        {candidate.full_name}
+                        {unlocked ? candidate.full_name : maskName(candidate.full_name)}
                       </h3>
                       {badge && (
                         <span className={`text-sm ${badge.color}`}>{badge.icon}</span>
+                      )}
+                      {!unlocked && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full font-medium flex items-center gap-1">
+                          <Lock className="h-3 w-3" />
+                          Profil masqué
+                        </span>
                       )}
                       {result.status === 'liked' && (
                         <span className="px-2 py-0.5 bg-pink-100 text-pink-600 text-xs rounded-full font-medium">
@@ -322,7 +402,7 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                       )}
                     </div>
 
-                    {/* Tags */}
+                    {/* Tags — toujours visibles (teaser) */}
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       {candidate.skills.slice(0, 4).map(skill => (
                         <span key={skill} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
@@ -347,7 +427,7 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                       )}
                     </div>
 
-                    {/* Niches */}
+                    {/* Niches — toujours visibles */}
                     {candidate.niches.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {candidate.niches.slice(0, 3).map(niche => {
@@ -366,7 +446,7 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                     )}
                   </div>
 
-                  {/* Score */}
+                  {/* Score — toujours visible */}
                   <div className="flex-shrink-0 text-center mr-2">
                     <div className={`text-3xl font-bold ${getScoreColor(result.score)}`}>
                       {Math.round(result.score)}%
@@ -374,7 +454,6 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
                     <p className={`text-xs font-medium ${getScoreColor(result.score)}`}>
                       {getScoreLabel(result.score)}
                     </p>
-                    {/* Score bar */}
                     <div className="w-20 h-2 bg-gray-100 rounded-full mt-2 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${getScoreBgColor(result.score)}`}
@@ -385,57 +464,94 @@ export function MatchingResults({ fiche, results: initialResults }: { fiche: Fic
 
                   {/* Actions */}
                   <div className="flex-shrink-0 flex flex-col gap-2">
-                    <button
-                      onClick={() => updateStatus(result.id, result.status === 'liked' ? 'pending' : 'liked')}
-                      disabled={updatingId === result.id}
-                      className={`p-2.5 rounded-full transition-colors ${
-                        result.status === 'liked'
-                          ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
-                          : 'bg-gray-100 text-gray-400 hover:bg-pink-50 hover:text-pink-500'
-                      }`}
-                      title={result.status === 'liked' ? 'Retirer le like' : 'Liker'}
-                    >
-                      <Heart className={`h-5 w-5 ${result.status === 'liked' ? 'fill-current' : ''}`} />
-                    </button>
-                    <button
-                      onClick={() => updateStatus(result.id, result.status === 'passed' ? 'pending' : 'passed')}
-                      disabled={updatingId === result.id}
-                      className={`p-2.5 rounded-full transition-colors ${
-                        result.status === 'passed'
-                          ? 'bg-gray-200 text-gray-600'
-                          : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-                      }`}
-                      title={result.status === 'passed' ? 'Reconsidérer' : 'Passer'}
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        updateStatus(result.id, 'contacted');
-                        router.push('/dashboard/messages');
-                      }}
-                      disabled={updatingId === result.id}
-                      className="p-2.5 rounded-full bg-gray-100 text-gray-400 hover:bg-emerald-50 hover:text-emerald-500 transition-colors"
-                      title="Contacter"
-                    >
-                      <MessageCircle className="h-5 w-5" />
-                    </button>
+                    {unlocked ? (
+                      <>
+                        <button
+                          onClick={() => updateStatus(result.id, result.status === 'liked' ? 'pending' : 'liked')}
+                          disabled={updatingId === result.id}
+                          className={`p-2.5 rounded-full transition-colors ${
+                            result.status === 'liked'
+                              ? 'bg-pink-100 text-pink-600 hover:bg-pink-200'
+                              : 'bg-gray-100 text-gray-400 hover:bg-pink-50 hover:text-pink-500'
+                          }`}
+                          title={result.status === 'liked' ? 'Retirer le like' : 'Liker'}
+                        >
+                          <Heart className={`h-5 w-5 ${result.status === 'liked' ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          onClick={() => updateStatus(result.id, result.status === 'passed' ? 'pending' : 'passed')}
+                          disabled={updatingId === result.id}
+                          className={`p-2.5 rounded-full transition-colors ${
+                            result.status === 'passed'
+                              ? 'bg-gray-200 text-gray-600'
+                              : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                          }`}
+                          title={result.status === 'passed' ? 'Reconsidérer' : 'Passer'}
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            updateStatus(result.id, 'contacted');
+                            router.push('/dashboard/messages');
+                          }}
+                          disabled={updatingId === result.id}
+                          className="p-2.5 rounded-full bg-gray-100 text-gray-400 hover:bg-emerald-50 hover:text-emerald-500 transition-colors"
+                          title="Contacter"
+                        >
+                          <MessageCircle className="h-5 w-5" />
+                        </button>
+                      </>
+                    ) : (
+                      /* Bouton débloquer */
+                      <button
+                        onClick={() => handleUnlock(result.candidate_id)}
+                        disabled={unlockingId === result.candidate_id || credits <= 0}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-brand-amber text-white rounded-lg hover:bg-brand-amber/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={credits <= 0 ? 'Aucun crédit restant' : 'Débloquer ce profil (1 crédit)'}
+                      >
+                        {unlockingId === result.candidate_id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Unlock className="h-4 w-4" />
+                        )}
+                        Débloquer
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Expand button */}
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : result.id)}
-                  className="mt-3 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  {isExpanded ? 'Masquer le détail' : 'Voir le détail du score'}
-                  {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                </button>
+                {/* Expand / Unlock prompt */}
+                {unlocked ? (
+                  <button
+                    onClick={() => setExpandedId(isExpanded ? null : result.id)}
+                    className="mt-3 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    {isExpanded ? 'Masquer le détail' : 'Voir le détail du score'}
+                    {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </button>
+                ) : (
+                  <div className="mt-3 flex items-center gap-3">
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      Débloquez ce profil pour voir le détail, contacter et accéder au profil complet
+                    </span>
+                    {credits <= 0 && (
+                      <a
+                        href="/dashboard/subscription"
+                        className="text-xs text-brand-amber hover:underline font-medium flex items-center gap-1"
+                      >
+                        <CreditCard className="h-3 w-3" />
+                        Acheter des déblocages
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Expanded details */}
-              {isExpanded && (
+              {/* Expanded details — uniquement si débloqué */}
+              {isExpanded && unlocked && (
                 <div className="border-t border-gray-100 px-5 py-4 bg-gray-50/50">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Détail du score de matching</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
