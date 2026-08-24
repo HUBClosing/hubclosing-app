@@ -9,6 +9,7 @@ const HOME = () => {
   const [loading, setLoading] = useState(true);
   const heroCanvasRef = useRef<HTMLCanvasElement>(null);
   const heroParticlesRef = useRef<HTMLDivElement>(null);
+  const sphereCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const cssStyles = `
 /* ===== RESET & VARIABLES ===== */
@@ -68,6 +69,8 @@ img{max-width:100%;height:auto;}
 .hero-flare{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:800px;height:400px;background:radial-gradient(ellipse at 50% 100%,rgba(240,90,40,0.18) 0%,rgba(245,122,74,0.06) 35%,transparent 70%);pointer-events:none;z-index:2;opacity:0;animation:flareIn 2.5s 2s ease forwards;}
 @keyframes flareIn{from{opacity:0;}to{opacity:1;}}
 
+.hero-sphere{position:relative;width:340px;height:340px;margin:40px auto 10px;z-index:4;opacity:0;animation:fadeInUp 1s 2.6s cubic-bezier(0.16,1,0.3,1) forwards;}
+.hero-sphere canvas{width:100%;height:100%;display:block;}
 .hero-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
 .particle{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--amber);opacity:0;animation:floatUp var(--dur) var(--delay) infinite;}
 @keyframes floatUp{0%{opacity:0;transform:translateY(100vh) scale(0);}15%{opacity:0.85;}85%{opacity:0.5;}100%{opacity:0;transform:translateY(-20vh) scale(1);}}
@@ -333,6 +336,7 @@ img{max-width:100%;height:auto;}
   .nav-logo svg{height:28px !important;}
   .hero{padding:120px 20px 60px;}
   .hero h1{letter-spacing:-2px;font-size:clamp(28px,6vw,48px);}
+  .hero-sphere{width:240px;height:240px;margin:24px auto 6px;}
   .hero-logo svg{height:56px;}
   .section,.section-alt{padding:80px 20px;}
   .cta-section{padding:80px 20px;}
@@ -548,6 +552,169 @@ img{max-width:100%;height:auto;}
       p.style.cssText = `left:${Math.random() * 100}%;--dur:${dur}s;--delay:${delay}s;width:${size}px;height:${size}px;`;
       particlesEl.appendChild(p);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
+  // === SPINNING WIREFRAME SPHERE ===
+  useEffect(() => {
+    if (loading) return;
+    const sc = sphereCanvasRef.current;
+    if (!sc) return;
+    const ctx = sc.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const SIZE = 340;
+    sc.width = SIZE * dpr;
+    sc.height = SIZE * dpr;
+    ctx.scale(dpr, dpr);
+
+    const cx = SIZE / 2;
+    const cy = SIZE / 2;
+    const R = 130;
+    const MERIDIANS = 14;
+    const PARALLELS = 10;
+    const FOV = 600;
+    const STEPS = 60;
+
+    let rotation = 0;
+    let sphereAnim: number;
+
+    const project = (x3: number, y3: number, z3: number) => {
+      const scale = FOV / (FOV + z3);
+      return { x: cx + x3 * scale, y: cy + y3 * scale, s: scale, z: z3 };
+    };
+
+    const drawSphere = () => {
+      ctx.clearRect(0, 0, SIZE, SIZE);
+
+      // Outer glow
+      const outerGlow = ctx.createRadialGradient(cx, cy, R * 0.5, cx, cy, R * 1.35);
+      outerGlow.addColorStop(0, 'rgba(240,90,40,0.06)');
+      outerGlow.addColorStop(0.5, 'rgba(240,90,40,0.03)');
+      outerGlow.addColorStop(1, 'rgba(240,90,40,0)');
+      ctx.fillStyle = outerGlow;
+      ctx.fillRect(0, 0, SIZE, SIZE);
+
+      // Gradient ring
+      const ringWidth = 2.5;
+      for (let a = 0; a < Math.PI * 2; a += 0.02) {
+        const rx = cx + (R + 8) * Math.cos(a);
+        const ry = cy + (R + 8) * Math.sin(a);
+        const t = (a + Math.PI) / (Math.PI * 2);
+        let r2: number, g: number, b: number;
+        if (t < 0.5) {
+          const p = t * 2;
+          r2 = 240 + (208 - 240) * p;
+          g = 90 + (65 - 90) * p;
+          b = 40 + (8 - 40) * p;
+        } else {
+          const p = (t - 0.5) * 2;
+          r2 = 208 + (245 - 208) * p;
+          g = 65 + (122 - 65) * p;
+          b = 8 + (74 - 8) * p;
+        }
+        const alpha = 0.6 + 0.3 * Math.sin(a * 2 + rotation * 0.5);
+        ctx.beginPath();
+        ctx.arc(rx, ry, ringWidth, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${Math.round(r2)},${Math.round(g)},${Math.round(b)},${alpha})`;
+        ctx.fill();
+      }
+
+      // Collect all wireframe segments with depth for sorting
+      const lines: Array<{x1:number;y1:number;x2:number;y2:number;z:number;type:string}> = [];
+      const nodes: Array<{x:number;y:number;z:number;s:number}> = [];
+
+      // Meridians (longitude lines)
+      for (let m = 0; m < MERIDIANS; m++) {
+        const phi = (m / MERIDIANS) * Math.PI * 2 + rotation;
+        let prev: {x:number;y:number;s:number;z:number} | null = null;
+        for (let s = 0; s <= STEPS; s++) {
+          const theta = (s / STEPS) * Math.PI;
+          const x3 = R * Math.sin(theta) * Math.cos(phi);
+          const y3 = R * Math.cos(theta);
+          const z3 = R * Math.sin(theta) * Math.sin(phi);
+          const pt = project(x3, y3, z3);
+          if (prev) {
+            lines.push({ x1: prev.x, y1: prev.y, x2: pt.x, y2: pt.y, z: (prev.z + pt.z) / 2, type: 'meridian' });
+          }
+          prev = pt;
+          // Node at intersections with parallels
+          if (s > 0 && s < STEPS && s % (STEPS / PARALLELS) === 0) {
+            nodes.push(pt);
+          }
+        }
+      }
+
+      // Parallels (latitude lines)
+      for (let p = 1; p < PARALLELS; p++) {
+        const theta = (p / PARALLELS) * Math.PI;
+        let prev: {x:number;y:number;s:number;z:number} | null = null;
+        for (let s = 0; s <= STEPS; s++) {
+          const phi = (s / STEPS) * Math.PI * 2 + rotation;
+          const x3 = R * Math.sin(theta) * Math.cos(phi);
+          const y3 = R * Math.cos(theta);
+          const z3 = R * Math.sin(theta) * Math.sin(phi);
+          const pt = project(x3, y3, z3);
+          if (prev) {
+            lines.push({ x1: prev.x, y1: prev.y, x2: pt.x, y2: pt.y, z: (prev.z + pt.z) / 2, type: 'parallel' });
+          }
+          prev = pt;
+        }
+      }
+
+      // Sort back to front
+      lines.sort((a2, b2) => b2.z - a2.z);
+      nodes.sort((a2, b2) => b2.z - a2.z);
+
+      // Draw wireframe
+      for (const l of lines) {
+        const depth = (l.z + R) / (2 * R);
+        const alpha = 0.05 + depth * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(l.x1, l.y1);
+        ctx.lineTo(l.x2, l.y2);
+        ctx.strokeStyle = `rgba(245,122,74,${alpha})`;
+        ctx.lineWidth = 0.4 + depth * 0.6;
+        ctx.stroke();
+      }
+
+      // Draw nodes
+      for (const n of nodes) {
+        const depth = (n.z + R) / (2 * R);
+        const alpha = 0.15 + depth * 0.6;
+        const nr = 1 + depth * 2;
+        // Glow
+        const ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, nr * 4);
+        ng.addColorStop(0, `rgba(245,166,35,${alpha * 0.3})`);
+        ng.addColorStop(1, 'rgba(245,166,35,0)');
+        ctx.fillStyle = ng;
+        ctx.fillRect(n.x - nr * 4, n.y - nr * 4, nr * 8, nr * 8);
+        // Dot
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, nr, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(245,166,35,${alpha})`;
+        ctx.fill();
+      }
+
+      // Center glow
+      const cGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.6);
+      cGlow.addColorStop(0, 'rgba(255,255,255,0.35)');
+      cGlow.addColorStop(0.2, 'rgba(245,166,35,0.12)');
+      cGlow.addColorStop(0.5, 'rgba(240,90,40,0.04)');
+      cGlow.addColorStop(1, 'rgba(240,90,40,0)');
+      ctx.fillStyle = cGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      rotation += 0.004;
+      sphereAnim = requestAnimationFrame(drawSphere);
+    };
+
+    drawSphere();
+
+    return () => { cancelAnimationFrame(sphereAnim); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
@@ -901,6 +1068,7 @@ img{max-width:100%;height:auto;}
         <p className="hero-desc">
           HUBClosing connecte les candidats (closers et setters) avec les recruteurs qui ont besoin d&apos;eux. Marketplace, outils de suivi, coaching — tout en un.
         </p>
+        <div className="hero-sphere"><canvas ref={sphereCanvasRef} /></div>
         <div className="hero-btns">
           <Link href="/auth/register" className="btn btn-primary"><span>Je suis candidat</span></Link>
           <Link href="/auth/register" className="btn btn-ghost">Je suis recruteur</Link>
