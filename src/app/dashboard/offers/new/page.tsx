@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, Button, Input, Textarea } from '@/components/ui';
-import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle, ClipboardList, Trash2, GripVertical, CheckSquare, AlignLeft } from 'lucide-react';
+import { ArrowLeft, Send, Info, Crown, Plus, X, Timer, AlertTriangle, ClipboardList, Trash2, GripVertical, CheckSquare, AlignLeft, Lock, Sparkles } from 'lucide-react';
 import type { Skill, OfferType, Questionnaire } from '@/types/database';
 
 const OFFER_TYPES: { value: OfferType; label: string; desc: string }[] = [
@@ -19,7 +19,6 @@ const SKILLS: { value: Skill; label: string }[] = [
   { value: 'management', label: 'Management' },
   { value: 'hos', label: 'Head of Sales' },
   { value: 'coaching', label: 'Coaching' },
-  { value: 'training', label: 'Formation' },
 ];
 
 const LANGUAGES = [
@@ -131,6 +130,21 @@ export default function NewOfferPage() {
   const [enableQuestionnaire, setEnableQuestionnaire] = useState(false);
   const [questionnaireTitle, setQuestionnaireTitle] = useState('');
   const [inlineQuestions, setInlineQuestions] = useState<InlineQuestion[]>([]);
+  const [hasMatchingIA, setHasMatchingIA] = useState(false);
+
+  // Vérifier si le recruteur a le matching IA (tier solo, equipe, campagne ou agency)
+  useEffect(() => {
+    const checkMatching = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from('users').select('tier').eq('id', user.id).single();
+      if (data && data.tier && data.tier !== 'free') {
+        setHasMatchingIA(true);
+      }
+    };
+    checkMatching();
+  }, []);
 
   const addQuestion = (type: 'mcq' | 'free_text') => {
     setInlineQuestions(prev => [...prev, {
@@ -282,10 +296,22 @@ export default function NewOfferPage() {
     const infoproductName = (formData.get('infoproduct_name') as string)?.trim() || null;
     const instagramUrl = (formData.get('instagram_url') as string)?.trim() || null;
     const linkedinUrl = (formData.get('linkedin_url') as string)?.trim() || null;
-    const videoUrl = (formData.get('video_url') as string)?.trim() || null;
-    const replayUrl = (formData.get('replay_url') as string)?.trim() || null;
     const hosVideoUrl = (formData.get('hos_video_url') as string)?.trim() || null;
     const maxApplicants = formData.get('max_applicants') ? parseInt(formData.get('max_applicants') as string) : null;
+
+    // Profil prospect cible
+    const prospectGender = (formData.get('prospect_gender') as string)?.trim() || null;
+    const prospectAgeRange = (formData.get('prospect_age_range') as string)?.trim() || null;
+    const prospectQualities = (formData.get('prospect_qualities') as string)?.trim() || null;
+    const prospectExperience = (formData.get('prospect_experience') as string)?.trim() || null;
+    const prospectValues = (formData.get('prospect_values') as string)?.trim() || null;
+    const prospectMindset = (formData.get('prospect_mindset') as string)?.trim() || null;
+
+    // Profil idéal Matching IA
+    const idealAgeRange = (formData.get('ideal_age_range') as string)?.trim() || null;
+    const idealExperience = (formData.get('ideal_experience') as string)?.trim() || null;
+    const idealMindset = (formData.get('ideal_mindset') as string)?.trim() || null;
+    const idealValues = (formData.get('ideal_values') as string)?.trim() || null;
 
     if (!title || !description) {
       setError('Le titre et la description sont obligatoires.');
@@ -361,10 +387,31 @@ export default function NewOfferPage() {
       }
     }
 
-    const { data: insertedOffer, error: insertError } = await supabase.from('offers').insert({
+    // Construire la description enrichie avec le profil prospect
+    const prospectSection = [
+      '\n\n--- PROFIL DU PROSPECT CIBLE ---',
+      prospectGender ? `Genre : ${prospectGender}` : null,
+      prospectAgeRange ? `Tranche d'âge : ${prospectAgeRange}` : null,
+      prospectQualities ? `Qualités : ${prospectQualities}` : null,
+      prospectExperience ? `Expérience : ${prospectExperience}` : null,
+      prospectValues ? `Valeurs : ${prospectValues}` : null,
+      prospectMindset ? `Mindset : ${prospectMindset}` : null,
+    ].filter(Boolean).join('\n');
+
+    const fullDescription = description + prospectSection;
+
+    // Stocker le profil idéal Matching IA en metadata JSON
+    const idealProfile = (idealAgeRange || idealExperience || idealMindset || idealValues) ? JSON.stringify({
+      age_range: idealAgeRange,
+      experience: idealExperience,
+      mindset: idealMindset,
+      values: idealValues,
+    }) : null;
+
+    const { error: insertError } = await supabase.from('offers').insert({
       manager_id: user.id,
       title,
-      description,
+      description: fullDescription,
       offer_type: offerType,
       commission_rate: commRate,
       fixed_salary: fixedSalary,
@@ -372,16 +419,16 @@ export default function NewOfferPage() {
       product_price_range: priceRange,
       niche,
       location: [instagramUrl, linkedinUrl].filter(Boolean).join(' | ') || null,
-      video_url: videoUrl,
-      replay_url: replayUrl,
+      video_url: hosVideoUrl,
       hos_video_url: hosVideoUrl,
+      replay_url: idealProfile,
       required_skills: selectedSkills,
       required_languages: selectedLanguages,
       questionnaire_id: questionnaireId,
       application_deadline: deadline || null,
       max_applicants: maxApplicants,
       status: 'active',
-    }).select('id, title').single();
+    });
 
     if (insertError) {
       setError(insertError.message);
@@ -394,15 +441,6 @@ export default function NewOfferPage() {
       await supabase.from('users').update({
         recruiter_annonces_remaining: Math.max(0, annoncesRemaining - 1),
       }).eq('id', user.id);
-    }
-
-    // Notifier les candidats de la nouvelle offre (fire-and-forget)
-    if (insertedOffer?.id) {
-      fetch('/api/notify-new-offer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offer_id: insertedOffer.id }),
-      }).catch(() => {});
     }
 
     router.push('/dashboard/offers');
@@ -429,22 +467,27 @@ export default function NewOfferPage() {
             </h2>
 
             <Input
+              name="infoproduct_name"
+              label="Nom de l'infoproduit"
+              placeholder="Ex : Formation « Investir en immobilier », Coaching Mindset Pro..."
+              required
+            />
+
+            <Input
               name="title"
               label="Titre de l'offre"
               placeholder="Ex : Closer pour formation immobilier haut de gamme"
               required
             />
 
-            <div className="space-y-1">
-              <Textarea
-                name="description"
-                label="Description détaillée"
-                placeholder="Décrivez l'offre, le produit à vendre, les conditions de travail, les attentes..."
-                rows={6}
-                required
-              />
-              <p className="text-xs text-gray-400">Mettez un max d&apos;infos pour rendre votre offre attractive</p>
-            </div>
+            {/* Niche — champ libre */}
+            <Input
+              name="niche"
+              label="Niche / Secteur"
+              placeholder="Ex : Immobilier, Crypto, Coaching, E-commerce, Santé..."
+              helperText="Écrivez librement le secteur de votre offre"
+              required
+            />
 
             {/* Type de contrat — boutons radio visuels */}
             <div className="space-y-1">
@@ -475,52 +518,106 @@ export default function NewOfferPage() {
               </div>
             </div>
 
-            {/* Niche — champ libre */}
-            <Input
-              name="niche"
-              label="Niche / Secteur"
-              placeholder="Ex : Immobilier, Crypto, Coaching, E-commerce, Santé..."
-              helperText="Écrivez librement le secteur de votre offre"
-              required
-            />
+            <div className="space-y-1">
+              <Textarea
+                name="description"
+                label="Description de l'offre"
+                placeholder="Décrivez l'offre, le produit à vendre, les conditions de travail, les attentes..."
+                rows={6}
+                required
+              />
+              <p className="text-xs text-gray-400">Mettez un max d&apos;infos pour rendre votre offre attractive</p>
+            </div>
 
-            <Input
-              name="infoproduct_name"
-              label="Nom de l'infoproduit"
-              placeholder="Ex : Formation « Investir en immobilier », Coaching Mindset Pro..."
-              required
-            />
+            {/* Sous-section : Profil du prospect cible */}
+            <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-sm font-semibold text-brand-dark">Profil du prospect cible</h3>
+              <p className="text-xs text-gray-500">Décrivez le type de client que le closer devra contacter pour correspondre à votre audience.</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Genre du prospect <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="prospect_gender"
+                    required
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="homme">Homme</option>
+                    <option value="femme">Femme</option>
+                    <option value="indifferent">Indifférent</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Tranche d&apos;âge du prospect <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="prospect_age_range"
+                    required
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="indifferent">Indifférent</option>
+                    <option value="18-25">18 – 25 ans</option>
+                    <option value="25-35">25 – 35 ans</option>
+                    <option value="35-45">35 – 45 ans</option>
+                    <option value="45+">45 ans et +</option>
+                  </select>
+                </div>
+              </div>
+
+              <Textarea
+                name="prospect_qualities"
+                label="Qualités personnelles recherchées"
+                placeholder="Ex : Empathique, bon communicant, à l'écoute, orienté résultats..."
+                rows={2}
+                required
+              />
+
+              <Input
+                name="prospect_experience"
+                label="Expérience minimum requise"
+                placeholder="Ex : 6 mois en closing, 1 an en vente B2C..."
+                required
+              />
+
+              <Textarea
+                name="prospect_values"
+                label="Valeurs attendues"
+                placeholder="Ex : Éthique, transparence, engagement, excellence..."
+                rows={2}
+                required
+              />
+
+              <Textarea
+                name="prospect_mindset"
+                label="Mindset recherché"
+                placeholder="Ex : Growth mindset, résilient, autonome, ambitieux..."
+                rows={2}
+                required
+              />
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 name="instagram_url"
-                label="Lien Instagram (optionnel)"
+                label="Lien Instagram"
                 type="url"
                 placeholder="https://instagram.com/..."
+                required
               />
               <Input
                 name="linkedin_url"
-                label="Lien LinkedIn (optionnel)"
+                label="Lien LinkedIn"
                 type="url"
                 placeholder="https://linkedin.com/in/..."
+                required
               />
             </div>
-
-            <Input
-              name="video_url"
-              label="Lien vidéo de présentation (optionnel)"
-              type="url"
-              placeholder="https://youtube.com/... ou https://loom.com/..."
-              helperText="Vidéo de présentation de votre offre pour donner envie aux candidats"
-            />
-
-            <Input
-              name="replay_url"
-              label="Exemple de call (optionnel)"
-              type="url"
-              placeholder="https://fathom.video/... ou https://drive.google.com/..."
-              helperText="Lien Fathom, Google Drive ou autre — montrez un vrai call pour rassurer les candidats"
-            />
 
             <div className="space-y-1">
               <Input
@@ -749,6 +846,9 @@ export default function NewOfferPage() {
                   <span className="text-sm font-medium text-gray-700">
                     Ajouter un questionnaire de qualification
                   </span>
+                  <span className="text-xs text-gray-400 block ml-6">
+                    Affinez vos critères de sélection en posant des questions ciblées aux candidats
+                  </span>
                 </label>
               </div>
 
@@ -890,6 +990,73 @@ export default function NewOfferPage() {
                 L&apos;offre sera visible immédiatement dans la marketplace. Les candidats verront le décompte en temps réel. Vous pourrez la mettre en pause ou la fermer à tout moment.
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 5 : Profil Idéal — Matching IA */}
+        <Card className={!hasMatchingIA ? 'opacity-75 relative' : ''}>
+          {!hasMatchingIA && (
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-xl z-10 flex flex-col items-center justify-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-brand-amber/10 flex items-center justify-center">
+                <Lock className="h-6 w-6 text-brand-amber" />
+              </div>
+              <p className="text-sm font-semibold text-brand-dark">Matching IA</p>
+              <p className="text-xs text-gray-500 text-center max-w-xs">Complétez le profil idéal de votre closer pour bénéficier du matching IA et recevoir les meilleurs profils automatiquement.</p>
+              <a href="/dashboard/subscription" className="text-xs font-medium text-brand-amber hover:underline">
+                Débloquer le Matching IA →
+              </a>
+            </div>
+          )}
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-base font-semibold text-brand-dark flex items-center gap-2">
+              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-brand-amber to-orange-500 text-white text-xs font-bold flex items-center justify-center">
+                <Sparkles className="h-3.5 w-3.5" />
+              </div>
+              Profil idéal du closer — Matching IA
+            </h2>
+            <p className="text-xs text-gray-500">
+              Décrivez le closer idéal pour cette offre. Ces critères seront utilisés par notre algorithme de Matching IA pour vous proposer automatiquement les profils les plus compatibles.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">Tranche d&apos;âge idéale</label>
+                <select
+                  name="ideal_age_range"
+                  disabled={!hasMatchingIA}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green disabled:bg-gray-100"
+                >
+                  <option value="">Indifférent</option>
+                  <option value="18-25">18 – 25 ans</option>
+                  <option value="25-35">25 – 35 ans</option>
+                  <option value="35-45">35 – 45 ans</option>
+                  <option value="45+">45 ans et +</option>
+                </select>
+              </div>
+
+              <Input
+                name="ideal_experience"
+                label="Expérience souhaitée"
+                placeholder="Ex : 1 an en closing B2C, débutant accepté..."
+                disabled={!hasMatchingIA}
+              />
+            </div>
+
+            <Textarea
+              name="ideal_mindset"
+              label="Mindset recherché"
+              placeholder="Ex : Ambitieux, résilient, orienté résultats, capacité à gérer la pression..."
+              rows={2}
+              disabled={!hasMatchingIA}
+            />
+
+            <Textarea
+              name="ideal_values"
+              label="Valeurs importantes"
+              placeholder="Ex : Éthique, transparence, esprit d'équipe, excellence..."
+              rows={2}
+              disabled={!hasMatchingIA}
+            />
           </CardContent>
         </Card>
 
