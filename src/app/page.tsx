@@ -1074,8 +1074,8 @@ img{max-width:100%;height:auto;}
           <Link href="/auth/register" className="btn btn-ghost">Je suis recruteur</Link>
         </div>
         <div className="hero-stats">
-          <div className="hero-stat"><div className="hero-stat-num" data-count="2500" data-suffix="+">0</div><div className="hero-stat-label">Professionnels réunis</div></div>
-          <div className="hero-stat"><div className="hero-stat-num" data-count="150" data-suffix="+">0</div><div className="hero-stat-label">Offres publiées</div></div>
+          <div className="hero-stat"><div className="hero-stat-num" data-count="2800" data-suffix="+">0</div><div className="hero-stat-label">Professionnels réunis</div></div>
+          <div className="hero-stat"><div className="hero-stat-num" data-count="250" data-suffix="+">0</div><div className="hero-stat-label">Offres publiées</div></div>
           <div className="hero-stat"><div className="hero-stat-num" data-count="98" data-suffix="%">0</div><div className="hero-stat-label">Satisfaction</div></div>
         </div>
       </section>
