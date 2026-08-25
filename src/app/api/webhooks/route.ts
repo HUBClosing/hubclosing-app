@@ -17,7 +17,7 @@ export async function GET() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error('[webhooks]', error.message); return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 }); }
 
     return NextResponse.json(data || []);
   } catch {
@@ -39,11 +39,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'URL requise' }, { status: 400 });
     }
 
-    // Valider l'URL
+    // Valider l'URL + protection SSRF
     try {
       const parsed = new URL(url.trim());
-      if (!['http:', 'https:'].includes(parsed.protocol)) {
-        return NextResponse.json({ error: 'URL doit être HTTP ou HTTPS' }, { status: 400 });
+      if (parsed.protocol !== 'https:') {
+        return NextResponse.json({ error: 'URL doit être HTTPS' }, { status: 400 });
+      }
+      const h = parsed.hostname.toLowerCase();
+      const blocked = ['localhost', '127.0.0.1', '0.0.0.0', '::1', '169.254.169.254', 'metadata.google.internal'];
+      if (blocked.includes(h) || h.startsWith('10.') || h.startsWith('192.168.') || h.startsWith('172.16.') || h.startsWith('172.17.') || h.startsWith('172.18.') || h.startsWith('172.19.') || h.startsWith('172.2') || h.startsWith('172.30.') || h.startsWith('172.31.') || h.endsWith('.internal') || h.endsWith('.local')) {
+        return NextResponse.json({ error: 'URL interne non autorisée' }, { status: 400 });
       }
     } catch {
       return NextResponse.json({ error: 'URL invalide' }, { status: 400 });
@@ -83,7 +88,7 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error('[webhooks]', error.message); return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 }); }
 
     return NextResponse.json(data, { status: 201 });
   } catch {
@@ -111,7 +116,7 @@ export async function DELETE(req: NextRequest) {
       .eq('id', webhookId)
       .eq('user_id', user.id);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error('[webhooks]', error.message); return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 }); }
 
     return NextResponse.json({ success: true });
   } catch {
@@ -160,7 +165,7 @@ export async function PATCH(req: NextRequest) {
       .select()
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error('[webhooks]', error.message); return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 }); }
 
     return NextResponse.json(data);
   } catch {

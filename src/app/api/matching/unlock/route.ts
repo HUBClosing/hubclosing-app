@@ -82,21 +82,28 @@ export async function POST(req: NextRequest) {
     if (insertError.code === '23505') {
       return NextResponse.json({ success: true, already_unlocked: true });
     }
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    console.error('[unlock] insert error:', insertError.message);
+    return NextResponse.json({ error: 'Erreur lors du déblocage' }, { status: 500 });
   }
 
-  // Décrémenter les crédits
-  const { error: updateError } = await supabase
+  // Décrémenter les crédits de façon atomique (protection race condition)
+  const { data: updatedUser, error: updateError } = await supabase
     .from('users')
     .update({ recruiter_deblocages_remaining: remaining - 1 })
-    .eq('id', user.id);
+    .eq('id', user.id)
+    .gt('recruiter_deblocages_remaining', 0)
+    .select('recruiter_deblocages_remaining')
+    .single();
 
-  if (updateError) {
-    console.error('Erreur décrémentation crédits:', updateError);
+  if (updateError || !updatedUser) {
+    // La mise à jour a échoué (concurrent: crédits déjà à 0) — rollback le déblocage
+    await supabase.from('profile_unlocks').delete().eq('recruiter_id', user.id).eq('candidate_id', candidate_id);
+    console.error('Erreur décrémentation crédits:', updateError?.message || 'crédits épuisés concurremment');
+    return NextResponse.json({ error: 'Crédit déjà utilisé, veuillez réessayer' }, { status: 409 });
   }
 
   return NextResponse.json({
     success: true,
-    remaining: remaining - 1,
+    remaining: updatedUser.recruiter_deblocages_remaining,
   });
 }
