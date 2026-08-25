@@ -192,7 +192,36 @@ export default function OnboardingPage() {
         router.refresh();
       }, 2000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      // Extract error message from any error type (Error, PostgrestError, plain object)
+      const errMsg = err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Une erreur inconnue est survenue';
+
+      setError(errMsg);
+
+      // Report error to admin via API
+      try {
+        const { data: { user: u } } = await supabase.auth.getUser();
+        fetch('/api/log-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: 'Onboarding - Finalisation inscription',
+            error: errMsg,
+            userId: u?.id,
+            userEmail: u?.email,
+            metadata: {
+              step: 'contact',
+              roles: selectedRoles,
+              skills: selectedSkills,
+            },
+          }),
+        }).catch(() => {});
+      } catch {
+        // Silent fail for error reporting
+      }
     } finally {
       setLoading(false);
     }
