@@ -53,13 +53,11 @@ async function getDashboardData(userId: string, role: string) {
       { count: applications },
       { count: acceptedApps },
       { data: recentApps },
-      { data: upcomingEvents },
     ] = await Promise.all([
       supabase.from('offers').select('*', { count: 'exact', head: true }).eq('manager_id', userId),
       supabase.from('applications').select('*, offers!inner(manager_id)', { count: 'exact', head: true }).eq('offers.manager_id', userId),
       supabase.from('applications').select('*, offers!inner(manager_id)', { count: 'exact', head: true }).eq('offers.manager_id', userId).eq('status', 'accepted'),
       supabase.from('applications').select('*, closer:users!closer_id(full_name, email), offer:offers!inner(title, manager_id)').eq('offers.manager_id', userId).order('created_at', { ascending: false }).limit(5),
-      supabase.from('events').select('*, host:users!host_id(full_name)').eq('status', 'upcoming').order('start_date', { ascending: true }).limit(3),
     ]);
     const conversionRate = applications && applications > 0 ? ((acceptedApps || 0) / applications * 100).toFixed(1) : '0';
     return {
@@ -67,7 +65,6 @@ async function getDashboardData(userId: string, role: string) {
       applications: applications || 0,
       conversionRate,
       recentApps: recentApps || [],
-      upcomingEvents: upcomingEvents || [],
     };
   }
 
@@ -266,20 +263,6 @@ export default async function DashboardPage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="/dashboard/events" className="block">
-              <Card hover>
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="h-12 w-12 bg-brand-amber/10 rounded-xl flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-brand-amber" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-brand-dark">Événements</h3>
-                    <p className="text-sm text-gray-500">Coaching, webinaires et networking</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
-                </CardContent>
-              </Card>
-            </Link>
           </div>
 
           {/* Recent Applications */}
@@ -312,41 +295,6 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Events */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-brand-dark flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-brand-amber" /> Prochains événements
-                </h2>
-                <Link href="/dashboard/events" className="text-sm text-brand-green hover:underline flex items-center gap-1">
-                  Voir tout <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {data.upcomingEvents && data.upcomingEvents.length > 0 ? (
-                <div className="space-y-3">
-                  {data.upcomingEvents.map((event: any) => (
-                    <div key={event.id} className="flex items-center gap-4 p-3 rounded-lg border border-gray-100">
-                      <div className="flex-shrink-0 h-12 w-12 bg-brand-amber/10 rounded-lg flex items-center justify-center">
-                        <Calendar className="h-6 w-6 text-brand-amber" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-brand-dark truncate">{event.title}</h3>
-                        <p className="text-sm text-gray-500">{formatDateTime(event.start_date)}</p>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-full ${eventTypeColors[event.event_type] || 'bg-gray-100 text-gray-600'}`}>
-                        {eventTypeLabels[event.event_type] || event.event_type}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">Aucun événement à venir.</p>
-              )}
-            </CardContent>
-          </Card>
         </>
       )}
 

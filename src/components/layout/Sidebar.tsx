@@ -30,11 +30,6 @@ import {
   CreditCard,
   Receipt,
   ClipboardList,
-  Sparkles,
-  Webhook,
-  BookOpen,
-  Lightbulb,
-  Phone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -74,7 +69,6 @@ const candidateLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/candidatures', label: 'Mes candidatures', icon: FileText },
-  { href: '/dashboard/suggestions', label: 'Suggestions IA', icon: Sparkles, minTier: 'starter' },
   { href: '/dashboard/tracking', label: 'Tracking Calls', icon: Target },
   { href: '/dashboard/performance', label: 'Mes performances', icon: TrendingUp, minTier: 'starter' },
   { href: '/dashboard/reputation', label: 'Réputation', icon: Award, minTier: 'starter' },
@@ -91,9 +85,7 @@ const candidateLinks: NavLink[] = [
 const recruiterLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
-  { href: '/dashboard/matching', label: 'Matching IA', icon: Sparkles, minTier: 'solo' },
   { href: '/dashboard/recruitment', label: 'Dashboard recrutement', icon: BarChart3 },
-  { href: '/dashboard/settings/webhooks', label: 'Connexion CRM', icon: Webhook, minTier: 'solo' },
   { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'solo' },
@@ -235,7 +227,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
             {links.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href || (link.href !== '/dashboard' && pathname.startsWith(link.href));
+              const isActive = pathname === link.href;
               const hasAccess = admin || hasTierAccess(userTier, link.minTier);
 
               if (!hasAccess) {
@@ -287,34 +279,6 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
               );
             })}
           </nav>
-
-          {/* Liens utilitaires en bas */}
-          <div className="px-3 pb-1 space-y-0.5">
-            <div className="border-t border-white/10 mb-2" />
-            {[
-              { href: '/dashboard/guide', label: 'Guide d\'utilisation', icon: BookOpen },
-              { href: '/dashboard/ideas', label: 'Boîte à idées', icon: Lightbulb },
-              { href: '/dashboard/contact', label: 'Contact', icon: Phone },
-            ].map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href;
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
-                    isActive
-                      ? 'bg-white/15 text-white'
-                      : 'text-white/50 hover:bg-white/10 hover:text-white/80'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{link.label}</span>
-                </a>
-              );
-            })}
-          </div>
 
           {/* Upgrade CTA pour les Free */}
           {userTier === 'free' && !admin && (
