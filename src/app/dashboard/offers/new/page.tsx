@@ -351,6 +351,66 @@ export default function NewOfferPage() {
       return;
     }
 
+    if (!instagramUrl) {
+      setError('Le lien Instagram est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!linkedinUrl) {
+      setError('Le lien LinkedIn est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!prospectGender) {
+      setError('Le genre du prospect cible est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!prospectAgeRange) {
+      setError('La tranche d\'âge du prospect cible est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!prospectQualities) {
+      setError('Les qualités personnelles du prospect cible sont obligatoires.');
+      setLoading(false);
+      return;
+    }
+
+    if (!prospectExperience) {
+      setError('L\'expérience minimum du prospect cible est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!prospectValues) {
+      setError('Les valeurs du prospect cible sont obligatoires.');
+      setLoading(false);
+      return;
+    }
+
+    if (!prospectMindset) {
+      setError('Le mindset du prospect cible est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!deadline) {
+      setError('La date limite de candidature est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
+    if (!maxApplicants) {
+      setError('Le nombre maximum de candidats est obligatoire.');
+      setLoading(false);
+      return;
+    }
+
     // Créer le questionnaire inline si activé
     let questionnaireId: string | null = null;
     if (enableQuestionnaire && inlineQuestions.length > 0) {
