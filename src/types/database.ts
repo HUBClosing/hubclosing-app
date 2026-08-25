@@ -44,6 +44,7 @@ export type StripeSubscriptionStatus = 'active' | 'past_due' | 'canceled' | 'inc
 export const TIER_LIMITS = {
 // --- Candidats (chaque tier inclut tout le tier inférieur) ---
 free: {
+// Candidat
 applications_per_month: 3,
 can_see_premium: false,
 has_tracker: false,
@@ -56,6 +57,10 @@ has_replays: false,
 has_upskill: false,
 has_accounting: false,
 has_direct_contact: false,
+// Recruteur — accès gratuit limité
+annonces: 1, offer_duration_days: 30, deblocages_included: 3,
+boosts_included: 0, has_smart_sourcing: true, has_questionnaire: false,
+has_guarantee: false, has_analytics: false, is_subscription: false,
 },
 starter: {
 applications_per_month: 6,
@@ -101,23 +106,23 @@ has_direct_contact: true,
 },
 // --- Recruteurs — Packs all-in-one ---
 solo: {
-annonces: 1, offer_duration_days: 60, deblocages_included: 3,
-boosts_included: 0, has_smart_sourcing: true, has_questionnaire: true,
-has_guarantee: true, has_analytics: false, is_subscription: false,
-},
-equipe: {
-annonces: 1, offer_duration_days: 90, deblocages_included: 5,
+annonces: 1, offer_duration_days: 60, deblocages_included: 5,
 boosts_included: 1, has_smart_sourcing: true, has_questionnaire: true,
 has_guarantee: true, has_analytics: false, is_subscription: false,
 },
-campagne: {
-annonces: 1, offer_duration_days: 120, deblocages_included: 10,
-boosts_included: 3, has_smart_sourcing: true, has_questionnaire: true,
+equipe: {
+annonces: 1, offer_duration_days: 90, deblocages_included: 10,
+boosts_included: 2, has_smart_sourcing: true, has_questionnaire: true,
 has_guarantee: true, has_analytics: false, is_subscription: false,
 },
-agency: {
-annonces: Infinity, offer_duration_days: Infinity, deblocages_included: 20,
+campagne: {
+annonces: 1, offer_duration_days: 120, deblocages_included: 20,
 boosts_included: 5, has_smart_sourcing: true, has_questionnaire: true,
+has_guarantee: true, has_analytics: true, is_subscription: false,
+},
+agency: {
+annonces: Infinity, offer_duration_days: Infinity, deblocages_included: 50,
+boosts_included: 10, has_smart_sourcing: true, has_questionnaire: true,
 has_guarantee: true, has_analytics: true, is_subscription: true,
 },
 } as const;
