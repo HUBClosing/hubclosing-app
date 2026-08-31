@@ -29,6 +29,8 @@ import {
   Lock,
   CreditCard,
   Receipt,
+  ClipboardList,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -85,8 +87,10 @@ const recruiterLinks: NavLink[] = [
   { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { href: '/dashboard/offers', label: 'Mes offres', icon: Briefcase },
   { href: '/dashboard/recruitment', label: 'Dashboard recrutement', icon: BarChart3 },
+  { href: '/dashboard/questionnaires', label: 'Questionnaires', icon: ClipboardList },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
   { href: '/dashboard/cvtheque', label: 'CVthèque', icon: Users, minTier: 'solo' },
+  { href: '/dashboard/events', label: 'Masterclasses', icon: Calendar },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/referral', label: 'Parrainage', icon: Share2 },
@@ -100,6 +104,7 @@ const adminLinks: NavLink[] = [
   { href: '/dashboard/admin', label: 'Vue d\'ensemble', icon: BarChart3 },
   { href: '/dashboard/admin/crm', label: 'CRM Recrutement', icon: TrendingUp },
   { href: '/dashboard/admin/users', label: 'Utilisateurs', icon: Users },
+  { href: '/dashboard/admin/coaches', label: 'Manager', icon: GraduationCap },
   { href: '/dashboard/admin/offers', label: 'Offres', icon: Briefcase },
   { href: '/dashboard/admin/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/marketplace', label: 'Marketplace', icon: ShoppingBag },
@@ -107,6 +112,16 @@ const adminLinks: NavLink[] = [
   { href: '/dashboard/admin/settings', label: 'Configuration', icon: Shield },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/subscription', label: 'Abonnement', icon: CreditCard },
+  { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
+];
+
+const coachLinks: NavLink[] = [
+  { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { href: '/dashboard/coach/events', label: 'Mes événements', icon: Calendar },
+  { href: '/dashboard/coach/events/new', label: 'Créer un événement', icon: GraduationCap },
+  { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
+  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+  { href: '/dashboard/profile', label: 'Mon profil', icon: UserCircle },
   { href: '/dashboard/settings', label: 'Paramètres', icon: Settings },
 ];
 
@@ -122,12 +137,17 @@ function isAdmin(user: User): boolean {
   return user.role_type === 'admin' || user.role === 'admin';
 }
 
+function isCoach(user: User): boolean {
+  return user.role_type === 'coach';
+}
+
 function getRoleLabel(activeRole: ActiveRole): string {
   return activeRole === 'candidate' ? 'Candidat' : 'Recruteur';
 }
 
 function getLinksForRole(user: User, activeRole: ActiveRole): NavLink[] {
   if (isAdmin(user)) return adminLinks;
+  if (isCoach(user)) return coachLinks;
   return activeRole === 'recruiter' ? recruiterLinks : candidateLinks;
 }
 
@@ -187,7 +207,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
             <p className="font-medium truncate">{user.full_name || user.email}</p>
             <div className="flex items-center gap-2 mt-1">
               <span className="inline-block px-2 py-0.5 bg-brand-amber/20 text-brand-amber rounded text-xs">
-                {admin ? 'Admin' : getRoleLabel(activeRole)}
+                {admin ? 'Admin' : isCoach(user) ? 'Coach' : getRoleLabel(activeRole)}
               </span>
               {userTier !== 'free' && (
                 <span className="inline-block px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded text-xs capitalize">
@@ -279,7 +299,7 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
           </nav>
 
           {/* Upgrade CTA pour les Free */}
-          {userTier === 'free' && !admin && (
+          {userTier === 'free' && !admin && !isCoach(user) && (
             <div className="px-3 pb-2">
               <a
                 href="/dashboard/subscription"
