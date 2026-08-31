@@ -169,3 +169,11 @@ export async function requireAdmin(): Promise<User> {
   }
   return user;
 }
+
+export async function requireCoach(): Promise<User> {
+  const user = await requireUser();
+  if (user.role_type !== 'coach' && user.role_type !== 'admin' && user.role !== 'admin') {
+    redirect('/dashboard');
+  }
+  return user;
+}

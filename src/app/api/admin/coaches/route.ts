@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createServerClient } from '@supabase/ssr';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
-function createServiceClient() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { get: () => undefined, set: () => {}, remove: () => {} } }
-  );
-}
-
-async function verifyAdmin(supabase: any, authUserId: string) {
-  const serviceClient = createServiceClient();
+async function verifyAdmin(authUserId: string) {
+  const serviceClient = getSupabaseAdmin();
   const { data: adminUser } = await serviceClient
     .from('users')
     .select('role, role_type')
@@ -25,11 +17,11 @@ export async function GET(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  if (!(await verifyAdmin(supabase, authUser.id))) {
+  if (!(await verifyAdmin(authUser.id))) {
     return NextResponse.json({ error: 'Réservé aux administrateurs' }, { status: 403 });
   }
 
-  const serviceClient = createServiceClient();
+  const serviceClient = getSupabaseAdmin();
   const { searchParams } = new URL(req.url);
   const coachId = searchParams.get('coach_id');
 
@@ -58,7 +50,7 @@ export async function GET(req: NextRequest) {
       .in('event_id', (events || []).map(e => e.id))
       .not('paid_at', 'is', null);
 
-    const totalRevenue = (registrations || []).reduce((sum, r) => sum + (r.amount_paid || 0), 0);
+    const totalRevenue = (registrations || []).reduce((sum: number, r: { amount_paid: number | null }) => sum + (r.amount_paid || 0), 0);
     const totalRegistrations = (registrations || []).length;
 
     return NextResponse.json({
@@ -68,7 +60,7 @@ export async function GET(req: NextRequest) {
         totalEvents: (events || []).length,
         totalRegistrations,
         totalRevenue,
-        activeEvents: (events || []).filter(e => e.status === 'upcoming').length,
+        activeEvents: (events || []).filter((e: { status: string }) => e.status === 'upcoming').length,
       }
     });
   }
@@ -81,14 +73,14 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false });
 
   // Récupérer les événements de tous les coachs
-  const coachIds = (coaches || []).map(c => c.id);
+  const coachIds = (coaches || []).map((c: { id: string }) => c.id);
   const { data: allEvents } = await serviceClient
     .from('events')
     .select('id, host_id, status, stripe_price_cents')
     .in('host_id', coachIds.length > 0 ? coachIds : ['none']);
 
   // Récupérer les inscriptions payées
-  const eventIds = (allEvents || []).map(e => e.id);
+  const eventIds = (allEvents || []).map((e: { id: string }) => e.id);
   const { data: allRegistrations } = await serviceClient
     .from('event_registrations')
     .select('event_id, amount_paid, paid_at')
@@ -96,17 +88,17 @@ export async function GET(req: NextRequest) {
     .not('paid_at', 'is', null);
 
   // Mapper les stats par coach
-  const coachesWithStats = (coaches || []).map(coach => {
-    const coachEvents = (allEvents || []).filter(e => e.host_id === coach.id);
-    const coachEventIds = coachEvents.map(e => e.id);
-    const coachRegs = (allRegistrations || []).filter(r => coachEventIds.includes(r.event_id));
-    const totalRevenue = coachRegs.reduce((sum, r) => sum + (r.amount_paid || 0), 0);
+  const coachesWithStats = (coaches || []).map((coach: { id: string }) => {
+    const coachEvents = (allEvents || []).filter((e: { host_id: string }) => e.host_id === coach.id);
+    const coachEventIds = coachEvents.map((e: { id: string }) => e.id);
+    const coachRegs = (allRegistrations || []).filter((r: { event_id: string }) => coachEventIds.includes(r.event_id));
+    const totalRevenue = coachRegs.reduce((sum: number, r: { amount_paid: number | null }) => sum + (r.amount_paid || 0), 0);
 
     return {
       ...coach,
       stats: {
         totalEvents: coachEvents.length,
-        activeEvents: coachEvents.filter(e => e.status === 'upcoming').length,
+        activeEvents: coachEvents.filter((e: { status: string }) => e.status === 'upcoming').length,
         totalRegistrations: coachRegs.length,
         totalRevenue,
       }
@@ -121,7 +113,7 @@ export async function PATCH(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
-  if (!(await verifyAdmin(supabase, authUser.id))) {
+  if (!(await verifyAdmin(authUser.id))) {
     return NextResponse.json({ error: 'Réservé aux administrateurs' }, { status: 403 });
   }
 
@@ -130,7 +122,7 @@ export async function PATCH(req: NextRequest) {
 
   if (!coach_id) return NextResponse.json({ error: 'coach_id requis' }, { status: 400 });
 
-  const serviceClient = createServiceClient();
+  const serviceClient = getSupabaseAdmin();
 
   if (action === 'suspend') {
     const { error } = await serviceClient

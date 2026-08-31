@@ -5,7 +5,7 @@
 // --- Enums ---
 
 /** Rôle principal : candidat, recruteur, les deux, ou admin */
-export type RoleType = 'pending' | 'candidate' | 'recruiter' | 'both' | 'admin';
+export type RoleType = 'pending' | 'candidate' | 'recruiter' | 'both' | 'admin' | 'coach';
 
 /** Rôle actif dans le dashboard (pour les utilisateurs double-rôle) */
 export type ActiveRole = 'candidate' | 'recruiter';

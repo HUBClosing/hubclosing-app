@@ -22,15 +22,9 @@ const eventTypeColors: Record<string, string> = {
   networking: 'bg-amber-100 text-amber-700',
 };
 
-/**
- * Mapping event_type → feature requise dans canUserDo
- * - coaching → 'upskill' (Élite uniquement)
- * - webinaire → 'masterclass' (Pro+)
- * - atelier, networking → accessible à tous (free inclus)
- */
 const EVENT_REQUIRED_FEATURE: Record<string, string | null> = {
-  coaching: 'upskill',
-  webinaire: 'masterclass',
+  coaching: null, // Coach events are open to all (paid per event)
+  webinaire: null,
   atelier: null,
   networking: null,
 };
@@ -77,7 +71,7 @@ export function EventsContent({ user }: EventsContentProps) {
           .from('event_registrations')
           .select('event_id')
           .eq('user_id', user.id)
-          .eq('status', 'registered'),
+          .neq('status', 'cancelled'),
       ]);
 
       setEvents(eventsData || []);
@@ -87,18 +81,65 @@ export function EventsContent({ user }: EventsContentProps) {
     load();
   }, []);
 
-  const handleRegister = async (eventId: string) => {
+  const handleRegister = async (eventId: string, price: number) => {
     setRegisteringId(eventId);
-    const { error } = await supabase.from('event_registrations').insert({
-      event_id: eventId,
-      user_id: user.id,
-    });
-    if (!error) {
-      setRegistrations(prev => {
-        const next = new Set(Array.from(prev));
-        next.add(eventId);
-        return next;
+
+    // Si l'événement est payant, passer par Stripe Checkout
+    if (price > 0) {
+      try {
+        const res = await fetch('/api/stripe/checkout-event', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ event_id: eventId }),
+        });
+        const data = await res.json();
+
+        if (data.url) {
+          window.location.href = data.url;
+          return;
+        }
+
+        if (data.free || data.success) {
+          // Événement gratuit traité côté serveur
+          setRegistrations(prev => {
+            const next = new Set(Array.from(prev));
+            next.add(eventId);
+            return next;
+          });
+          setRegisteringId(null);
+          return;
+        }
+
+        if (data.error) {
+          alert(data.error);
+        }
+      } catch {
+        alert('Erreur lors de l\'inscription');
+      }
+      setRegisteringId(null);
+      return;
+    }
+
+    // Événement gratuit — inscription directe via API
+    try {
+      const res = await fetch('/api/stripe/checkout-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: eventId }),
       });
+      const data = await res.json();
+
+      if (data.success || data.free) {
+        setRegistrations(prev => {
+          const next = new Set(Array.from(prev));
+          next.add(eventId);
+          return next;
+        });
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch {
+      alert('Erreur lors de l\'inscription');
     }
     setRegisteringId(null);
   };
@@ -221,6 +262,16 @@ export function EventsContent({ user }: EventsContentProps) {
                       <span className="flex items-center gap-1 text-sm text-green-600 font-medium">
                         <CheckCircle className="h-4 w-4" /> Inscrit(e)
                       </span>
+                      {event.meeting_url && (
+                        <a
+                          href={event.meeting_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 flex items-center gap-1 text-sm text-blue-600 hover:underline"
+                        >
+                          <Video className="h-4 w-4" /> Rejoindre
+                        </a>
+                      )}
                       <button
                         onClick={() => handleCancel(event.id)}
                         disabled={registeringId === event.id}
@@ -231,11 +282,16 @@ export function EventsContent({ user }: EventsContentProps) {
                     </div>
                   ) : (
                     <Button
-                      onClick={() => handleRegister(event.id)}
+                      onClick={() => handleRegister(event.id, event.price || 0)}
                       disabled={registeringId === event.id}
                       className="w-full"
                     >
-                      {registeringId === event.id ? 'Inscription...' : 'S\'inscrire'}
+                      {registeringId === event.id
+                        ? 'Inscription...'
+                        : event.price > 0
+                          ? `S'inscrire — ${event.price}€`
+                          : 'S\'inscrire gratuitement'
+                      }
                     </Button>
                   )}
                 </CardContent>
